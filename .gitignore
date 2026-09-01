@@ -1,0 +1,22 @@
+# dependencies and build output
+node_modules/
+.vinext/
+dist/
+out/
+.wrangler/
+
+# local environment and logs
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+
+# runtime-only player data (never commit interaction archives)
+server/data/state.json
+server/data/judgments.json
+
+# editor files
+.idea/
+.vscode/
+*.swp
