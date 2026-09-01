@@ -41,3 +41,13 @@ test('a finalized hearing cannot be rebutted twice', () => {
   const final = loop.rebut(session, '我会合作修复。');
   assert.throws(() => loop.rebut(final, '再次反驳'), /不能再次反驳/);
 });
+
+test('manual trigger can start multiple independent hearings', () => {
+  const loop = createAgentLoop({ gods, retriever, random: () => 0, now: fixedNow });
+  const state = { round: 1, attributes: { economy: 10, environment: 10, society: 10 }, activeDisasters: [] };
+  const first = loop.start(state);
+  const second = loop.start(state);
+  assert.notEqual(first.id, second.id);
+  assert.equal(first.status, 'awaiting_rebuttal');
+  assert.equal(second.status, 'awaiting_rebuttal');
+});

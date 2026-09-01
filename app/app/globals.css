@@ -94,6 +94,8 @@ button, input, textarea { font: inherit; }
 .evidence-box span { display: flex; align-items: center; gap: 6px; color: #4b6f60; font-size: 11px; font-weight: 700; } .evidence-box svg { width: 14px; } .evidence-box p { margin: 7px 0 0; color: #6f7974; font-size: 12px; line-height: 1.6; }
 .rebuttal-box { display: grid; gap: 9px; margin-top: 15px; } .rebuttal-box label { font-size: 12px; font-weight: 700; } .rebuttal-box textarea { resize: vertical; background: rgb(255 255 255 / 40%); } .rebuttal-box button { justify-self: end; }
 .verdict-box { margin-top: 15px; padding: 14px 16px; border: 1px solid #a9cbb6; border-radius: 9px; background: #e6f0e8; } .verdict-box div { display: flex; align-items: center; gap: 7px; color: #315d47; } .verdict-box svg { width: 17px; } .verdict-box p { margin: 7px 0 0; color: #52705f; font-size: 12px; line-height: 1.6; } .verdict-box ul { margin: 8px 0 0; padding-left: 18px; color: #456854; font-size: 11px; line-height: 1.65; }
+.final-stack { display: grid; gap: 11px; }
+.repeat-judgment { justify-self: end; border-color: #b9b29f; background: #f7f4e9; color: #34483f; }
 .intel-tabs [data-slot="tabs-list"] { background: #e4e2d8; } .intel-tabs [data-slot="tabs-trigger"] svg { width: 13px; }
 .stable-panel, .archive-panel { display: flex; align-items: center; gap: 13px; min-height: 88px; padding: 15px 18px; border: 1px solid #d6d4c8; border-radius: 11px; background: rgb(250 249 243 / 78%); }
 .stable-panel > svg, .archive-panel > svg { width: 23px; color: #4f8569; } .stable-panel strong, .archive-panel strong { font-size: 13px; } .stable-panel p, .archive-panel p { margin: 3px 0 0; color: #7d8580; font-size: 11px; } .archive-panel > span { margin-left: auto; color: #858e89; font-size: 10px; }

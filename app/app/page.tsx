@@ -175,6 +175,8 @@ export default function Home() {
   }
 
   async function beginHearing() {
+    setRebuttal('');
+    setSession(null);
     setHearing('reviewing');
     try {
       await saveState();
@@ -211,7 +213,7 @@ export default function Home() {
         <div className="ml-auto flex items-center gap-2">
           <span className={`status-dot ${apiConnected ? '' : 'is-offline'}`} />
           <span className="hidden text-sm text-muted-foreground sm:inline">{apiConnected ? '本地引擎已连接' : '正在连接本地引擎'}</span>
-          <span className="round-pill">第 01 轮</span>
+          <span className="round-pill">手动触发模式</span>
         </div>
       </header>
 
@@ -278,7 +280,12 @@ export default function Home() {
                   {hearing === 'rebuttal' ? (
                     <div className="rebuttal-box"><label htmlFor="rebuttal">玩家反驳</label><Textarea id="rebuttal" value={rebuttal} onChange={(event) => setRebuttal(event.target.value)} placeholder="说明你的行动背景、公共收益或补救计划……" /><Button onClick={submitRebuttal} disabled={!rebuttal.trim()}>提交反驳并请求最终裁决</Button></div>
                   ) : (
-                    <div className="verdict-box"><div><ShieldCheck /><strong>最终裁决 · {session?.finalVerdict?.title}</strong></div><p>{session?.finalVerdict?.statement}</p><ul>{session?.finalVerdict?.measures.map((measure) => <li key={measure}>{measure}</li>)}</ul></div>
+                    <div className="final-stack">
+                      <div className="verdict-box"><div><ShieldCheck /><strong>最终裁决 · {session?.finalVerdict?.title}</strong></div><p>{session?.finalVerdict?.statement}</p><ul>{session?.finalVerdict?.measures.map((measure) => <li key={measure}>{measure}</li>)}</ul></div>
+                      <Button className="repeat-judgment" variant="outline" onClick={beginHearing}>
+                        <Gavel /> 再次手动触发审判
+                      </Button>
+                    </div>
                   )}
                 </div>
               )}
