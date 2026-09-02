@@ -93,6 +93,7 @@ app/                    前端项目
 server/
   src/server.js         HTTP API
   src/agent-loop.js     上帝编排、初判与反驳回路
+  src/god-prompts.js    从 god.md 原样加载三位上帝的完整提示词
   src/catalog.js        灾难规则与阈值引擎
   src/rag.js            可替换的本地嵌入/检索接口
   src/llm/minimax.js    MiniMax 请求、结构化解析和安全降级
@@ -112,12 +113,13 @@ disaster.md             原始灾难设定
 
 1. `read_state`：读取已保存的三属性和当前灾难。
 2. `select_god`：随机选取激进、普通或保守上帝。
-3. `retrieve_knowledge`：把上帝价值观和世界状态组成查询，由本地检索器召回 3 条证据。
-4. `initial_verdict`：有密钥时调用 MiniMax 给出结构化裁决；未配置、超时或请求失败时使用确定性规则。
-5. `await_rebuttal`：等待玩家提交一次反驳。
-6. `evaluate_rebuttal`：识别是否提出修复、补偿、合作等可核验方案。
-7. `final_verdict`：MiniMax 或规则引擎评估反驳；措辞和减免条件可变化，但最终奖惩永远存在。
-8. `archive_json`：保存完整会话，供前端查看和后续复盘。
+3. `load_god_prompt`：从 `god.md` 取得所选上帝的完整原始提示词，并以 SHA-256 标识版本。
+4. `retrieve_knowledge`：把上帝价值观和世界状态组成查询，由本地检索器召回 3 条证据。
+5. `initial_verdict`：把完整上帝提示词放入 System Prompt；有密钥时调用 MiniMax，失败时使用确定性规则。
+6. `await_rebuttal`：等待玩家提交一次反驳。
+7. `evaluate_rebuttal`：识别是否提出修复、补偿、合作等可核验方案。
+8. `final_verdict`：再次使用同一份完整上帝提示词评估反驳；措辞和减免条件可变化，但最终奖惩永远存在。
+9. `archive_json`：保存完整会话、提示词来源和哈希，供前端查看和后续复盘。
 
 `trace` 字段保留每一步的状态与关键输出，未来接入真正的 agent runtime 后可以直接映射为可观测事件。
 
@@ -143,7 +145,7 @@ disaster.md             原始灾难设定
 
 ```dotenv
 MINIMAX_BASE_URL=https://api.minimaxi.com/anthropic
-MINIMAX_MODEL=MiniMax-M2.7
+MINIMAX_MODEL=MiniMax-M3.0
 MINIMAX_TIMEOUT_MS=60000
 ```
 

@@ -4,7 +4,7 @@ import test from 'node:test';
 import { createAgentLoop } from '../src/agent-loop.js';
 
 const gods = [
-  { id: 'balanced', name: '平衡与共存之神', type: '普通型', values: '平衡 合作 可持续', voice: '保持动态平衡。' },
+  { id: 'balanced', name: '平衡与共存之神', type: '普通型', values: '平衡 合作 可持续', voice: '保持动态平衡。', prompt: 'FULL_GOD_PROMPT_SENTINEL', promptSource: 'god.md', promptHash: 'test-hash' },
 ];
 const retriever = {
   model: 'local-test-model',
@@ -54,10 +54,18 @@ test('manual trigger can start multiple independent hearings', async () => {
 });
 
 test('configured verdict model is used for both initial and final judgment', async () => {
+  let initialContext;
+  let finalContext;
   const verdictModel = {
     provider: 'minimax', model: 'MiniMax-test', enabled: true,
-    generateInitial: async () => ({ classification: '模型分类', tone: 'mixed', title: '模型初判', statement: '模型理由', measures: ['模型措施'] }),
-    generateFinal: async () => ({ tone: 'mixed', title: '模型终判', statement: '模型回应', measures: ['最终措施'], unavoidable: true }),
+    generateInitial: async (context) => {
+      initialContext = context;
+      return { classification: '模型分类', tone: 'mixed', title: '模型初判', statement: '模型理由', measures: ['模型措施'] };
+    },
+    generateFinal: async (context) => {
+      finalContext = context;
+      return { tone: 'mixed', title: '模型终判', statement: '模型回应', measures: ['最终措施'], unavoidable: true };
+    },
   };
   const loop = createAgentLoop({ gods, retriever, verdictModel, random: () => 0, now: fixedNow });
   const session = await loop.start({ round: 1, attributes: { economy: 10, environment: 10, society: 10 }, activeDisasters: [] });
@@ -66,4 +74,8 @@ test('configured verdict model is used for both initial and final judgment', asy
   assert.equal(session.llm.used, true);
   assert.equal(final.finalVerdict.title, '模型终判');
   assert.equal(final.llm.final.used, true);
+  assert.equal(initialContext.god.prompt, 'FULL_GOD_PROMPT_SENTINEL');
+  assert.equal(finalContext.session.god.prompt, 'FULL_GOD_PROMPT_SENTINEL');
+  assert.equal(session.god.promptSource, 'god.md');
+  assert.equal(session.god.prompt, undefined);
 });

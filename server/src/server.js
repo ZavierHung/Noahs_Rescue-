@@ -7,11 +7,14 @@ import { resolveDisasters } from './catalog.js';
 import { createLocalRetriever } from './rag.js';
 import { createJsonStore } from './storage.js';
 import { createMiniMaxVerdictModel } from './llm/minimax.js';
+import { loadGodProfiles } from './god-prompts.js';
 
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url));
 const dataDirectory = process.env.GAME_DATA_DIR || path.resolve(sourceDirectory, '../data');
 const store = createJsonStore(dataDirectory);
-const gods = await store.read('gods.json', []);
+const godPromptPath = process.env.GOD_PROMPT_PATH || path.resolve(sourceDirectory, '../../god.md');
+const godDefinitions = await store.read('gods.json', []);
+const gods = await loadGodProfiles(godDefinitions, godPromptPath);
 const retriever = await createLocalRetriever(path.join(dataDirectory, 'knowledge.json'));
 const verdictModel = createMiniMaxVerdictModel();
 const agentLoop = createAgentLoop({ gods, retriever, verdictModel });
@@ -54,7 +57,7 @@ const server = createServer(async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host}`);
 
     if (request.method === 'GET' && url.pathname === '/api/health') {
-      return send(response, 200, { ok: true, rag: { model: retriever.model, documents: retriever.size }, llm: verdictModel.describe(), persistence: 'json' });
+      return send(response, 200, { ok: true, rag: { model: retriever.model, documents: retriever.size }, llm: verdictModel.describe(), godPrompts: { source: 'god.md', loaded: gods.length }, persistence: 'json' });
     }
 
     if (request.method === 'GET' && url.pathname === '/api/state') {
