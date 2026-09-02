@@ -22,14 +22,8 @@ function assessmentFor(god, attributes) {
 }
 
 function archivedGod(god) {
-  const { prompt, ...metadata } = god;
+  const { prompt, promptFile, ...metadata } = god;
   return metadata;
-}
-
-function configuredGod(gods, godId) {
-  const god = gods.find((item) => item.id === godId);
-  if (!god) throw new Error(`god_profile_missing:${godId}`);
-  return god;
 }
 
 function stateQuery(god, state) {
@@ -47,9 +41,10 @@ function llmMetadata(verdictModel, used, fallbackReason = null) {
   };
 }
 
-export function createAgentLoop({ gods, retriever, verdictModel = null, random = Math.random, now = () => new Date().toISOString() }) {
+export function createAgentLoop({ godRepository, retriever, verdictModel = null, random = Math.random, now = () => new Date().toISOString() }) {
   return {
     async start(state, player = { id: 'player-1', name: '玩家一' }) {
+      const gods = await godRepository.list();
       const configured = gods[Math.floor(random() * gods.length)];
       const evidence = retriever.search(stateQuery(configured, state), 3);
       const ruleAssessment = assessmentFor(configured, state.attributes);
@@ -92,7 +87,7 @@ export function createAgentLoop({ gods, retriever, verdictModel = null, random =
 
     async rebut(session, text) {
       if (session.status !== 'awaiting_rebuttal') throw new Error('该审判已完成，不能再次反驳。');
-      const configured = configuredGod(gods, session.god.id);
+      const configured = await godRepository.get(session.god.id);
       const hasRemedy = /修复|补偿|合作|共享|降低|恢复|承诺/.test(text);
       const measures = [...session.initialVerdict.measures];
       if (hasRemedy && session.initialVerdict.tone !== 'reward') measures[0] = `若兑现补救承诺，则减免：${measures[0]}`;
@@ -119,6 +114,7 @@ export function createAgentLoop({ gods, retriever, verdictModel = null, random =
         ...session,
         status: 'final',
         updatedAt: now(),
+        god: archivedGod(configured),
         rebuttal: { text, submittedAt: now(), recognizedRemedy: hasRemedy },
         llm: { ...session.llm, final: finalLlm },
         finalVerdict,

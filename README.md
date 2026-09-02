@@ -11,7 +11,7 @@
 - 阈值状态会同步改变颜色、文案、边框与脉冲效果。
 - 上帝 Agent Loop：读取状态 → 随机选择上帝 → 本地 RAG → 初步裁决 → 玩家反驳 → 最终奖惩 → JSON 归档。
 - 上帝审判只由玩家点击界面按钮触发；完成裁决后可再次点击触发，每次都会创建独立会话并保留旧档案。
-- 三种上帝人格：激进型、普通型、保守型，规则来自 `god.md`。
+- 三种上帝人格：激进型、普通型、保守型；运行时 Prompt 来自独立的服务端数据后端，`god.md` 仅保留原始设计说明。
 - 灾难目录来自 `disaster.md`，同一阈值区间内保持同一灾难，进入新层级时重新随机抽取。
 - 审判档案保存状态快照、上帝、检索证据、初判、反驳、最终裁决和执行轨迹。
 - 提供前端可调用的 HTTP API、MiniMax 模型适配层和 WebMCP 操作入口。
@@ -76,6 +76,7 @@ npm run check  # 先测试再构建
 本地 API（Node.js）
   ├─ World State + Disaster Engine
   ├─ God Router（随机人格）
+  ├─ God Data Repository（每次读取最新 Prompt）
   ├─ Local RAG（Hash-256 embedding）
   ├─ MiniMax Verdict Adapter（Anthropic-compatible）
   ├─ Deterministic Verdict Fallback
@@ -93,13 +94,14 @@ app/                    前端项目
 server/
   src/server.js         HTTP API
   src/agent-loop.js     上帝编排、初判与反驳回路
-  src/god-prompts.js    从 god.md 原样加载三位上帝的完整提示词
+  src/god-repository.js 上帝人格与 Prompt 数据仓库
   src/catalog.js        灾难规则与阈值引擎
   src/rag.js            可替换的本地嵌入/检索接口
   src/llm/minimax.js    MiniMax 请求、结构化解析和安全降级
   src/storage.js        JSON 原子读写
   data/knowledge.json   测试环保知识
-  data/gods.json        上帝人格配置
+  data/gods.json        上帝人格与 Prompt 文件映射
+  data/god-prompts/     三位上帝的完整运行时 Prompt
   data/state.json       当前世界状态
   data/judgments.json   完整审判档案
   test/                 功能测试
@@ -113,15 +115,25 @@ disaster.md             原始灾难设定
 
 1. `read_state`：读取已保存的三属性和当前灾难。
 2. `select_god`：随机选取激进、普通或保守上帝。
-3. `load_god_prompt`：从 `god.md` 取得所选上帝的完整原始提示词，并以 SHA-256 标识版本。
+3. `load_god_prompt`：由 God Repository 从 `server/data/god-prompts/` 读取所选上帝的最新完整提示词。
 4. `retrieve_knowledge`：把上帝价值观和世界状态组成查询，由本地检索器召回 3 条证据。
 5. `initial_verdict`：把完整上帝提示词放入 System Prompt；有密钥时调用 MiniMax，失败时使用确定性规则。
 6. `await_rebuttal`：等待玩家提交一次反驳。
 7. `evaluate_rebuttal`：识别是否提出修复、补偿、合作等可核验方案。
 8. `final_verdict`：再次使用同一份完整上帝提示词评估反驳；措辞和减免条件可变化，但最终奖惩永远存在。
-9. `archive_json`：保存完整会话、提示词来源和哈希，供前端查看和后续复盘。
+9. `archive_json`：保存游戏交互会话，不把 Prompt 原文、文件路径或哈希复制进审判快照。
 
 `trace` 字段保留每一步的状态与关键输出，未来接入真正的 agent runtime 后可以直接映射为可观测事件。
+
+### 上帝 Prompt 数据后端
+
+`god.md` 是设计文档，不参与运行时解析。实际 Prompt 分别保存在：
+
+- `server/data/god-prompts/radical.txt`
+- `server/data/god-prompts/balanced.txt`
+- `server/data/god-prompts/conservative.txt`
+
+`server/data/gods.json` 负责把上帝 ID 映射到 Prompt 文件。God Repository 在每次初判和终判前重新读取这些文件，因此修改数据后端中的 Prompt 后，下一次模型调用会立即使用新内容，不需要重启 API。Prompt 原文、文件路径和哈希都不会进入审判档案或前端 API。
 
 ## 本地 RAG
 

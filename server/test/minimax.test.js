@@ -4,7 +4,7 @@ import test from 'node:test';
 import { createMiniMaxVerdictModel } from '../src/llm/minimax.js';
 
 const context = {
-  god: { id: 'balanced', name: '平衡与共存之神', prompt: 'FULL_GOD_PROMPT_SENTINEL', promptSource: 'god.md', promptHash: 'test-hash' },
+  god: { id: 'balanced', name: '平衡与共存之神', prompt: 'FULL_GOD_PROMPT_SENTINEL', promptFile: 'god-prompts/balanced.txt' },
   state: { attributes: { economy: 10, environment: 10, society: 10 } },
   evidence: [{ id: 'eco-01', content: '系统平衡提高韧性。' }],
   ruleDraft: { classification: '平衡发展型', tone: 'reward', title: '平衡回响', statement: '规则理由', measures: ['合作效率 +1'] },

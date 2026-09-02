@@ -4,8 +4,12 @@ import test from 'node:test';
 import { createAgentLoop } from '../src/agent-loop.js';
 
 const gods = [
-  { id: 'balanced', name: '平衡与共存之神', type: '普通型', values: '平衡 合作 可持续', voice: '保持动态平衡。', prompt: 'FULL_GOD_PROMPT_SENTINEL', promptSource: 'god.md', promptHash: 'test-hash' },
+  { id: 'balanced', name: '平衡与共存之神', type: '普通型', values: '平衡 合作 可持续', voice: '保持动态平衡。', promptFile: 'god-prompts/balanced.txt', prompt: 'FULL_GOD_PROMPT_SENTINEL' },
 ];
+const godRepository = {
+  list: async () => gods,
+  get: async (id) => gods.find((god) => god.id === id),
+};
 const retriever = {
   model: 'local-test-model',
   search: () => [{ id: 'eco-test', title: '测试知识', content: '三维平衡提高韧性。', score: 0.9 }],
@@ -13,7 +17,7 @@ const retriever = {
 const fixedNow = () => '2026-09-02T00:00:00.000Z';
 
 test('agent loop reads state, selects god, retrieves evidence and awaits rebuttal', async () => {
-  const loop = createAgentLoop({ gods, retriever, random: () => 0, now: fixedNow });
+  const loop = createAgentLoop({ godRepository, retriever, random: () => 0, now: fixedNow });
   const session = await loop.start({ round: 1, attributes: { economy: 10, environment: 10, society: 10 }, activeDisasters: [] });
   assert.equal(session.status, 'awaiting_rebuttal');
   assert.equal(session.god.id, 'balanced');
@@ -25,7 +29,7 @@ test('agent loop reads state, selects god, retrieves evidence and awaits rebutta
 });
 
 test('rebuttal is heard, but final measures are always produced', async () => {
-  const loop = createAgentLoop({ gods, retriever, random: () => 0, now: fixedNow });
+  const loop = createAgentLoop({ godRepository, retriever, random: () => 0, now: fixedNow });
   const session = await loop.start({ round: 1, attributes: { economy: 17, environment: 5, society: 8 }, activeDisasters: [] });
   const final = await loop.rebut(session, '我承诺下一轮进行生态修复并共享资源。');
   assert.equal(final.status, 'final');
@@ -37,14 +41,14 @@ test('rebuttal is heard, but final measures are always produced', async () => {
 });
 
 test('a finalized hearing cannot be rebutted twice', async () => {
-  const loop = createAgentLoop({ gods, retriever, random: () => 0, now: fixedNow });
+  const loop = createAgentLoop({ godRepository, retriever, random: () => 0, now: fixedNow });
   const session = await loop.start({ round: 1, attributes: { economy: 10, environment: 10, society: 10 }, activeDisasters: [] });
   const final = await loop.rebut(session, '我会合作修复。');
   await assert.rejects(() => loop.rebut(final, '再次反驳'), /不能再次反驳/);
 });
 
 test('manual trigger can start multiple independent hearings', async () => {
-  const loop = createAgentLoop({ gods, retriever, random: () => 0, now: fixedNow });
+  const loop = createAgentLoop({ godRepository, retriever, random: () => 0, now: fixedNow });
   const state = { round: 1, attributes: { economy: 10, environment: 10, society: 10 }, activeDisasters: [] };
   const first = await loop.start(state);
   const second = await loop.start(state);
@@ -67,7 +71,7 @@ test('configured verdict model is used for both initial and final judgment', asy
       return { tone: 'mixed', title: '模型终判', statement: '模型回应', measures: ['最终措施'], unavoidable: true };
     },
   };
-  const loop = createAgentLoop({ gods, retriever, verdictModel, random: () => 0, now: fixedNow });
+  const loop = createAgentLoop({ godRepository, retriever, verdictModel, random: () => 0, now: fixedNow });
   const session = await loop.start({ round: 1, attributes: { economy: 10, environment: 10, society: 10 }, activeDisasters: [] });
   const final = await loop.rebut(session, '我会修复环境。');
   assert.equal(session.initialVerdict.title, '模型初判');
@@ -76,6 +80,36 @@ test('configured verdict model is used for both initial and final judgment', asy
   assert.equal(final.llm.final.used, true);
   assert.equal(initialContext.god.prompt, 'FULL_GOD_PROMPT_SENTINEL');
   assert.equal(finalContext.session.god.prompt, 'FULL_GOD_PROMPT_SENTINEL');
-  assert.equal(session.god.promptSource, 'god.md');
   assert.equal(session.god.prompt, undefined);
+  assert.equal(session.god.promptFile, undefined);
+});
+
+test('prompt edits in the data backend are used by the next agent stage without entering the snapshot', async () => {
+  let livePrompt = 'PROMPT_VERSION_ONE';
+  let initialPrompt;
+  let finalPrompt;
+  const liveRepository = {
+    list: async () => [{ ...gods[0], prompt: livePrompt }],
+    get: async () => ({ ...gods[0], prompt: livePrompt }),
+  };
+  const verdictModel = {
+    provider: 'minimax', model: 'MiniMax-M3.0', enabled: true,
+    generateInitial: async ({ god }) => {
+      initialPrompt = god.prompt;
+      return { classification: '平衡发展型', tone: 'reward', title: '初判', statement: '初判理由', measures: ['初判措施'] };
+    },
+    generateFinal: async ({ session }) => {
+      finalPrompt = session.god.prompt;
+      return { tone: 'reward', title: '终判', statement: '终判理由', measures: ['终判措施'], unavoidable: true };
+    },
+  };
+  const loop = createAgentLoop({ godRepository: liveRepository, retriever, verdictModel, random: () => 0, now: fixedNow });
+  const session = await loop.start({ round: 1, attributes: { economy: 10, environment: 10, society: 10 }, activeDisasters: [] });
+  livePrompt = 'PROMPT_VERSION_TWO';
+  const final = await loop.rebut(session, '我会合作修复。');
+  assert.equal(initialPrompt, 'PROMPT_VERSION_ONE');
+  assert.equal(finalPrompt, 'PROMPT_VERSION_TWO');
+  assert.equal(session.god.prompt, undefined);
+  assert.equal(final.god.prompt, undefined);
+  assert.equal(final.god.promptFile, undefined);
 });

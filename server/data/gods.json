@@ -1,5 +1,26 @@
 [
-  {"id":"radical","name":"增长与突破之神","type":"激进型","values":"发展、效率、主动行动","voice":"停滞也是风险；行动必须产生真实进展。"},
-  {"id":"balanced","name":"平衡与共存之神","type":"普通型","values":"平衡、合作、可持续","voice":"真正的生存，是让经济、生态与社会形成稳定循环。"},
-  {"id":"conservative","name":"秩序与守护之神","type":"保守型","values":"安全、生态、秩序","voice":"当系统接近崩溃时，节制与修复优先于扩张。"}
+  {
+    "id": "radical",
+    "name": "增长与突破之神",
+    "type": "激进型",
+    "values": "发展、效率、主动行动",
+    "voice": "停滞也是风险；行动必须产生真实进展。",
+    "promptFile": "god-prompts/radical.txt"
+  },
+  {
+    "id": "balanced",
+    "name": "平衡与共存之神",
+    "type": "普通型",
+    "values": "平衡、合作、可持续",
+    "voice": "真正的生存，是让经济、生态与社会形成稳定循环。",
+    "promptFile": "god-prompts/balanced.txt"
+  },
+  {
+    "id": "conservative",
+    "name": "秩序与守护之神",
+    "type": "保守型",
+    "values": "安全、生态、秩序",
+    "voice": "当系统接近崩溃时，节制与修复优先于扩张。",
+    "promptFile": "god-prompts/conservative.txt"
+  }
 ]

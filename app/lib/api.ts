@@ -29,7 +29,7 @@ export type Judgment = {
   id: string;
   status: 'awaiting_rebuttal' | 'final';
   createdAt: string;
-  god: { id: string; name: string; type: string; values: string; voice: string; promptSource: string; promptHash: string };
+  god: { id: string; name: string; type: string; values: string; voice: string };
   rag: { model: string; evidence: Evidence[] };
   llm: { provider: string; model: string | null; configured: boolean; used: boolean; fallbackReason: string | null; final?: { used: boolean } };
   initialVerdict: { classification: string; tone: string; title: string; statement: string; measures: string[] };

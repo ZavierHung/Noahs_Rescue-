@@ -39,7 +39,7 @@ function validateVerdict(value, { final = false } = {}) {
 }
 
 function compactGod(god) {
-  const { prompt, promptSource, promptHash, ...profile } = god;
+  const { prompt, promptFile, ...profile } = god;
   return profile;
 }
 
