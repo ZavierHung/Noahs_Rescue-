@@ -26,12 +26,36 @@ function stateQuery(god, state) {
   return `${god.values} 经济 ${economy} 环境 ${environment} 社会 ${society} 资源 开采 生态 修复 合作 灾难 韧性`;
 }
 
-export function createAgentLoop({ gods, retriever, random = Math.random, now = () => new Date().toISOString() }) {
+function llmMetadata(verdictModel, used, fallbackReason = null) {
   return {
-    start(state, player = { id: 'player-1', name: '玩家一' }) {
+    provider: verdictModel?.provider || 'none',
+    model: verdictModel?.model || null,
+    configured: Boolean(verdictModel?.enabled),
+    used,
+    fallbackReason,
+  };
+}
+
+export function createAgentLoop({ gods, retriever, verdictModel = null, random = Math.random, now = () => new Date().toISOString() }) {
+  return {
+    async start(state, player = { id: 'player-1', name: '玩家一' }) {
       const god = gods[Math.floor(random() * gods.length)];
       const evidence = retriever.search(stateQuery(god, state), 3);
-      const assessment = assessmentFor(god, state.attributes);
+      const ruleAssessment = assessmentFor(god, state.attributes);
+      const ruleDraft = {
+        ...ruleAssessment,
+        statement: `${god.voice} 依据当前世界状态，你被判定为“${ruleAssessment.classification}”。`,
+      };
+      let assessment = ruleDraft;
+      let llm = llmMetadata(verdictModel, false, verdictModel?.enabled ? null : 'not_configured');
+      if (verdictModel?.enabled) {
+        try {
+          assessment = await verdictModel.generateInitial({ god, state, evidence, ruleDraft });
+          llm = llmMetadata(verdictModel, true);
+        } catch (error) {
+          llm = llmMetadata(verdictModel, false, error.message || 'request_failed');
+        }
+      }
       return {
         id: randomUUID(),
         status: 'awaiting_rebuttal',
@@ -41,45 +65,55 @@ export function createAgentLoop({ gods, retriever, random = Math.random, now = (
         stateSnapshot: structuredClone(state),
         god,
         rag: { model: retriever.model, query: stateQuery(god, state), evidence },
-        initialVerdict: {
-          ...assessment,
-          statement: `${god.voice} 依据当前世界状态，你被判定为“${assessment.classification}”。`,
-        },
+        llm,
+        initialVerdict: assessment,
         rebuttal: null,
         finalVerdict: null,
         trace: [
           { step: 'read_state', status: 'complete' },
           { step: 'select_god', status: 'complete', output: god.id },
           { step: 'retrieve_knowledge', status: 'complete', output: evidence.map((item) => item.id) },
-          { step: 'initial_verdict', status: 'complete' },
+          { step: 'initial_verdict', status: 'complete', output: llm.used ? 'minimax' : 'rules_fallback' },
           { step: 'await_rebuttal', status: 'waiting' },
         ],
       };
     },
 
-    rebut(session, text) {
+    async rebut(session, text) {
       if (session.status !== 'awaiting_rebuttal') throw new Error('该审判已完成，不能再次反驳。');
       const hasRemedy = /修复|补偿|合作|共享|降低|恢复|承诺/.test(text);
       const measures = [...session.initialVerdict.measures];
       if (hasRemedy && session.initialVerdict.tone !== 'reward') measures[0] = `若兑现补救承诺，则减免：${measures[0]}`;
+      const ruleDraft = {
+        title: session.initialVerdict.title,
+        tone: session.initialVerdict.tone,
+        statement: hasRemedy
+          ? `你的反驳提出了可核验的补救计划，本神予以记录；奖惩不会撤销，但允许以行动争取减免。`
+          : `你的立场已被听取，但尚未提供足以改变系统风险的补救措施；原奖惩维持。`,
+        measures,
+        unavoidable: true,
+      };
+      let finalVerdict = ruleDraft;
+      let finalLlm = llmMetadata(verdictModel, false, verdictModel?.enabled ? null : 'not_configured');
+      if (verdictModel?.enabled) {
+        try {
+          finalVerdict = await verdictModel.generateFinal({ session, rebuttal: text, recognizedRemedy: hasRemedy, ruleDraft });
+          finalLlm = llmMetadata(verdictModel, true);
+        } catch (error) {
+          finalLlm = llmMetadata(verdictModel, false, error.message || 'request_failed');
+        }
+      }
       return {
         ...session,
         status: 'final',
         updatedAt: now(),
         rebuttal: { text, submittedAt: now(), recognizedRemedy: hasRemedy },
-        finalVerdict: {
-          title: session.initialVerdict.title,
-          tone: session.initialVerdict.tone,
-          statement: hasRemedy
-            ? `你的反驳提出了可核验的补救计划，本神予以记录；奖惩不会撤销，但允许以行动争取减免。`
-            : `你的立场已被听取，但尚未提供足以改变系统风险的补救措施；原奖惩维持。`,
-          measures,
-          unavoidable: true,
-        },
+        llm: { ...session.llm, final: finalLlm },
+        finalVerdict,
         trace: [
           ...session.trace.map((step) => step.step === 'await_rebuttal' ? { ...step, status: 'complete' } : step),
           { step: 'evaluate_rebuttal', status: 'complete', output: { recognizedRemedy: hasRemedy } },
-          { step: 'final_verdict', status: 'complete' },
+          { step: 'final_verdict', status: 'complete', output: finalLlm.used ? 'minimax' : 'rules_fallback' },
           { step: 'archive_json', status: 'complete' },
         ],
       };

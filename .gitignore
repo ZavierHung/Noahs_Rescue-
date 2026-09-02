@@ -7,6 +7,7 @@ out/
 
 # local environment and logs
 .env
+server/.env
 .env.local
 .env.*.local
 *.log

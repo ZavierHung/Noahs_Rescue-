@@ -93,12 +93,14 @@ export default function Home() {
   const [apiConnected, setApiConnected] = useState(false);
   const [error, setError] = useState('');
   const [knowledgeMeta, setKnowledgeMeta] = useState({ model: 'local-hash-256', documents: 8 });
+  const [llmMeta, setLlmMeta] = useState({ provider: 'minimax', model: 'MiniMax-M2.7', enabled: false });
 
   useEffect(() => {
     Promise.all([api.health(), api.state(), api.judgments()])
       .then(([health, state, judgments]) => {
         setApiConnected(health.ok);
         setKnowledgeMeta(health.rag);
+        setLlmMeta(health.llm);
         setDimensions((current) => current.map((item) => ({ ...item, value: state.attributes[item.key] })));
         setServerDisasters(state.activeDisasters);
         setArchive(judgments);
@@ -323,8 +325,8 @@ export default function Home() {
               ].map(([number, title, body], index) => <div className="loop-step" key={number}><span>{number}</span><div><strong>{title}</strong><p>{body}</p></div>{index < 5 && <i />}</div>)}
             </CardContent>
           </Card>
-          <Card className="knowledge-card"><CardHeader><div className="flex items-center justify-between"><CardTitle>本地知识库</CardTitle><span className="local-badge">LOCAL</span></div><CardDescription>测试语料 · 可替换模型适配器</CardDescription></CardHeader><CardContent className="space-y-3"><div className="knowledge-stat"><span>知识切片</span><strong>{knowledgeMeta.documents}</strong></div><div className="knowledge-stat"><span>嵌入模型</span><strong>{knowledgeMeta.model}</strong></div><div className="knowledge-stat"><span>外部请求</span><strong>0</strong></div></CardContent></Card>
-          <div className="api-note"><MessageSquareQuote /><p><strong>API 已预留</strong><br />后续可接 Ollama、本地向量库或远程 LLM。</p></div>
+          <Card className="knowledge-card"><CardHeader><div className="flex items-center justify-between"><CardTitle>模型与知识库</CardTitle><span className={`local-badge ${llmMeta.enabled ? 'is-live' : ''}`}>{llmMeta.enabled ? 'LLM READY' : 'RULES'}</span></div><CardDescription>MiniMax 裁决 · 本地 RAG 证据</CardDescription></CardHeader><CardContent className="space-y-3"><div className="knowledge-stat"><span>裁决模型</span><strong>{llmMeta.enabled ? llmMeta.model : '规则回退'}</strong></div><div className="knowledge-stat"><span>知识切片</span><strong>{knowledgeMeta.documents}</strong></div><div className="knowledge-stat"><span>嵌入模型</span><strong>{knowledgeMeta.model}</strong></div></CardContent></Card>
+          <div className="api-note"><MessageSquareQuote /><p><strong>模型接口已接通</strong><br />填写本地密钥即可启用 MiniMax；无密钥时安全回退为规则裁决。</p></div>
           {error && <div className="error-note"><CircleAlert /><p><strong>本地 API 暂不可用</strong><br />{error}</p></div>}
         </aside>
       </div>

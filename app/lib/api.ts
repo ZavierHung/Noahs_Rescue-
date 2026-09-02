@@ -13,7 +13,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  health: () => request<{ ok: boolean; rag: { model: string; documents: number } }>('/api/health'),
+  health: () => request<{ ok: boolean; rag: { model: string; documents: number }; llm: { provider: string; protocol: string; model: string; enabled: boolean } }>('/api/health'),
   state: () => request<WorldState>('/api/state'),
   saveState: (attributes: Attributes) => request<WorldState>('/api/state', { method: 'PUT', body: JSON.stringify({ attributes }) }),
   judgments: () => request<Judgment[]>('/api/judgments'),
@@ -31,6 +31,7 @@ export type Judgment = {
   createdAt: string;
   god: { id: string; name: string; type: string; values: string; voice: string };
   rag: { model: string; evidence: Evidence[] };
+  llm: { provider: string; model: string | null; configured: boolean; used: boolean; fallbackReason: string | null; final?: { used: boolean } };
   initialVerdict: { classification: string; tone: string; title: string; statement: string; measures: string[] };
   rebuttal: null | { text: string; submittedAt: string; recognizedRemedy: boolean };
   finalVerdict: null | { title: string; tone: string; statement: string; measures: string[]; unavoidable: boolean };

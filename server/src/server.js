@@ -6,13 +6,15 @@ import { createAgentLoop } from './agent-loop.js';
 import { resolveDisasters } from './catalog.js';
 import { createLocalRetriever } from './rag.js';
 import { createJsonStore } from './storage.js';
+import { createMiniMaxVerdictModel } from './llm/minimax.js';
 
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url));
 const dataDirectory = process.env.GAME_DATA_DIR || path.resolve(sourceDirectory, '../data');
 const store = createJsonStore(dataDirectory);
 const gods = await store.read('gods.json', []);
 const retriever = await createLocalRetriever(path.join(dataDirectory, 'knowledge.json'));
-const agentLoop = createAgentLoop({ gods, retriever });
+const verdictModel = createMiniMaxVerdictModel();
+const agentLoop = createAgentLoop({ gods, retriever, verdictModel });
 const port = Number(process.env.GAME_API_PORT || 8787);
 const DEFAULT_STATE = {
   round: 1,
@@ -52,7 +54,7 @@ const server = createServer(async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host}`);
 
     if (request.method === 'GET' && url.pathname === '/api/health') {
-      return send(response, 200, { ok: true, rag: { model: retriever.model, documents: retriever.size }, persistence: 'json' });
+      return send(response, 200, { ok: true, rag: { model: retriever.model, documents: retriever.size }, llm: verdictModel.describe(), persistence: 'json' });
     }
 
     if (request.method === 'GET' && url.pathname === '/api/state') {
@@ -82,7 +84,7 @@ const server = createServer(async (request, response) => {
       const input = await bodyOf(request);
       const state = await store.read('state.json', DEFAULT_STATE);
       validateAttributes(state.attributes);
-      const session = agentLoop.start(state, input.player);
+      const session = await agentLoop.start(state, input.player);
       const sessions = await store.read('judgments.json', []);
       await store.write('judgments.json', [...sessions, session]);
       return send(response, 201, session);
@@ -95,7 +97,7 @@ const server = createServer(async (request, response) => {
       const sessions = await store.read('judgments.json', []);
       const index = sessions.findIndex((item) => item.id === rebuttalMatch[1]);
       if (index === -1) return send(response, 404, { error: '未找到该审判。' });
-      const updated = agentLoop.rebut(sessions[index], input.text.trim());
+      const updated = await agentLoop.rebut(sessions[index], input.text.trim());
       sessions[index] = updated;
       await store.write('judgments.json', sessions);
       return send(response, 200, updated);

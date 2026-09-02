@@ -2,7 +2,7 @@
 
 一个可在 localhost 运行的世界状态模拟器。玩家可拖动经济、环境、社会三条属性（1—19），系统根据阈值触发或解除灾难，并通过可反驳的“上帝 Agent Loop”给出最终奖惩。
 
-当前版本不连接 LLM，也不向外部服务发送数据。环保知识检索、判定逻辑和 JSON 存档均在本地完成。
+当前版本已提供 MiniMax Coding Plan 的 LLM 裁决适配器。未填写 API Key 时自动使用本地规则引擎；填写后仅把当前状态、随机上帝、RAG 证据和玩家反驳发送给 MiniMax。环保知识检索与 JSON 存档始终在本地完成。
 
 ## 当前可用功能
 
@@ -14,7 +14,7 @@
 - 三种上帝人格：激进型、普通型、保守型，规则来自 `god.md`。
 - 灾难目录来自 `disaster.md`，同一阈值区间内保持同一灾难，进入新层级时重新随机抽取。
 - 审判档案保存状态快照、上帝、检索证据、初判、反驳、最终裁决和执行轨迹。
-- 提供前端可调用的 HTTP API，并预留模型适配层和 WebMCP 操作入口。
+- 提供前端可调用的 HTTP API、MiniMax 模型适配层和 WebMCP 操作入口。
 
 ## 快速开始
 
@@ -25,6 +25,20 @@
 ```bash
 npm --prefix app install
 ```
+
+复制环境变量模板：
+
+```bash
+cp .env.example .env
+```
+
+如需启用 MiniMax，在本地 `.env` 中只填写自己的密钥：
+
+```dotenv
+MINIMAX_API_KEY=你的_API_Key
+```
+
+`.env` 已加入 `.gitignore`，不会被 Git 提交；`.env.example` 只保留空值和非敏感配置。未填写密钥也可以完整运行和测试，此时上帝裁决自动使用确定性规则。
 
 同时启动网站和本地 API：
 
@@ -63,7 +77,8 @@ npm run check  # 先测试再构建
   ├─ World State + Disaster Engine
   ├─ God Router（随机人格）
   ├─ Local RAG（Hash-256 embedding）
-  ├─ Deterministic Verdict Engine
+  ├─ MiniMax Verdict Adapter（Anthropic-compatible）
+  ├─ Deterministic Verdict Fallback
   ├─ Rebuttal Loop
   └─ JSON Repository（原子替换写入）
 ```
@@ -80,6 +95,7 @@ server/
   src/agent-loop.js     上帝编排、初判与反驳回路
   src/catalog.js        灾难规则与阈值引擎
   src/rag.js            可替换的本地嵌入/检索接口
+  src/llm/minimax.js    MiniMax 请求、结构化解析和安全降级
   src/storage.js        JSON 原子读写
   data/knowledge.json   测试环保知识
   data/gods.json        上帝人格配置
@@ -97,10 +113,10 @@ disaster.md             原始灾难设定
 1. `read_state`：读取已保存的三属性和当前灾难。
 2. `select_god`：随机选取激进、普通或保守上帝。
 3. `retrieve_knowledge`：把上帝价值观和世界状态组成查询，由本地检索器召回 3 条证据。
-4. `initial_verdict`：无 LLM 模式下由确定性规则给出分类、陈述和奖惩。
+4. `initial_verdict`：有密钥时调用 MiniMax 给出结构化裁决；未配置、超时或请求失败时使用确定性规则。
 5. `await_rebuttal`：等待玩家提交一次反驳。
 6. `evaluate_rebuttal`：识别是否提出修复、补偿、合作等可核验方案。
-7. `final_verdict`：反驳会影响措辞和减免条件，但最终奖惩永远存在。
+7. `final_verdict`：MiniMax 或规则引擎评估反驳；措辞和减免条件可变化，但最终奖惩永远存在。
 8. `archive_json`：保存完整会话，供前端查看和后续复盘。
 
 `trace` 字段保留每一步的状态与关键输出，未来接入真正的 agent runtime 后可以直接映射为可观测事件。
@@ -119,13 +135,37 @@ disaster.md             原始灾难设定
 }
 ```
 
-推荐的后续本地方案：Ollama embedding 模型 + SQLite/向量扩展，或独立的本地向量库。裁决模型也可以通过同样的适配器接 Ollama；HTTP API 和前端不需要改变。
+推荐的后续本地方案：Ollama embedding 模型 + SQLite/向量扩展，或独立的本地向量库。裁决模型也可以通过相同接口接入 Ollama；HTTP API 和前端不需要改变。
+
+## MiniMax LLM 配置
+
+适配器直接调用 MiniMax 的 Anthropic-compatible Messages API，不增加 SDK 依赖。默认配置适合国内账号：
+
+```dotenv
+MINIMAX_BASE_URL=https://api.minimaxi.com/anthropic
+MINIMAX_MODEL=MiniMax-M2.7
+MINIMAX_TIMEOUT_MS=60000
+```
+
+国际账号可将 `MINIMAX_BASE_URL` 改为 `https://api.minimax.io/anthropic`，模型名称也可通过 `MINIMAX_MODEL` 更新。服务启动时会从根目录 `.env` 读取配置。
+
+模型适配器的最小职责是：
+
+```js
+{
+  enabled: true,
+  generateInitial(context) => Promise<InitialVerdict>,
+  generateFinal(context) => Promise<FinalVerdict>
+}
+```
+
+两个阶段都要求结构化 JSON，并校验标题、语气、陈述、分类和奖惩数组。请求失败不会中断游戏，而是记录不含密钥的失败原因并回退到规则裁决。最终裁决在服务端强制 `unavoidable: true`，保证玩家能反驳但上帝一定给出奖惩。
 
 ## HTTP API
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| `GET` | `/api/health` | 本地引擎、RAG 模型和知识数量 |
+| `GET` | `/api/health` | 本地引擎、RAG 及 MiniMax 配置状态（不含密钥） |
 | `GET` | `/api/state` | 当前世界状态和活动灾难 |
 | `PUT` | `/api/state` | 保存三属性并重新计算灾难 |
 | `GET` | `/api/judgments` | 按时间倒序读取审判档案 |
@@ -148,6 +188,8 @@ disaster.md             原始灾难设定
 
 - `state.json` 保存当前状态；`judgments.json` 使用数组保存完整档案。
 - 写入采用“临时文件 + rename”的原子替换，降低进程中断造成半个 JSON 文件的风险。
+- API Key 只从本地环境变量读取，不进入请求日志、响应或审判 JSON；`.env` 与 `server/.env` 均被 Git 忽略。
+- 审判档案只保存模型名、是否成功使用模型及安全化的回退原因，便于调试而不泄露凭证。
 - 可用 `GAME_DATA_DIR` 把运行数据放到其他绝对路径，方便测试隔离和服务器挂载持久卷。
 - 当前是单机单进程原型。部署到多实例服务器前应把 repository 替换为 SQLite/PostgreSQL，并增加事务、鉴权和并发控制。
 - 当前 CORS 只允许 `http://localhost:3000`。正式部署时应改为实际可信域名。
@@ -168,10 +210,15 @@ disaster.md             原始灾难设定
 - 灾难副作用真正回写属性与玩家资源。
 - 规则幂等、回合结算与事件重放测试。
 
-### Sprint 3（建议）：本地模型
+### Sprint 2.5（已完成）：MiniMax 裁决接口
+
+- Anthropic-compatible MiniMax 适配器、结构化输出校验、超时和规则降级。
+- 初判与反驳后终判均经过同一个 Agent Loop，调用信息写入本地档案但不保存密钥。
+
+### Sprint 3（建议）：本地模型与增强检索
 
 - Ollama embedding 与本地向量库。
-- 可切换的 LLM verdict adapter、结构化输出校验和超时降级。
+- Ollama 裁决适配器，与 MiniMax/规则引擎运行时切换。
 - prompt/version、检索证据和模型参数随档案保存，保证可复现。
 
 ### Sprint 4（建议）：服务器化
@@ -183,7 +230,7 @@ disaster.md             原始灾难设定
 
 ## 已知边界
 
-- 当前裁决是规则引擎，不是自然语言 LLM。
+- MiniMax 输出依赖网络和账号额度；未配置或调用失败时会明确降级为规则引擎。
 - 玩家行为历史尚未建模，初判只使用当前三属性和灾难快照；接口中已保留 `stateSnapshot` 与 `player`。
 - 灾难文本已结构化，但资源、手牌、移动等效果尚未连接到完整桌游状态机。
 - JSON 适合本地原型和单用户调试，不适合多实例并发写入。
