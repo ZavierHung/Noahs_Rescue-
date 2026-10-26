@@ -1,0 +1,137 @@
+{
+  "source": "卡牌.docx",
+  "assets": {
+    "deflation": {
+      "file": "deflation.jpg",
+      "width": 715,
+      "height": 1000,
+      "originalWidth": 916,
+      "originalHeight": 1280,
+      "sourceImage": "image1.png",
+      "sourceSha256": "360edb05bc72eb5a1044f3403b6dccbe94ca50780552629c0bb86051dba70231",
+      "sha256": "08b19f9e8ccea63a336e92598d024bc86cbd583a93db9170f7467b42e7104a44",
+      "bytes": 181726
+    },
+    "develop-first": {
+      "file": "develop-first.jpg",
+      "width": 716,
+      "height": 1000,
+      "originalWidth": 1061,
+      "originalHeight": 1482,
+      "sourceImage": "image2.png",
+      "sourceSha256": "caa14a55238bafd02e1f6422de90e1e402724e0554ef834f42762aa4340d3d82",
+      "sha256": "35aecc542462215c38056a4131c5c02fd35de03f73e5eab9bb6591e60a922fe6",
+      "bytes": 238084
+    },
+    "eco-conflict": {
+      "file": "eco-conflict.jpg",
+      "width": 716,
+      "height": 1000,
+      "originalWidth": 1061,
+      "originalHeight": 1482,
+      "sourceImage": "image3.png",
+      "sourceSha256": "9ba152e3462ba90f373631bc6b097d243f059ba741633ca23f8080e0874d2c93",
+      "sha256": "3cde1c695769b335a551ab520b5abac496083e679fd6c05b4b27151a078d7360",
+      "bytes": 214419
+    },
+    "eco-collapse": {
+      "file": "eco-collapse.jpg",
+      "width": 716,
+      "height": 1000,
+      "originalWidth": 1061,
+      "originalHeight": 1482,
+      "sourceImage": "image4.png",
+      "sourceSha256": "25b5c877b1a092f679ce2c08ceff0ab916c34737239091144fbacd7eedd257c9",
+      "sha256": "116d0c91536f75b0540a60d2fdd9e06d7d7fba60429780e352c94653cc46ef87",
+      "bytes": 202161
+    },
+    "welfare-pressure": {
+      "file": "welfare-pressure.jpg",
+      "width": 716,
+      "height": 1000,
+      "originalWidth": 1061,
+      "originalHeight": 1482,
+      "sourceImage": "image5.png",
+      "sourceSha256": "5332107a4743f2106d92c44182118a8b2d5410c56586f9d120f76997b9e4ea9f",
+      "sha256": "6f4aaa1891f46369e562819a9088bbab312f0874132883167e9c06f2beaeadc3",
+      "bytes": 204477
+    },
+    "wealth-gap": {
+      "file": "wealth-gap.jpg",
+      "width": 714,
+      "height": 1000,
+      "originalWidth": 1060,
+      "originalHeight": 1484,
+      "sourceImage": "image6.png",
+      "sourceSha256": "70d9a3d3ccaf807bddb466707e68f6f9e3d1b643db0460a4a697925103c700ab",
+      "sha256": "c9ff28ee063c1d455917f312fb12513792f9375d472b506acc15fee4edf12a56",
+      "bytes": 207156
+    },
+    "resource-protection": {
+      "file": "resource-protection.jpg",
+      "width": 715,
+      "height": 1000,
+      "originalWidth": 1061,
+      "originalHeight": 1483,
+      "sourceImage": "image7.png",
+      "sourceSha256": "94da51ebcd4f3e9dc2ef637ba3b4924bd22a441d8daaf93ac9028619a84a9af9",
+      "sha256": "6a3f05a45450d9bfa1fc16809e581388096fd841f9f86c49a86217deba60ff46",
+      "bytes": 230597
+    },
+    "depression": {
+      "file": "depression.jpg",
+      "width": 714,
+      "height": 1000,
+      "originalWidth": 1060,
+      "originalHeight": 1484,
+      "sourceImage": "image8.png",
+      "sourceSha256": "3416aff2c0ee2eae20f09c4e19a7d291b75d0f55255c641183fc988ec101726b",
+      "sha256": "844eb7365f4edd0ed361f2b75c803e0a93cc23f816a2e738815e40f99115dcaf",
+      "bytes": 206214
+    },
+    "social-disorder": {
+      "file": "social-disorder.jpg",
+      "width": 716,
+      "height": 1000,
+      "originalWidth": 1061,
+      "originalHeight": 1482,
+      "sourceImage": "image9.png",
+      "sourceSha256": "edb1c9a54303c73a1e8516f2252990e5ff02d59bf5d174c36e73954e99a52ec9",
+      "sha256": "3fb955c76f25c95ab5252ccdc1d03151c2f280a736b1b2e9b9945fb55bc166ae",
+      "bytes": 227129
+    },
+    "mutual-aid": {
+      "file": "mutual-aid.jpg",
+      "width": 715,
+      "height": 1000,
+      "originalWidth": 916,
+      "originalHeight": 1280,
+      "sourceImage": "image10.png",
+      "sourceSha256": "de42cd3af13c640d0bebb8474a54ca49f52d95fb54c66b96e37aa7c43a4b8efd",
+      "sha256": "4657740f7b01c188064d608f3f50046f51b89c9fff252170c01feb8c046cca42",
+      "bytes": 197808
+    },
+    "class-lock": {
+      "file": "class-lock.jpg",
+      "width": 716,
+      "height": 1000,
+      "originalWidth": 1061,
+      "originalHeight": 1482,
+      "sourceImage": "image11.png",
+      "sourceSha256": "cfe89e3eb923fb487066985abc6efc81e0d7af20ba75b4827d34ab43a9931207",
+      "sha256": "dbdb557bf460d5be8282493ef7e3cbb66c535e1bf07ecea684bc127297fc1ab9",
+      "bytes": 245344
+    },
+    "steady-imbalance": {
+      "file": "steady-imbalance.jpg",
+      "width": 714,
+      "height": 1000,
+      "originalWidth": 1060,
+      "originalHeight": 1484,
+      "sourceImage": "image12.png",
+      "sourceSha256": "ab881a5357ca90bad53af3185500cc5747d6f667245254d7efb18c412b9c7341",
+      "sha256": "0fd6e30badbc7a18ad5cb67859538bcc8c41313d6a1018c884f0ac36feabdd75",
+      "bytes": 212071
+    }
+  }
+}

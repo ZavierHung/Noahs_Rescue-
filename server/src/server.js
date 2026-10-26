@@ -3,11 +3,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { createAgentLoop } from './agent-loop.js';
-import { resolveDisasters } from './catalog.js';
+import { resolveDisasters, refreshWorldDisasters } from './catalog.js';
 import { createLocalRetriever } from './rag.js';
 import { createJsonStore } from './storage.js';
 import { createMiniMaxVerdictModel } from './llm/minimax.js';
 import { createGodRepository } from './god-repository.js';
+import { createRoomRepository } from './rooms/repository.js';
+import { createRoomService } from './rooms/service.js';
+import { createTaskAssessor } from './rooms/assessment.js';
+import { createRoomHandler } from './rooms/http.js';
+import { createTaskCatalog } from './rooms/tasks.js';
 
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url));
 const dataDirectory = process.env.GAME_DATA_DIR || path.resolve(sourceDirectory, '../data');
@@ -15,8 +20,10 @@ const store = createJsonStore(dataDirectory);
 const godRepository = createGodRepository(dataDirectory);
 await godRepository.list();
 const retriever = await createLocalRetriever(path.join(dataDirectory, 'knowledge.json'));
-const verdictModel = createMiniMaxVerdictModel();
+const verdictModel = createMiniMaxVerdictModel(process.env.GAME_LLM_MODE === 'mock' ? { apiKey: '' } : {});
 const agentLoop = createAgentLoop({ godRepository, retriever, verdictModel });
+const roomService = createRoomService({ repository: createRoomRepository(store), agentLoop, assessTask: createTaskAssessor({ godRepository, verdictModel }), taskCatalog: createTaskCatalog(dataDirectory) });
+const roomHandler = createRoomHandler(roomService);
 const port = Number(process.env.GAME_API_PORT || 8787);
 const DEFAULT_STATE = {
   round: 1,
@@ -37,7 +44,12 @@ function send(response, status, payload) {
 
 async function bodyOf(request) {
   const chunks = [];
-  for await (const chunk of request) chunks.push(chunk);
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > 64 * 1024) throw new Error('请求内容过长。');
+    chunks.push(chunk);
+  }
   if (!chunks.length) return {};
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
@@ -54,13 +66,15 @@ const server = createServer(async (request, response) => {
   try {
     if (request.method === 'OPTIONS') return send(response, 204, {});
     const url = new URL(request.url, `http://${request.headers.host}`);
+    request.res = response;
+    if (await roomHandler(request, url, { send, bodyOf })) return;
 
     if (request.method === 'GET' && url.pathname === '/api/health') {
       return send(response, 200, { ok: true, rag: { model: retriever.model, documents: retriever.size }, llm: verdictModel.describe(), godPrompts: await godRepository.describe(), persistence: 'json' });
     }
 
     if (request.method === 'GET' && url.pathname === '/api/state') {
-      return send(response, 200, await store.read('state.json', DEFAULT_STATE));
+      return send(response, 200, refreshWorldDisasters(await store.read('state.json', DEFAULT_STATE)));
     }
 
     if (request.method === 'PUT' && url.pathname === '/api/state') {
@@ -84,7 +98,7 @@ const server = createServer(async (request, response) => {
 
     if (request.method === 'POST' && url.pathname === '/api/judgments') {
       const input = await bodyOf(request);
-      const state = await store.read('state.json', DEFAULT_STATE);
+      const state = refreshWorldDisasters(await store.read('state.json', DEFAULT_STATE));
       validateAttributes(state.attributes);
       const session = await agentLoop.start(state, input.player);
       const sessions = await store.read('judgments.json', []);
@@ -111,6 +125,6 @@ const server = createServer(async (request, response) => {
   }
 });
 
-server.listen(port, '127.0.0.1', () => {
+server.listen(port, process.env.GAME_API_HOST || '127.0.0.1', () => {
   console.log(`World Balance API: http://localhost:${port}`);
 });

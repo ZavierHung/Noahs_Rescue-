@@ -1,3 +1,6 @@
+import type { Disaster } from '../../miniprogram/shared/disasters';
+export type { Disaster } from '../../miniprogram/shared/disasters';
+
 const API_BASE = process.env.NEXT_PUBLIC_GAME_API_URL || 'http://localhost:8787';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -22,7 +25,6 @@ export const api = {
 };
 
 export type Attributes = { economy: number; environment: number; society: number };
-export type Disaster = { id: string; name: string; effect: string; dimension: keyof Attributes; dimensionLabel: string; band: string; triggerValue: number };
 export type WorldState = { round: number; attributes: Attributes; activeDisasters: Disaster[]; updatedAt: string | null };
 export type Evidence = { id: string; title: string; content: string; score: number };
 export type Judgment = {

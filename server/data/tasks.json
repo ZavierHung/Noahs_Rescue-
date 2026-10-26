@@ -1,0 +1,7 @@
+[
+  { "id": "restoration", "title": "大地的喘息", "category": "生态修复", "instruction": "动物与人类各派一名玩家，共同完成一次桌面规则允许的生态修复，并记录付出的资源。", "criteria": "说明参与双方、具体修复行动、资源支出与可观察的结果。", "durationRounds": 1 },
+  { "id": "cooperation", "title": "跨越阵营的桥", "category": "合作", "instruction": "两队达成一次资源共享或互助行动，记录双方如何履行约定。", "criteria": "说明双方角色、约定、实际交换或帮助，以及各自的结果。", "durationRounds": 1 },
+  { "id": "resource", "title": "有限的馈赠", "category": "资源管理", "instruction": "两队协商一项不透支环境的资源使用方案，并在桌面上执行一次。", "criteria": "说明资源从哪里来、如何分配、实际执行了什么以及环境代价。", "durationRounds": 1 },
+  { "id": "balance", "title": "方舟的三重平衡", "category": "平衡", "instruction": "比较经济、社会、环境三维状态，协商并执行一次兼顾三者的桌面行动。", "criteria": "说明三维取舍、双方意见、实际行动和结果；不能只表达意愿。", "durationRounds": 1 },
+  { "id": "reflection", "title": "回望这片海", "category": "反思", "instruction": "两队各复盘一次本轮行动，指出对另一阵营和世界造成的影响，并共同提出下一轮改进。", "criteria": "双方都提供具体行动及后果，并给出可检查的共同改进计划。", "durationRounds": 1 }
+]

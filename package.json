@@ -1,14 +1,24 @@
 {
   "name": "world-balance-system",
-  "version": "0.1.0",
+  "version": "0.2.0-alpha.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "dev:mock": "node scripts/dev.mjs --mock",
     "dev:web": "npm --prefix app run dev",
     "dev:api": "npm --prefix server run dev",
     "build": "npm --prefix app run build",
     "test": "npm --prefix server test",
-    "check": "npm test && npm run build"
+    "test:multiplayer": "node --test --test-name-pattern=HTTP server/test/rooms.test.js",
+    "typecheck": "npm --prefix app exec tsc -- --noEmit -p app/tsconfig.json",
+    "check": "npm test && npm run typecheck && npm run build",
+    "test:e2e": "playwright test",
+    "test:quick": "node --test server/test/quick-game.test.js && playwright test --grep quick",
+    "check:all": "npm run check && npm run test:e2e",
+    "release:check": "node scripts/release-check.mjs && npm run check:all"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
   }
 }

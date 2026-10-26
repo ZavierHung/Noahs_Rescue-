@@ -1,0 +1,111 @@
+<template name="scores">
+  <view wx:for="{{scoreGroups}}" wx:key="scope" wx:for-item="group" class="score-card {{group.scope}}">
+    <view class="row"><text class="heading">{{group.label}}</text><text class="meta">{{group.scope === 'world' ? 'WORLD' : 'TEAM SCORE'}}</text></view>
+    <view class="score-columns">
+      <view wx:for="{{group.dimensions}}" wx:key="key" wx:for-item="dim" class="dimension {{dim.key}} {{dim.warning ? 'warning' : ''}}">
+        <text>{{dim.label}}</text>
+        <button class="score-number" disabled="{{readOnly || pending || busy}}" data-scope="{{group.scope}}" data-dimension="{{dim.key}}" data-label="{{group.label + ' · ' + dim.label}}" data-value="{{dim.value}}" bindtap="editScore">{{dim.value}}</button>
+        <progress percent="{{dim.value / 19 * 100}}" stroke-width="3" activeColor="{{dim.key === 'economy' ? '#C89B45' : dim.key === 'society' ? '#5D86C9' : '#4C956C'}}" backgroundColor="#e4e6dc" />
+        <text wx:if="{{dim.warning}}" class="meta">{{!(dim.value > 6) ? '低位预警' : '高位预警'}}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<view class="page">
+  <view class="brand">NOAH’S RESCUE<view class="meta">{{role.name || '选择角色'}} · {{roleId}} <text class="connection">{{connected ? '已连接本地服务' : '未连接'}}</text></view></view>
+  <view class="content">
+    <button class="outline" bindtap="toggleGuide">{{showGuide ? '收起玩法说明' : '第一次玩？查看玩法'}}</button>
+    <view wx:if="{{showGuide}}" class="paper"><view class="title">第一次登上方舟</view><view wx:for="{{guide}}" wx:key="title" class="list-line"><view class="heading">{{index + 1}}. {{item.title}}</view><view>{{item.text}}</view></view><view class="notice">{{playerNotice}}</view><view class="meta">本地内测 · {{playerVersion}}</view></view>
+    <view wx:if="{{pendingCreate}}" class="notice">上一笔建房请求尚未确认，重试不会重复建房。<button bindtap="retryCreate" disabled="{{busy}}">重试建房</button></view>
+    <view class="quick-panel">
+      <view class="eyebrow">{{testMode ? 'PLAYTEST · 独立测试身份' : 'LOCAL PLAYTEST'}}</view>
+      <button class="primary" bindtap="quickStart" disabled="{{busy || preparing}}">{{preparing ? '正在安排玩家…' : '一键测试开局'}}</button>
+      <view class="meta">六个角色自动加入、准备并开局。不覆盖手动游戏，也不会自动触发上帝。</view>
+      <view wx:if="{{quickMessage}}" class="notice">{{quickMessage}}</view>
+      <block wx:if="{{testMode}}"><view class="role-grid"><button wx:for="{{roles}}" wx:key="id" class="{{item.id === roleId ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="selectRole" disabled="{{busy}}">{{item.name}}</button></view><button class="link" bindtap="manualMode" disabled="{{busy}}">返回手动游戏</button></block>
+    </view>
+    <view wx:if="{{error}}" class="notice error">{{error}}<button size="mini" bindtap="retry">重试连接</button></view>
+    <view wx:if="{{busy}}" class="notice">正在处理，请稍候…</view>
+
+    <block wx:if="{{screen === 'role'}}">
+      <view class="eyebrow">01 / 角色确认</view>
+      <view class="role-hero"><image class="voyage-art" src="/assets/ark-companions.jpg" mode="aspectFill" aria-label="六位伙伴同乘方舟" /><view class="role-chip {{role.team}}">{{role.badge || roleId}}</view><view class="title">{{role.name}}</view><text class="muted">{{role.team === 'animals' ? '动物阵营' : '人类阵营'}} · ROLE ID {{roleId}}</text></view>
+      <button wx:if="{{!testMode}}" class="outline" bindtap="scan" disabled="{{busy}}">扫描角色卡</button>
+      <view wx:if="{{!testMode}}" class="role-grid"><button wx:for="{{roles}}" wx:key="id" class="{{item.id === roleId ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="selectRole" disabled="{{busy}}">{{item.name}}</button></view>
+      <view class="muted center">本地测试可直接选择角色。角色卡只表示身份，不绑定游戏。</view>
+      <button wx:if="{{room ? room.status !== 'finished' : false}}" class="primary" data-id="{{room.id}}" bindtap="join" disabled="{{busy}}">回到 {{room.id}}</button>
+      <button class="primary" data-screen="rooms" bindtap="navigate" disabled="{{busy || !connected}}">加入游戏</button>
+      <button class="outline" bindtap="create" disabled="{{busy || !connected}}">新建一局</button>
+      <button class="link" data-screen="records" bindtap="navigate">查看历史游戏</button>
+    </block>
+
+    <block wx:if="{{screen === 'rooms'}}">
+      <button class="back" data-screen="role" bindtap="navigate">← 返回</button>
+      <view class="title">找到你的方舟</view><view class="muted">输入同伴给你的 8 位房间码，加入同一局。</view>
+      <view class="paper"><view class="heading">房间码</view><input class="input" value="{{roomCode}}" maxlength="13" placeholder="例如 A1B2C3D4" bindinput="roomCodeInput" /><button class="primary" bindtap="joinCode" disabled="{{busy || !connected || !roomCode}}">使用房间码加入</button></view>
+      <view class="subtitle">{{testMode ? '本地游戏' : '最近参与的游戏'}}</view>
+      <view wx:for="{{rooms}}" wx:key="id" wx:if="{{item.status !== 'finished'}}" class="paper">
+        <view class="row"><text class="heading">{{item.id}}</text><text class="pill">{{item.status === 'lobby' ? '等待加入' : '进行中'}}</text></view>
+        <button class="outline" data-id="{{item.id}}" bindtap="join" disabled="{{busy}}">加入 / 重连 →</button>
+      </view>
+      <view wx:if="{{!rooms.length}}" class="muted">还没有游戏，创建第一局吧。</view>
+      <button class="primary" bindtap="create" disabled="{{busy}}">创建新游戏</button>
+    </block>
+
+    <block wx:if="{{screen === 'lobby'}}">
+      <view class="eyebrow">02 / 等待室</view><view class="row"><view class="title">船员集结中</view><text class="heading">{{readyCount}}/6</text></view><view class="muted">{{room.id}}</view>
+      <view class="paper center"><view class="meta">把房间码告诉其他五位玩家</view><text class="subtitle" user-select="{{true}}">{{room.id}}</text><button class="outline" bindtap="copyRoomCode">复制房间码</button></view>
+      <view wx:for="{{seats}}" wx:key="id" class="seat"><view class="avatar {{item.team}}">{{item.id}}</view><view class="seat-name"><view class="heading">{{item.name}}</view><text class="meta">{{item.teamLabel}} {{item.id === roleId ? '· 这是你' : ''}}</text></view><text class="meta {{(item.ready ? item.online : false) ? 'ready' : ''}}">{{item.online ? item.ready ? '已准备' : '未准备' : item.roleId ? '已离线' : '等待加入'}}</text></view>
+      <view class="muted">动物 3 人 · 人类 3 人，全部在线并准备后开局。</view>
+      <button class="primary" bindtap="ready" disabled="{{busy}}">{{me.ready ? '取消准备' : '我已准备'}}</button>
+      <button class="outline" bindtap="start" disabled="{{busy || readyCount !== 6}}">开始游戏 · {{readyCount}}/6 已准备</button>
+      <button class="link danger" bindtap="leave" disabled="{{busy}}">退出等待室</button>
+    </block>
+
+    <block wx:if="{{screen === 'game'}}">
+      <view class="row"><view><view class="eyebrow">{{room.id}}</view><view class="title">共同的世界</view></view><view class="round">ROUND<view>{{room.round}}</view></view></view>
+      <image class="oracle-art" src="/assets/oracle-sanctuary.jpg" mode="aspectFill" aria-label="森林神谕圣殿" />
+      <view class="oracle-card"><view class="eyebrow">AI GOD · {{oracle.god.name || '等待神谕'}}</view><view class="subtitle">{{oracle.initialVerdict.title || '倾听方舟的声音'}}</view><view>{{oracle.initialVerdict.statement || '手动召唤一位上帝，祂将读取世界、阵营状态与最近行动，给出本轮神谕。'}}</view><view wx:if="{{oracle}}" class="pill">{{pending ? oracle.finalVerdict ? '等待确认结算' : '本回合待回应' : '已结算'}}</view><button class="primary" bindtap="trigger" disabled="{{busy}}">{{pending ? '回应神谕 / 查看奖惩' : oracle ? '再次触发上帝' : '触发上帝'}} →</button></view>
+      <view class="row"><view class="subtitle">世界与阵营</view><text class="meta">点击数字调整 · 1—19</text></view>
+      <template is="scores" data="{{scoreGroups, pending, busy, readOnly: false}}" />
+      <view wx:if="{{edit}}" class="paper"><view class="subtitle">{{edit.label}} · {{edit.value}}</view><slider min="1" max="19" step="1" value="{{edit.value}}" activeColor="#234D40" bindchange="scoreInput" show-value="{{true}}" /><input class="input" placeholder="填写分数变化原因（必填）" value="{{reason}}" maxlength="2000" bindinput="reasonInput" /><button class="primary" bindtap="saveScore" disabled="{{busy || !reason}}">保存分数并留档</button><button class="link" bindtap="cancelEdit">取消</button></view>
+      <view wx:if="{{room.activeDisasters.length}}" class="subtitle">灾难卡生效中</view>
+      <view wx:for="{{room.activeDisasters}}" wx:key="id" class="disaster-card">
+        <button wx:if="{{item.image}}" class="disaster-art-button" data-id="{{item.id}}" bindtap="previewDisaster" aria-label="查看{{item.name}}卡牌大图"><image class="disaster-art" src="/assets/disasters/{{item.image.file}}" mode="widthFix" aria-label="{{item.name}}灾难卡" /><view class="meta">点击放大 ↗</view></button>
+        <view class="disaster-copy"><view class="meta">{{item.dimensionLabel}} {{item.triggerValue}} · 世界分数触发</view><view class="heading">{{item.name}}</view><view>{{item.effect}}</view></view>
+      </view>
+      <view wx:if="{{room.activeDisasters.length}}" class="meta">按卡面执行桌面效果；涉及分数的变化请手动调整并留档。</view>
+      <view wx:if="{{pending}}" class="muted">神谕处理期间锁定分数，确保裁决依据不变。</view>
+      <button class="outline" bindtap="advance" disabled="{{busy || pending}}">进入下一回合</button>
+      <view class="split"><button class="link" bindtap="finish" disabled="{{busy}}">结束本局</button><button class="link" bindtap="leave" disabled="{{busy}}">暂时退出</button></view>
+    </block>
+
+    <block wx:if="{{screen === 'report'}}">
+      <button class="back" data-screen="game" bindtap="navigate">← 返回游戏</button><view class="eyebrow">03 / 神谕回应</view><view class="title">{{oracle.initialVerdict.title}}</view><view class="muted">{{oracle.god.name}} · {{oracle.llm.used ? oracle.llm.model : '本地规则模式'}}</view>
+      <view wx:if="{{oracle.task}}" class="assessment"><view class="eyebrow">{{oracle.task.category}} · 本回合任务</view><view class="subtitle">{{oracle.task.title}}</view><view>{{oracle.task.instruction}}</view><view class="muted">完成标准：{{oracle.task.criteria}}</view></view>
+      <view class="paper"><view>{{oracle.initialVerdict.statement}}</view><view wx:for="{{oracle.initialVerdict.measures}}" wx:key="*this" class="list-line">{{index + 1}}. {{item}}</view></view>
+      <view class="subtitle">本地 RAG 知识依据</view><view wx:for="{{oracle.rag.evidence}}" wx:key="id" class="knowledge"><view class="heading">{{item.title}}</view><view>{{item.content}}</view></view>
+      <block wx:if="{{!oracle.finalVerdict}}"><view class="subtitle">汇报桌面行动</view><textarea value="{{reportText}}" maxlength="2000" bindinput="reportInput" placeholder="请描述谁做了什么、付出了什么、产生了什么结果。" /><button class="primary" bindtap="report" disabled="{{busy || !reportText}}">提交行动评估</button></block>
+      <view wx:if="{{report}}" class="assessment"><view class="eyebrow">{{report.assessment.used ? 'AI 行动评估' : '本地规则评估（非 AI）'}}</view><view class="subtitle">{{report.assessment.completed ? '建议判定：已完成' : '建议判定：证据不足 / 未完成'}}</view><view>{{report.assessment.reason}}</view><view class="muted">玩家自述：{{report.text}}</view></view>
+      <block wx:if="{{report ? !oracle.finalVerdict : false}}"><view class="subtitle">向上帝驳斥（可选）</view><textarea value="{{rebuttalText}}" maxlength="2000" bindinput="rebutInput" placeholder="你是否有不同意见或补救计划？" /><button class="primary" bindtap="rebut" disabled="{{busy}}">听取最终裁决</button></block>
+      <block wx:if="{{oracle.finalVerdict}}"><view class="paper"><view class="eyebrow">最终裁决 · {{oracle.llm.final.used ? 'M3' : '本地规则'}}</view><view class="subtitle">{{oracle.finalVerdict.title}}</view><view>{{oracle.finalVerdict.statement}}</view><view wx:for="{{oracle.finalVerdict.measures}}" wx:key="*this" class="list-line">{{index + 1}}. {{item}}</view></view><view class="subtitle">数值奖惩预览</view><view wx:for="{{changes}}" wx:key="index" class="change"><text>{{item.scopeLabel}} · {{item.label}}</text><text class="heading">{{item.before}} → {{item.after}}</text></view><view class="muted">试玩规则 tabletop-v1。叙事措施不额外自动改分，只有确认才写入分数变化。</view><button class="primary" bindtap="settle" disabled="{{busy || oracle.settlement}}">{{oracle.settlement ? '已确认结算' : '确认并结算'}}</button><button class="link" data-screen="game" bindtap="navigate">暂不确认，返回游戏</button></block>
+    </block>
+
+    <block wx:if="{{screen === 'records'}}">
+      <button class="back" bindtap="gameTab">← 返回游戏</button><view class="eyebrow">ARCHIVE</view><view class="title">方舟航行记录</view><view class="muted">当前游戏与历史游戏，独立保存。</view>
+      <view wx:for="{{rooms}}" wx:key="id" class="paper"><view class="row"><text class="heading">{{item.id}}</text><text class="pill">{{item.status === 'finished' ? '已结束' : item.status === 'playing' ? '进行中' : '等待加入'}}</text></view><view class="muted">第 {{item.round}} 回合 · {{item.judgments.length}} 次神谕</view><button class="outline" data-id="{{item.id}}" bindtap="detail">查看游戏详情 →</button></view><view wx:if="{{!rooms.length}}" class="muted">第一段航行还未开始。</view>
+    </block>
+
+    <block wx:if="{{screen === 'detail'}}">
+      <button class="back" data-screen="records" bindtap="navigate">← 返回记录</button><view class="eyebrow">{{room.status === 'finished' ? '已结束' : '进行中'}} · 第 {{room.round}} 回合</view><view class="title">{{room.id}}</view><view class="meta">开始 {{room.createdAt}}<view wx:if="{{room.finishedAt}}">结束 {{room.finishedAt}}</view></view>
+      <view class="muted"><text wx:for="{{seats}}" wx:key="id" wx:if="{{item.roleId}}">{{item.name}} · </text></view>
+      <template is="scores" data="{{scoreGroups, readOnly: true}}" />
+      <view class="subtitle">神谕时间线</view><view wx:for="{{room.judgments}}" wx:key="id" wx:for-item="judgment" class="paper"><view class="eyebrow">第 {{judgment.round}} 回合 · {{judgment.settlement ? '已结算' : '未结算'}}</view><view class="subtitle">{{judgment.initialVerdict.title}}</view><view class="muted">{{judgment.god.name}}</view><view>{{judgment.initialVerdict.statement}}</view><view wx:for="{{judgment.taskReports}}" wx:key="id" class="list-line"><view>行动：{{item.text}}</view><view>{{item.assessment.completed ? '完成' : '未完成 / 证据不足'}}：{{item.assessment.reason}}</view></view><view wx:if="{{judgment.playerRebuttal}}" class="list-line">驳斥：{{judgment.playerRebuttal}}</view><view wx:if="{{judgment.finalVerdict}}" class="list-line">最终裁决：{{judgment.finalVerdict.statement}}<view wx:for="{{judgment.finalVerdict.measures}}" wx:key="*this">{{item}}</view></view><view class="meta">RAG 依据：<text wx:for="{{judgment.rag.evidence}}" wx:key="id">{{item.title}} · </text></view></view>
+      <view class="subtitle">全部操作与分数来源</view><view class="timeline"><view wx:for="{{timeline}}" wx:key="id" class="timeline-item"><view class="meta">{{item.time}} · {{item.actorName}} · 第 {{item.round}} 回合</view><view>{{item.detail}}</view><view wx:if="{{item.changesText}}" class="heading">{{item.changesText}}</view></view></view>
+    </block>
+
+    <block wx:if="{{screen === 'finished'}}"><view class="role-hero"><view class="role-seal">FIN</view><view class="eyebrow">VOYAGE COMPLETE</view><view class="title">这一程，已被记住。</view><view class="muted">{{room.id}} · 已结束并保存</view></view><view class="center">{{room.round}} 回合 · {{room.judgments.length}} 次神谕</view><template is="scores" data="{{scoreGroups, readOnly: true}}" /><button class="primary" bindtap="create" disabled="{{busy}}">开始新的一局</button><button class="outline" data-id="{{room.id}}" bindtap="detail">查看完整记录</button><button class="link" bindtap="leave">退出游戏</button></block>
+  </view>
+  <view class="bottom-nav"><button class="link" bindtap="gameTab" disabled="{{busy}}">游戏</button><button class="link" data-screen="records" bindtap="navigate" disabled="{{busy}}">记录</button></view>
+</view>

@@ -1,5 +1,15 @@
 # 神谕 · 世界平衡台
 
+当前产品迭代为 **0.2.0-alpha.1 · 本地内测**。新玩家使用 [玩家入口](http://localhost:3000/play)，开发调试使用 [六人模拟器](http://localhost:3000/mobile)，原世界平衡台仍保留。玩家入口提供玩法说明、角色选择、房间码加入/复制、刷新恢复和本机参与记录；上帝核心流程不变。
+
+发行前本地质量检查：`npm run release:check`。这不等于公开发行验收，当前仍缺少账号鉴权、房间访问控制及微信真机验证。后续分阶段验收见 [发行路线与内测边界](docs/RELEASE_PLAN.md)。
+
+新增 **Noah’s Rescue 微信小程序本地版 + 六人手机模拟器**。原世界平衡台保留不变，新入口是 [http://localhost:3000/mobile](http://localhost:3000/mobile)。小程序源码在 `miniprogram/`；详见 [手机端开发、测试与迭代手册](docs/MOBILE_LOCAL.md)。
+
+手机端已实现固定六角色 3v3、六人准备开局、两队及世界三维分数、五类神谕任务、汇报与驳斥、人工确认奖惩、重复召唤、退出重连、结束归档与历史详情。`npm run dev:mock` 可完全离线演示，`npm run test:multiplayer` 可隔离运行六人 HTTP 流程测试。原上帝流程继续复用，提示词仍由专用数据后端管理。
+
+现在可直接点击 **“一键测试开局”**：自动安排六个独立测试身份、加入同一局、全部准备并开始游戏。再次点击会续接未结束的测试局，手动游戏不受影响。浏览器和原生小程序均已加入本地方舟角色、神谕插画。快速回归运行 `npm run test:quick`；详见 [快速试玩与本轮迭代](docs/QUICK_START.md) 和 [图片素材及生成提示词](docs/ART_ASSETS.md)。
+
 一个可在 localhost 运行的世界状态模拟器。玩家可拖动经济、环境、社会三条属性（1—19），系统根据阈值触发或解除灾难，并通过可反驳的“上帝 Agent Loop”给出最终奖惩。
 
 当前版本已提供 MiniMax Coding Plan 的 LLM 裁决适配器。未填写 API Key 时自动使用本地规则引擎；填写后仅把当前状态、随机上帝、RAG 证据和玩家反驳发送给 MiniMax。环保知识检索与 JSON 存档始终在本地完成。
@@ -12,7 +22,8 @@
 - 上帝 Agent Loop：读取状态 → 随机选择上帝 → 本地 RAG → 初步裁决 → 玩家反驳 → 最终奖惩 → JSON 归档。
 - 上帝审判只由玩家点击界面按钮触发；完成裁决后可再次点击触发，每次都会创建独立会话并保留旧档案。
 - 三种上帝人格：激进型、普通型、保守型；运行时 Prompt 来自独立的服务端数据后端，`god.md` 仅保留原始设计说明。
-- 灾难目录来自 `disaster.md`，同一阈值区间内保持同一灾难，进入新层级时重新随机抽取。
+- 新版灾难目录依据 `卡牌.docx` 的 12 张卡，存于 `server/data/disasters.json`；旧版额外规则已移除。阈值仍为 2 / 6 / 14 / 18，每个维度每个非稳定分档当前对应一张卡。
+- 灾难触发后同时展示卡图与完整效果，网页和微信小程序均可点击放大。卡图直接提取 Word 内嵌原图，保持原始约 5:7 比例，不沿用 Word 的拉伸尺寸。
 - 审判档案保存状态快照、上帝、检索证据、初判、反驳、最终裁决和执行轨迹。
 - 提供前端可调用的 HTTP API、MiniMax 模型适配层和 WebMCP 操作入口。
 
@@ -26,7 +37,7 @@
 npm --prefix app install
 ```
 
-复制环境变量模板：
+仅在尚无 `.env` 时复制环境变量模板；已有文件不要覆盖：
 
 ```bash
 cp .env.example .env
@@ -58,12 +69,20 @@ npm run dev:api
 ## 测试与构建
 
 ```bash
-npm test       # Node 内置测试：灾难引擎与 Agent Loop
+npm test       # 原有引擎、房间规则、六人HTTP流程、小程序接线等
+npm run test:multiplayer # 六人真实本地 HTTP 流程（模型模拟）
+npm run typecheck # TypeScript 检查
 npm run build  # 构建前端
-npm run check  # 先测试再构建
+npm run check  # 测试 + 类型检查 + 构建
+npm run test:e2e # 真实浏览器操作（首次先在根目录 npm ci）
+npm run test:quick # 一键开局专项：接口、失败重试、刷新续接、图片加载
+npm run check:all # 全部检查，含浏览器
+npm run release:check # 版本/忽略规则/已追踪敏感文件检查 + 全部回归
 ```
 
-测试不依赖网络、外部数据库或 LLM，适合持续集成和快速回归。
+自动测试不依赖外网、外部数据库或真实 LLM，适合持续集成和快速回归；首次安装测试依赖需要网络，浏览器测试使用本地 HTTP 服务。
+
+浏览器测试使用临时 API 和独立存档，不操作用户现有游戏；详细结果与修复说明见 [2026-09-19 测试迭代记录](docs/TEST_ITERATION_2026-09-19.md)。
 
 ## 架构
 
@@ -95,7 +114,9 @@ server/
   src/server.js         HTTP API
   src/agent-loop.js     上帝编排、初判与反驳回路
   src/god-repository.js 上帝人格与 Prompt 数据仓库
-  src/catalog.js        灾难规则与阈值引擎
+  src/catalog.js        灾难规则、阈值引擎与旧存档卡牌刷新
+  data/disasters.json   新版 12 张灾难卡名称、效果、分档（编辑后重启 API）
+  data/disaster-art.json 卡图尺寸、文档图片索引与校验哈希
   src/rag.js            可替换的本地嵌入/检索接口
   src/llm/minimax.js    MiniMax 请求、结构化解析和安全降级
   src/storage.js        JSON 原子读写
@@ -106,7 +127,7 @@ server/
   data/judgments.json   完整审判档案
   test/                 功能测试
 god.md                  原始上帝设定
-disaster.md             原始灾难设定
+disaster.md             新版灾难卡分档、效果与执行边界
 ```
 
 ## Agent Loop 设计
@@ -120,7 +141,7 @@ disaster.md             原始灾难设定
 5. `initial_verdict`：把完整上帝提示词放入 System Prompt；有密钥时调用 MiniMax，失败时使用确定性规则。
 6. `await_rebuttal`：等待玩家提交一次反驳。
 7. `evaluate_rebuttal`：识别是否提出修复、补偿、合作等可核验方案。
-8. `final_verdict`：再次使用同一份完整上帝提示词评估反驳；措辞和减免条件可变化，但最终奖惩永远存在。
+8. `final_verdict`：重新从数据后端读取同一位上帝的最新完整提示词评估反驳；措辞和减免条件可变化，但最终奖惩永远存在。
 9. `archive_json`：保存游戏交互会话，不把 Prompt 原文、文件路径或哈希复制进审判快照。
 
 `trace` 字段保留每一步的状态与关键输出，未来接入真正的 agent runtime 后可以直接映射为可观测事件。
@@ -200,7 +221,7 @@ MINIMAX_TIMEOUT_MS=60000
 
 ## JSON 数据与安全
 
-- `state.json` 保存当前状态；`judgments.json` 使用数组保存完整档案。
+- `state.json` 保存原工作台状态；`judgments.json` 保存原工作台审判；`rooms.json` 独立保存多人游戏、角色、完整神谕交互与分数事件。三者都是被 Git 忽略的运行数据。
 - 写入采用“临时文件 + rename”的原子替换，降低进程中断造成半个 JSON 文件的风险。
 - API Key 只从本地环境变量读取，不进入请求日志、响应或审判 JSON；`.env` 与 `server/.env` 均被 Git 忽略。
 - 审判档案只保存模型名、是否成功使用模型及安全化的回退原因，便于调试而不泄露凭证。
@@ -218,11 +239,11 @@ MINIMAX_TIMEOUT_MS=60000
 
 - 三属性交互、阈值灾难、上帝随机路由、本地 RAG、反驳、最终奖惩、档案查看与自动测试。
 
-### Sprint 2（建议）：游戏行为与多人状态
+### Sprint 2（本地版已实现）：游戏行为与多人状态
 
-- 玩家、资源、地块和最近 N 轮行为模型。
-- 灾难副作用真正回写属性与玩家资源。
-- 规则幂等、回合结算与事件重放测试。
+- 六角色房间、最近行为、双方及世界分数、五类任务、确认结算、历史和重连。
+- 小程序 + 共用控制器的六人手机模拟器；并发、幂等与完整 HTTP 流程测试。
+- 地块、资源实体、灾难副作用自动扣分与事件重放仍待正式玩法定义。
 
 ### Sprint 2.5（已完成）：MiniMax 裁决接口
 
@@ -233,7 +254,7 @@ MINIMAX_TIMEOUT_MS=60000
 
 - Ollama embedding 与本地向量库。
 - Ollama 裁决适配器，与 MiniMax/规则引擎运行时切换。
-- prompt/version、检索证据和模型参数随档案保存，保证可复现。
+- 检索证据与模型参数可追溯；Prompt 继续由数据后端管理，不复制原文或哈希到审判快照。
 
 ### Sprint 4（建议）：服务器化
 

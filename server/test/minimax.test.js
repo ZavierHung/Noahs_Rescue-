@@ -99,3 +99,19 @@ test('MiniMax adapter reports a safe error without exposing the API key', async 
     (error) => !error.message.includes(secret) && error.message === 'http_401',
   );
 });
+
+test('task assessment uses M3, full persona, snapshot, RAG and structured validation', async () => {
+  let body;
+  const model = createMiniMaxVerdictModel({ apiKey: 'test-key-never-store', fetchImpl: async (_url, init) => {
+    body = JSON.parse(init.body);
+    return { ok: true, json: async () => ({ content: [{ type: 'text', text: '{"completed":true,"reason":"双方提交了修复行动，自述仍需人工确认。"}' }] }) };
+  } });
+  const result = await model.generateAssessment({ god: context.god, state: context.state, evidence: context.evidence, task: context.ruleDraft, report: '已完成：共同修复湿地。' });
+  assert.equal(body.model, 'MiniMax-M3.0');
+  assert.match(body.system, /FULL_GOD_PROMPT_SENTINEL/);
+  assert.match(body.messages[0].content[0].text, /eco-01/);
+  assert.match(body.messages[0].content[0].text, /共同修复湿地/);
+  assert.equal(result.completed, true);
+  const invalid = createMiniMaxVerdictModel({ apiKey: 'test-key-never-store', fetchImpl: async () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text: '{"completed":"yes","reason":""}' }] }) }) });
+  await assert.rejects(invalid.generateAssessment({ god: context.god }), /invalid_assessment/);
+});

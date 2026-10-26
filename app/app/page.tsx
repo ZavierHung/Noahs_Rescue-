@@ -30,6 +30,7 @@ import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { api, type Disaster, type Judgment } from '@/lib/api';
+import { DisasterCards } from '@/components/game/disaster-cards';
 
 type DimensionKey = 'economy' | 'environment' | 'society';
 
@@ -59,12 +60,6 @@ const INITIAL_DIMENSIONS: Dimension[] = [
 ];
 
 const ICONS = { economy: Landmark, environment: Leaf, society: Users };
-
-const DISASTER_COPY: Record<DimensionKey, Record<string, string>> = {
-  economy: { criticalHigh: '贫富悬殊加剧', high: '先发展再治理', low: '经济萧条', criticalLow: '通货紧缩' },
-  environment: { criticalHigh: '生态管制冲突', high: '低碳转型阵痛', low: '生态崩坏', criticalLow: '稳态失衡' },
-  society: { criticalHigh: '集体决策低效', high: '全民保障压力', low: '社会失序', criticalLow: '阶层固化' },
-};
 
 function getBand(value: number) {
   if (value >= 18) return 'criticalHigh';
@@ -213,6 +208,7 @@ export default function Home() {
           <h1>神谕 · 世界平衡台</h1>
         </div>
         <div className="ml-auto flex items-center gap-2">
+          <a className="text-sm underline" href="/play">手机玩家入口</a>
           <span className={`status-dot ${apiConnected ? '' : 'is-offline'}`} />
           <span className="hidden text-sm text-muted-foreground sm:inline">{apiConnected ? '本地引擎已连接' : '正在连接本地引擎'}</span>
           <span className="round-pill">手动触发模式</span>
@@ -300,11 +296,9 @@ export default function Home() {
               {activeDisasters.length === 0 ? (
                 <div className="stable-panel"><ShieldCheck /><div><strong>所有维度处于稳定区</strong><p>拖动任意属性到 2 / 6 / 14 / 18 附近，观察系统反馈。</p></div></div>
               ) : (
-                <div className="disaster-grid">
-                  {activeDisasters.map((disaster) => {
-                    const persisted = serverDisasters.find((item) => item.dimension === disaster.key && item.band === disaster.band);
-                    return <article key={disaster.key} style={{ '--dimension': disaster.color } as React.CSSProperties}><CircleAlert /><div><span>{disaster.label} · {disaster.value}</span><strong>{persisted?.name || DISASTER_COPY[disaster.key][disaster.band]}</strong><p>{persisted?.effect}</p></div><small>阈值生效中</small></article>;
-                  })}
+                <div>
+                  <DisasterCards cards={serverDisasters.filter((card) => activeDisasters.some((dimension) => dimension.key === card.dimension && dimension.value === card.triggerValue))} />
+                  {activeDisasters.some((dimension) => !serverDisasters.some((card) => card.dimension === dimension.key && card.triggerValue === dimension.value)) && <p role="status">正在同步分数，请等待对应灾难卡；连接失败时请重新保存分数。</p>}
                 </div>
               )}
             </TabsContent>

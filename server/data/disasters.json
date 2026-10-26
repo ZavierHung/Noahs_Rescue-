@@ -1,0 +1,18 @@
+{
+  "version": "cards-docx-v2",
+  "source": "卡牌.docx",
+  "cards": [
+    { "id": "deflation", "dimension": "economy", "band": "criticalLow", "name": "通货紧缩", "effect": "所有玩家手牌上限 -1，立马失去一张科技牌。", "sourceImage": "image1.png" },
+    { "id": "develop-first", "dimension": "economy", "band": "high", "name": "先发展再治理", "effect": "生态值 -1；所有玩家立马获得 1 资源。", "sourceImage": "image2.png" },
+    { "id": "eco-conflict", "dimension": "environment", "band": "criticalHigh", "name": "生态管制冲突", "effect": "常驻被动：社会值 -1。当玩家进行会降低生态值的行动时，相邻（不限阵营）玩家可以消耗 1 资源阻止，使此次行动失效。", "sourceImage": "image3.png" },
+    { "id": "eco-collapse", "dimension": "environment", "band": "low", "name": "生态崩坏", "effect": "被采集过的自然地块不可再次产出资源。", "sourceImage": "image4.png" },
+    { "id": "welfare-pressure", "dimension": "society", "band": "high", "name": "全民保障压力", "effect": "生态值 -1；所有人立即获得 1 份保障物资。", "sourceImage": "image5.png" },
+    { "id": "wealth-gap", "dimension": "economy", "band": "criticalHigh", "name": "财富悬殊", "effect": "社会值 -1；资源最少的玩家需向资源最多的玩家交纳 1 个晶矿资源。", "sourceImage": "image6.png" },
+    { "id": "resource-protection", "dimension": "environment", "band": "high", "name": "资源保护", "effect": "成功保护资源时，生态值 +1；资源被占用或过度保护导致开发受限时，经济值 -1。", "sourceImage": "image7.png" },
+    { "id": "depression", "dimension": "economy", "band": "low", "name": "经济萧条", "effect": "收回所有经济增益卡牌（科技）。", "sourceImage": "image8.png" },
+    { "id": "social-disorder", "dimension": "society", "band": "low", "name": "社会失序", "effect": "持续灾难：禁止远程合作和远程交易，玩家只能与相邻（不限阵营）玩家互动。", "sourceImage": "image9.png" },
+    { "id": "mutual-aid", "dimension": "society", "band": "criticalHigh", "name": "强制互助制度", "effect": "经济值 -1；每回合资源最多的玩家必须向资源最少的玩家转移 1 资源。", "sourceImage": "image10.png" },
+    { "id": "class-lock", "dimension": "society", "band": "criticalLow", "name": "阶层固化", "effect": "资源总量排名前一半（向下取整）的玩家，采集资源有 50% 概率额外获得 1 资源；其余玩家采集资源有 50% 概率少获得 1 资源。", "sourceImage": "image11.png" },
+    { "id": "steady-imbalance", "dimension": "environment", "band": "criticalLow", "name": "稳态失衡", "effect": "所有玩家失去 1 资源，资源类型可以自选；之后立即且每轮都随机往一个方向前进。", "sourceImage": "image12.png" }
+  ]
+}

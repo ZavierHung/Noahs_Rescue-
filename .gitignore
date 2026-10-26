@@ -10,12 +10,21 @@ out/
 server/.env
 .env.local
 .env.*.local
+.env.*
+!.env.example
 *.log
+*.tsbuildinfo
+test-results/
+playwright-report/
 .DS_Store
 
 # runtime-only player data (never commit interaction archives)
 server/data/state.json
 server/data/judgments.json
+server/data/rooms.json
+server/data/*.tmp
+miniprogram/project.private.config.json
+miniprogram/config.local.js
 
 # editor files
 .idea/
