@@ -23,7 +23,7 @@ export default defineConfig({
   },
   webServer: {
     command: "npm run dev:web",
-    url: "http://localhost:3000/mobile",
+    url: "http://localhost:3000/",
     reuseExistingServer: !process.env.CI,
     timeout: 60000,
   },

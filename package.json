@@ -1,6 +1,6 @@
 {
   "name": "world-balance-system",
-  "version": "0.2.0-alpha.1",
+  "version": "0.3.0-local",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,11 +10,11 @@
     "dev:api": "npm --prefix server run dev",
     "build": "npm --prefix app run build",
     "test": "npm --prefix server test",
-    "test:multiplayer": "node --test --test-name-pattern=HTTP server/test/rooms.test.js",
+    "test:simulation": "node scripts/simulate-expedition.mjs",
     "typecheck": "npm --prefix app exec tsc -- --noEmit -p app/tsconfig.json",
     "check": "npm test && npm run typecheck && npm run build",
     "test:e2e": "playwright test",
-    "test:quick": "node --test server/test/quick-game.test.js && playwright test --grep quick",
+    "test:game": "node --test server/test/expedition*.test.js",
     "check:all": "npm run check && npm run test:e2e",
     "release:check": "node scripts/release-check.mjs && npm run check:all"
   },

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: '神谕 · 世界平衡台',
-  description: '经济、环境与社会三维世界状态模拟，以及可反驳的上帝 Agent 裁决系统。',
+  title: 'Noah’s Rescue · 方舟航程',
+  description: '六边形地图、角色选择、资源采集、洪水缩圈与终局上帝审判。',
 };
 
 export default function RootLayout({

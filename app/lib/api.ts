@@ -1,5 +1,5 @@
-import type { Disaster } from '../../miniprogram/shared/disasters';
-export type { Disaster } from '../../miniprogram/shared/disasters';
+import type { Disaster } from './disasters';
+export type { Disaster } from './disasters';
 
 const API_BASE = process.env.NEXT_PUBLIC_GAME_API_URL || 'http://localhost:8787';
 

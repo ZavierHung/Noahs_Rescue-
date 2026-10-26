@@ -22,6 +22,7 @@ playwright-report/
 server/data/state.json
 server/data/judgments.json
 server/data/rooms.json
+server/data/expeditions.json
 server/data/*.tmp
 miniprogram/project.private.config.json
 miniprogram/config.local.js

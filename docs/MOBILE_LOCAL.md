@@ -1,5 +1,7 @@
 # Noah’s Rescue 手机端本地版
 
+> 历史文档：本页描述已暂停的 0.2 小程序版本，源码与可运行环境保存在 `archive/miniprogram-v0.2`。当前 `feature/web-hex-map` 已与之解耦；请按 [网页 README](../README.md) 使用 `/` 和 `/lab`，以下旧入口与命令不适用于当前分支。
+
 本次实现依据 `image/README/` 中六张 Demo。交付包括 **原生微信小程序** 和 **本地浏览器六人模拟器**，不是把网页放进小程序 WebView。两者共用同一份应用控制器、HTTP 接口、游戏规则和本地存档。原来的世界平衡台仍在 `/`，新体验在 `/mobile`。
 
 0.2.0-alpha.1 增加独立玩家入口 `/play`，和 `/mobile` 的开发者模拟操作分开。共用 UI 已抽出到 `app/components/game/game-phone.tsx`，网页传输层位于 `app/lib/game-transport.ts`；不是复制第二套游戏逻辑。网页/小程序通过共享 `player-guide.js` 呈现玩法说明，通过 `parseRoomCode` 处理完整或短房间码。

@@ -1,0 +1,406 @@
+{
+  "version": 1,
+  "source": {
+    "document": "资产合集.docx",
+    "archivePath": "word/media",
+    "importMethod": "直接提取 DOCX 内嵌图片；忽略 Word 绘图拉伸尺寸；仅转为 JPEG，保持原始像素长宽比。",
+    "version": "2026-10-26"
+  },
+  "drawPolicy": {
+    "action": "equal_probability_with_replacement",
+    "technology": "equal_probability_with_replacement",
+    "duplicatesAllowed": true
+  },
+  "notes": [
+    "只收录本 DOCX 中出现的 2 种行动卡和 13 种科技卡，不混入资产目录中其它版本的卡。",
+    "sourceCopies 表示文档中出现的卡面设计数，不是实体牌堆数量。文档未规定重复张数，按用户要求等概率抽取且允许重复。",
+    "effect、condition、restriction、note 为卡面原文（仅统一空格与换行）。status 为卡面状态栏的三维分数增减。",
+    "科技行动的原文是选一张获得对应收益：选定后生效；条件触发的名刀需保留至洪水触发后弃置。",
+    "卡面未规定初始手牌上限、建立联络方式、方舟范围边界、资源池组成、同名非手牌上限科技的叠加细则；这些应由独立规则配置明确，不应假冒卡面原文。",
+    "互助信标中的斗争在本轮用户要求的基本流程之外；保留规则字段，供后续冲突模块使用。"
+  ],
+  "actions": [
+    {
+      "id": "invitation",
+      "name": "邀约",
+      "kind": "action",
+      "type": "行动卡",
+      "flavor": "送出资源，提出交换请求。",
+      "effect": "尝试进行一次资源交换；若被拒绝，可再向其他玩家发出请求。",
+      "condition": "对已建立联络的玩家使用。",
+      "restriction": "对方可自由选择回应或拒绝。",
+      "note": "适合用于试探立场或短期合作。",
+      "status": {},
+      "semantics": {
+        "kind": "trade_invitation",
+        "requiresContact": true,
+        "requiresConsent": true,
+        "retryAfterRejection": true
+      },
+      "width": 1061,
+      "height": 1482,
+      "image": "/images/expedition/cards/invitation.jpg",
+      "sourceImage": "image14.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "technology",
+      "name": "科技",
+      "kind": "action",
+      "type": "行动卡",
+      "flavor": "推动科技进化，获得新能力。",
+      "effect": "随机抽取两张科技卡卡牌并选择一张获得对应收益",
+      "condition": "任意时刻可使用。",
+      "restriction": "效果包含即时或持续增益。",
+      "note": "包含采集、移动、社交、防御强化。",
+      "status": {},
+      "semantics": {
+        "kind": "technology_choice",
+        "drawCount": 2,
+        "chooseCount": 1,
+        "activateSelected": true
+      },
+      "width": 744,
+      "height": 1039,
+      "image": "/images/expedition/cards/technology.jpg",
+      "sourceImage": "image15.png",
+      "sourceCopies": 1
+    }
+  ],
+  "technology": [
+    {
+      "id": "space-ring",
+      "name": "空间戒指",
+      "type": "常驻被动",
+      "flavor": "把有限空间折叠起来，才能带走更多可能。",
+      "effect": "手牌上限变为 8；同类手牌上限科技不可叠加。",
+      "status": {
+        "economy": 2
+      },
+      "semantics": {
+        "kind": "hand_limit",
+        "limit": 8,
+        "stackable": false
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1482,
+      "image": "/images/expedition/cards/space-ring.jpg",
+      "sourceImage": "image30.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "skateboard-shoes",
+      "name": "滑板鞋",
+      "type": "常驻被动",
+      "flavor": "在洪水追上你之前，先学会更快离开。",
+      "effect": "每回合第一次使用【移动】时，移动距离 +1 格。",
+      "status": {
+        "environment": 2
+      },
+      "semantics": {
+        "kind": "move_bonus",
+        "amount": 1,
+        "usesPerRound": 1
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1482,
+      "image": "/images/expedition/cards/skateboard-shoes.jpg",
+      "sourceImage": "image31.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "famed-blade",
+      "name": "名刀",
+      "type": "单次触发，使用后弃置",
+      "flavor": "关键时刻，锋刃只为劈开一条生路。",
+      "effect": "被洪水缩圈波及时，立即额外移动 2 格。",
+      "status": {
+        "economy": 1,
+        "society": -1
+      },
+      "semantics": {
+        "kind": "flood_escape",
+        "distance": 2,
+        "trigger": "affected_by_flood",
+        "singleUse": true
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1482,
+      "image": "/images/expedition/cards/famed-blade.jpg",
+      "sourceImage": "image32.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "mining-drone",
+      "name": "采矿无人机",
+      "type": "常驻被动",
+      "flavor": "每一次敲击，都是向大地索取更多。",
+      "effect": "每回合第一次【采集】时，额外获得 1 个该类资源。",
+      "status": {
+        "economy": 2,
+        "environment": -2
+      },
+      "semantics": {
+        "kind": "gather_bonus",
+        "amount": 1,
+        "resource": "same_as_gathered",
+        "usesPerRound": 1
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1483,
+      "image": "/images/expedition/cards/mining-drone.jpg",
+      "sourceImage": "image33.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "reserve-crate",
+      "name": "储备仓",
+      "type": "常驻被动",
+      "flavor": "提前储备的人，能在浪潮之后少付一点代价。",
+      "effect": "缩圈后的资源扣除阶段，少支付 1 个资源。",
+      "status": {
+        "environment": -1
+      },
+      "semantics": {
+        "kind": "flood_discount",
+        "amount": 1
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1482,
+      "image": "/images/expedition/cards/reserve-crate.jpg",
+      "sourceImage": "image34.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "alchemy-furnace",
+      "name": "炼金炉",
+      "type": "单次触发，使用后弃置",
+      "flavor": "资源不会凭空出现，只是换了一种形状。",
+      "effect": "将任意 2 个资源转化为任意 3 个同类资源；本回合不能使用【邀约】。",
+      "status": {
+        "environment": 1,
+        "economy": -1
+      },
+      "semantics": {
+        "kind": "resource_conversion",
+        "inputCount": 2,
+        "inputSameTypeRequired": false,
+        "outputCount": 3,
+        "outputSameTypeRequired": true,
+        "blocksActionForRound": "invitation",
+        "singleUse": true
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1482,
+      "image": "/images/expedition/cards/alchemy-furnace.jpg",
+      "sourceImage": "image35.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "aid-beacon",
+      "name": "互助信标",
+      "type": "常驻被动",
+      "flavor": "向别人发出坐标，也是在给自己留下退路。",
+      "effect": "周围一圈范围内有任意玩家时，每回合可与其中 1 名玩家交换各 1 个资源；本回合不能对该玩家选择【斗争】。",
+      "status": {
+        "society": 2,
+        "economy": 2,
+        "environment": -2
+      },
+      "semantics": {
+        "kind": "adjacent_exchange",
+        "range": 1,
+        "resourcesEach": 1,
+        "usesPerRound": 1,
+        "blocksConflictWithTargetForRound": true
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1483,
+      "image": "/images/expedition/cards/aid-beacon.jpg",
+      "sourceImage": "image36.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "shared-supply-pod",
+      "name": "共享补给舱",
+      "type": "单次触发，使用后弃置",
+      "flavor": "灾难面前，分配比储备更考验秩序。",
+      "effect": "从资源池公开抽取玩家人数 +1 个资源，从你开始顺时针每名玩家选择 1 个资源获得，剩余资源弃置。",
+      "status": {
+        "society": 2,
+        "economy": 1,
+        "environment": -2
+      },
+      "semantics": {
+        "kind": "public_resource_draft",
+        "drawCount": "playerCount+1",
+        "choiceCountPerPlayer": 1,
+        "order": "clockwise_from_user",
+        "discardRemaining": true,
+        "singleUse": true
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1483,
+      "image": "/images/expedition/cards/shared-supply-pod.jpg",
+      "sourceImage": "image37.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "ecological-repeller",
+      "name": "生态驱赶器",
+      "type": "单次触发，使用后弃置",
+      "flavor": "当栖息地崩塌，迁徙本身也会成为灾难。",
+      "effect": "所有不在方舟范围内的玩家选择一项：弃置 1 个资源，或向远离方舟方向移动 1 格。",
+      "status": {
+        "environment": 1,
+        "society": -1
+      },
+      "semantics": {
+        "kind": "outside_ark_choice",
+        "targets": "all_players_outside_ark",
+        "choices": [
+          {
+            "kind": "discard_resource",
+            "amount": 1
+          },
+          {
+            "kind": "move_away_from_ark",
+            "distance": 1
+          }
+        ],
+        "singleUse": true
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1483,
+      "image": "/images/expedition/cards/ecological-repeller.jpg",
+      "sourceImage": "image38.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "black-tide-alarm",
+      "name": "黑潮警报器",
+      "type": "单次触发，使用后弃置",
+      "flavor": "海面变黑的时候，没有人能置身事外。",
+      "effect": "所有位于水域、河流或洪水边缘相邻地块的玩家弃置 1 个资源；若没有资源，则弃置 1 张手牌。",
+      "status": {
+        "environment": 1,
+        "economy": -1
+      },
+      "semantics": {
+        "kind": "water_edge_loss",
+        "targets": "water_river_or_adjacent_flood_edge",
+        "resourceCount": 1,
+        "noResourceFallback": {
+          "kind": "discard_hand",
+          "amount": 1
+        },
+        "singleUse": true
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1483,
+      "image": "/images/expedition/cards/black-tide-alarm.jpg",
+      "sourceImage": "image39.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "rapid-prototyper",
+      "name": "快速原型机",
+      "type": "单次触发，使用后弃置",
+      "flavor": "不是每个发明都成熟，但每个发明都可能有用。",
+      "effect": "立即抽 2 张行动卡，选择 1 张加入手牌，另一张置于牌堆底部。",
+      "status": {
+        "economy": 1,
+        "environment": -1
+      },
+      "semantics": {
+        "kind": "action_choice",
+        "drawCount": 2,
+        "chooseCount": 1,
+        "unselected": "deck_bottom",
+        "singleUse": true
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1483,
+      "image": "/images/expedition/cards/rapid-prototyper.jpg",
+      "sourceImage": "image40.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "ruins-blueprint",
+      "name": "废墟蓝图",
+      "type": "单次触发，使用后弃置",
+      "flavor": "废墟不是终点，它也可能是说明书。",
+      "effect": "从弃牌区选择 1 张行动卡加入手牌；不能选择已经弃置的限次科技牌。",
+      "status": {
+        "economy": 1,
+        "environment": -1
+      },
+      "semantics": {
+        "kind": "recover_action",
+        "amount": 1,
+        "source": "action_discard",
+        "excludeLimitedTechnology": true,
+        "singleUse": true
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1483,
+      "image": "/images/expedition/cards/ruins-blueprint.jpg",
+      "sourceImage": "image41.png",
+      "sourceCopies": 1
+    },
+    {
+      "id": "recycling-claw",
+      "name": "回收机械爪",
+      "type": "单次触发，使用后弃置",
+      "flavor": "所谓回收，只是换了一个所有者。",
+      "effect": "选择相邻 1 名玩家，获得其 1 个随机资源；若对方没有资源，则你抽 1 张行动卡。",
+      "status": {
+        "economy": 2,
+        "society": -2
+      },
+      "semantics": {
+        "kind": "adjacent_resource_steal",
+        "range": 1,
+        "resourceCount": 1,
+        "randomResource": true,
+        "emptyTargetFallback": {
+          "kind": "draw_action",
+          "amount": 1
+        },
+        "singleUse": true
+      },
+      "kind": "technology",
+      "width": 1061,
+      "height": 1483,
+      "image": "/images/expedition/cards/recycling-claw.jpg",
+      "sourceImage": "image42.png",
+      "sourceCopies": 1
+    }
+  ],
+  "backs": {
+    "action": {
+      "image": "/images/expedition/cards/action-back.jpg",
+      "sourceImage": "image13.png",
+      "width": 744,
+      "height": 1039
+    },
+    "technology": {
+      "image": "/images/expedition/cards/technology-back.jpg",
+      "sourceImage": "image29.png",
+      "width": 744,
+      "height": 1039
+    }
+  }
+}

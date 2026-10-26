@@ -8,11 +8,9 @@ import { createLocalRetriever } from './rag.js';
 import { createJsonStore } from './storage.js';
 import { createMiniMaxVerdictModel } from './llm/minimax.js';
 import { createGodRepository } from './god-repository.js';
-import { createRoomRepository } from './rooms/repository.js';
-import { createRoomService } from './rooms/service.js';
-import { createTaskAssessor } from './rooms/assessment.js';
-import { createRoomHandler } from './rooms/http.js';
-import { createTaskCatalog } from './rooms/tasks.js';
+import { createExpeditionService } from './expedition/service.js';
+import { createExpeditionHandler } from './expedition/http.js';
+import { createBoardingJudge } from './expedition/judgment.js';
 
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url));
 const dataDirectory = process.env.GAME_DATA_DIR || path.resolve(sourceDirectory, '../data');
@@ -22,8 +20,8 @@ await godRepository.list();
 const retriever = await createLocalRetriever(path.join(dataDirectory, 'knowledge.json'));
 const verdictModel = createMiniMaxVerdictModel(process.env.GAME_LLM_MODE === 'mock' ? { apiKey: '' } : {});
 const agentLoop = createAgentLoop({ godRepository, retriever, verdictModel });
-const roomService = createRoomService({ repository: createRoomRepository(store), agentLoop, assessTask: createTaskAssessor({ godRepository, verdictModel }), taskCatalog: createTaskCatalog(dataDirectory) });
-const roomHandler = createRoomHandler(roomService);
+const expeditionService = createExpeditionService({store,judge:createBoardingJudge({godRepository,retriever,verdictModel})});
+const expeditionHandler = createExpeditionHandler(expeditionService);
 const port = Number(process.env.GAME_API_PORT || 8787);
 const DEFAULT_STATE = {
   round: 1,
@@ -67,7 +65,7 @@ const server = createServer(async (request, response) => {
     if (request.method === 'OPTIONS') return send(response, 204, {});
     const url = new URL(request.url, `http://${request.headers.host}`);
     request.res = response;
-    if (await roomHandler(request, url, { send, bodyOf })) return;
+    if (await expeditionHandler(request, url, { send, bodyOf })) return;
 
     if (request.method === 'GET' && url.pathname === '/api/health') {
       return send(response, 200, { ok: true, rag: { model: retriever.model, documents: retriever.size }, llm: verdictModel.describe(), godPrompts: await godRepository.describe(), persistence: 'json' });

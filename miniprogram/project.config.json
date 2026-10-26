@@ -1,9 +1,0 @@
-{
-  "description": "Noah's Rescue · 本地 3v3 桌游陪伴小程序",
-  "projectname": "noahs-rescue-local",
-  "appid": "touristappid",
-  "compileType": "miniprogram",
-  "miniprogramRoot": "./",
-  "setting": { "es6": true, "enhance": true, "urlCheck": false, "minified": false },
-  "packOptions": { "ignore": [{ "type": "suffix", "value": ".d.ts" }, { "type": "file", "value": "README.md" }] }
-}

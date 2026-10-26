@@ -1,0 +1,124 @@
+{
+  "version": 1,
+  "source": {
+    "document": "资产合集.docx",
+    "archivePath": "word/media",
+    "importMethod": "直接提取 DOCX 内嵌图片；忽略 Word 绘图拉伸尺寸；仅转为 JPEG，保持原始像素长宽比。",
+    "version": "2026-10-26"
+  },
+  "notes": [
+    "角色名称逐字保留卡面；仅用于选人和形象展示，原卡未给出角色技能，不额外发明属性或能力。"
+  ],
+  "characters": [
+    {
+      "id": "fennec-fox",
+      "name": "格兰特斑马耳廓沙狐",
+      "faction": "animal",
+      "factionLabel": "动物阵营",
+      "text": "动物阵营 · 格兰特斑马耳廓沙狐 · 角色卡",
+      "image": "/images/expedition/characters/fennec-fox.jpg",
+      "sourceImage": "image3.png",
+      "width": 958,
+      "height": 1642
+    },
+    {
+      "id": "snowfinch",
+      "name": "白翅雪雀",
+      "faction": "animal",
+      "factionLabel": "动物阵营",
+      "text": "动物阵营 · 白翅雪雀 · 角色卡",
+      "image": "/images/expedition/characters/snowfinch.jpg",
+      "sourceImage": "image4.png",
+      "width": 958,
+      "height": 1642
+    },
+    {
+      "id": "chinese-alligator",
+      "name": "扬子鳄",
+      "faction": "animal",
+      "factionLabel": "动物阵营",
+      "text": "动物阵营 · 扬子鳄 · 角色卡",
+      "image": "/images/expedition/characters/chinese-alligator.jpg",
+      "sourceImage": "image5.png",
+      "width": 958,
+      "height": 1642
+    },
+    {
+      "id": "golden-lion-tamarin",
+      "name": "金狮狷猴",
+      "faction": "animal",
+      "factionLabel": "动物阵营",
+      "text": "动物阵营 · 金狮狷猴 · 角色卡",
+      "image": "/images/expedition/characters/golden-lion-tamarin.jpg",
+      "sourceImage": "image6.png",
+      "width": 957,
+      "height": 1644
+    },
+    {
+      "id": "polar-bear",
+      "name": "北极熊",
+      "faction": "animal",
+      "factionLabel": "动物阵营",
+      "text": "动物阵营 · 北极熊 · 角色卡",
+      "image": "/images/expedition/characters/polar-bear.jpg",
+      "sourceImage": "image7.png",
+      "width": 958,
+      "height": 1642
+    },
+    {
+      "id": "biologist",
+      "name": "生物学家",
+      "faction": "human",
+      "factionLabel": "人类阵营",
+      "text": "人类阵营 · 生物学家 · 角色卡",
+      "image": "/images/expedition/characters/biologist.jpg",
+      "sourceImage": "image8.png",
+      "width": 958,
+      "height": 1642
+    },
+    {
+      "id": "alchemist",
+      "name": "炼金师",
+      "faction": "human",
+      "factionLabel": "人类阵营",
+      "text": "人类阵营 · 炼金师 · 角色卡",
+      "image": "/images/expedition/characters/alchemist.jpg",
+      "sourceImage": "image9.png",
+      "width": 958,
+      "height": 1642
+    },
+    {
+      "id": "captain",
+      "name": "舰长",
+      "faction": "human",
+      "factionLabel": "人类阵营",
+      "text": "人类阵营 · 舰长 · 角色卡",
+      "image": "/images/expedition/characters/captain.jpg",
+      "sourceImage": "image10.png",
+      "width": 959,
+      "height": 1641
+    },
+    {
+      "id": "wandering-merchant",
+      "name": "流浪商人",
+      "faction": "human",
+      "factionLabel": "人类阵营",
+      "text": "人类阵营 · 流浪商人 · 角色卡",
+      "image": "/images/expedition/characters/wandering-merchant.jpg",
+      "sourceImage": "image11.png",
+      "width": 958,
+      "height": 1642
+    },
+    {
+      "id": "wilderness-hunter",
+      "name": "荒野猎人",
+      "faction": "human",
+      "factionLabel": "人类阵营",
+      "text": "人类阵营 · 荒野猎人 · 角色卡",
+      "image": "/images/expedition/characters/wilderness-hunter.jpg",
+      "sourceImage": "image12.png",
+      "width": 959,
+      "height": 1640
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 // macOS unzip/sips extract original media and preserve native aspect ratios.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtemp, mkdir, readFile, writeFile, copyFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -12,9 +12,7 @@ if (!source) throw new Error('Usage: node scripts/import-disaster-art.mjs /absol
 const root = fileURLToPath(new URL('../', import.meta.url));
 const catalog = JSON.parse(await readFile(path.join(root, 'server/data/disasters.json'), 'utf8'));
 const web = path.join(root, 'app/public/images/disasters');
-const native = path.join(root, 'miniprogram/assets/disasters');
 await mkdir(web, { recursive: true });
-await mkdir(native, { recursive: true });
 const temp = await mkdtemp(path.join(tmpdir(), 'noah-card-import-'));
 const assets = {};
 try {
@@ -26,7 +24,6 @@ try {
     const file = `${card.id}.jpg`;
     await writeFile(input, bytes);
     execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '65', '-Z', '1000', input, '--out', path.join(web, file)], { stdio: 'pipe' });
-    await copyFile(path.join(web, file), path.join(native, file));
     const dimensions = execFileSync('sips', ['-g', 'pixelWidth', '-g', 'pixelHeight', path.join(web, file)], { encoding: 'utf8' });
     const jpeg = await readFile(path.join(web, file));
     assets[card.id] = { file, width: Number(dimensions.match(/pixelWidth: (\d+)/)[1]), height: Number(dimensions.match(/pixelHeight: (\d+)/)[1]), originalWidth, originalHeight, sourceImage: card.sourceImage, sourceSha256: createHash('sha256').update(bytes).digest('hex'), sha256: createHash('sha256').update(jpeg).digest('hex'), bytes: jpeg.length };

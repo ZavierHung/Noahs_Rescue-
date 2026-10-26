@@ -91,14 +91,12 @@ test('effects preserve document details, not the superseded mechanics', () => {
   assert.doesNotMatch(JSON.stringify(all), /低碳转型阵痛|集体决策低效|资源保护区扩大|开采成功率|自然资源产出 -1/);
 });
 
-test('12 source card assets match web/native, retain native proportions and stay within 3 MB', async () => {
+test('12 source card assets retain native proportions and stay within 3 MB', async () => {
   const art = JSON.parse(await readFile(new URL('../data/disaster-art.json', import.meta.url), 'utf8'));
   assert.equal(Object.keys(art.assets).length, 12);
   let total = 0;
   for (const [id, asset] of Object.entries(art.assets)) {
     const web = await readFile(new URL(`../../app/public/images/disasters/${asset.file}`, import.meta.url));
-    const native = await readFile(new URL(`../../miniprogram/assets/disasters/${asset.file}`, import.meta.url));
-    assert.deepEqual(web, native);
     assert.equal(createHash('sha256').update(web).digest('hex'), asset.sha256);
     assert.equal(web.subarray(0, 2).toString('hex'), 'ffd8');
     assert.ok(Math.abs(asset.width / asset.height - asset.originalWidth / asset.originalHeight) < 0.001, id);
