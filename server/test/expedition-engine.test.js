@@ -207,8 +207,8 @@ test("persistent tech: hand8, move+1, gather+1, no stacking; full status changes
     g = act(g, "choose", { techId: id });
     assert.ok(g.players[0].equipment.includes(id));
     for (const [k, d] of Object.entries(expected))
-      assert.equal(g.players[0].attributes[k], 10 + d);
-    const scores = { ...g.players[0].attributes };
+      assert.equal(g.attributes[k], 10 + d);
+    const scores = { ...g.attributes };
     g.pending = {
       kind: "technology",
       actor: "P1",
@@ -217,7 +217,7 @@ test("persistent tech: hand8, move+1, gather+1, no stacking; full status changes
     };
     g.phase = "choice";
     g = act(g, "choose", { techId: id });
-    assert.deepEqual(g.players[0].attributes, scores);
+    assert.deepEqual(g.attributes, scores);
     if (id === "skateboard-shoes") {
       g.phase = "move";
       assert.ok(

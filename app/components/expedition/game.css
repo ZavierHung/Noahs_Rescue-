@@ -1,3 +1,115 @@
+.world-panel {
+  margin: 0 0 26px;
+  padding: 22px;
+  border: 1px solid #c7c9b5;
+  background: #fcf9ef;
+  border-radius: 12px;
+}
+.world-attributes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.world-attribute {
+  padding: 15px;
+  border: 1px solid #bccab4;
+  border-radius: 9px;
+  background: #edf1e5;
+}
+.world-attribute.warning {
+  background: #f3e9d0;
+  border-color: #bea26c;
+}
+.world-attribute.critical {
+  background: #f4ded4;
+  border-color: #b67e64;
+}
+.world-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.world-score output {
+  font:
+    32px Georgia,
+    serif;
+}
+.world-attribute input[type="range"] {
+  width: 100%;
+  padding: 0;
+  accent-color: #395f4a;
+  cursor: ew-resize;
+}
+.world-attribute.critical input[type="range"] {
+  accent-color: #aa543e;
+}
+.world-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  font-size: 10px;
+  color: #7f7d6e;
+  margin: 6px 0;
+}
+.expedition .world-number {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0;
+}
+.world-number input {
+  width: 65px;
+}
+.world-attribute small,
+.protection-confirmation small,
+.disaster-choice small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #6b7464;
+}
+.world-edit {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px 0 8px;
+}
+.world-edit label {
+  flex: 1;
+  min-width: 180px;
+}
+.protection-confirmation {
+  border-top: 1px solid #d0c8b3;
+  margin-top: 18px;
+  padding-top: 12px;
+}
+.protection-confirmation .two-buttons {
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.disaster-choice {
+  padding: 4px 0 12px;
+}
+.disaster-choice h4 {
+  margin: 0;
+  font-size: 18px;
+}
+@media (max-width: 740px) {
+  .world-panel {
+    padding: 14px;
+  }
+  .world-attributes {
+    grid-template-columns: 1fr;
+  }
+  .world-edit > button {
+    flex: 1;
+  }
+  .world-edit label {
+    width: 100%;
+    flex-basis: 100%;
+  }
+}
 .expedition {
   --ink: #203b34;
   --paper: #f6f1e6;
@@ -560,6 +672,113 @@
 .player-roster article.active {
   border-color: #ad8444;
   background: #efe6ce;
+}
+.player-roster article.inspected {
+  outline: 2px solid #395f4a;
+  outline-offset: 2px;
+}
+.expedition .roster-select {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+}
+.roster-summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.roster-line,
+.roster-view-label {
+  display: block;
+  font-size: 11px;
+  margin-top: 5px;
+}
+.roster-view-label {
+  color: #395f4a;
+}
+.player-view-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  border-left: 3px solid #395f4a;
+  background: #e9eddf;
+  border-radius: 8px;
+}
+.player-view-status p {
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+.player-inspector {
+  border: 1px solid #aabb9e;
+  border-radius: 12px;
+  padding: 20px;
+  background: #fcf9ef;
+  overflow-wrap: anywhere;
+}
+.inspection-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.inspection-identity .art-button {
+  width: 64px;
+  flex-shrink: 0;
+}
+.inspection-identity h2 {
+  font-size: 20px;
+  margin: 0;
+}
+.player-inspector p,
+.player-inspector small {
+  font-size: 12px;
+}
+.inspection-note {
+  padding: 10px;
+  background: #e9eddf;
+  border-radius: 6px;
+}
+.inspection-inventory dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.inspection-inventory dt {
+  font-size: 11px;
+}
+.inspection-inventory dd {
+  margin: 0;
+  font-size: 21px;
+}
+.inspection-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.inspection-card .art-button {
+  display: block;
+  width: 100%;
+  max-width: 100px;
+  margin-bottom: 8px;
+}
+.inspection-card strong {
+  font-size: 13px;
+}
+.inspection-card p {
+  margin: 5px 0;
+}
+.inspection-impact {
+  margin-top: 18px;
+  border-top: 1px solid #d3cfbc;
 }
 .player-roster img {
   width: 55px;

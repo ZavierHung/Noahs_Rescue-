@@ -76,13 +76,16 @@ export function Board({
           const wet =
               t.terrain === "water" ||
               (!!game && t.zone > 0 && t.zone >= 4 - game.floodLevel),
-            canMove = !!game?.reachable[t.id];
+            canMove = !!game?.reachable[t.id],
+            exhausted =
+              !!game?.world.harvested[t.id] &&
+              game.activeDisasters.some((c) => c.id === "eco-collapse");
           return (
             <g
               key={t.id}
               role="button"
               tabIndex={0}
-              aria-label={`格子 ${t.id}，${wet ? "淹没或水域" : t.zone ? `区域${t.zone}` : "方舟范围"}，${t.resource ? catalog.resources[t.resource] : "无资源"}`}
+              aria-label={`格子 ${t.id}，${wet ? "淹没或水域" : t.zone ? `区域${t.zone}` : "方舟范围"}，${t.resource ? catalog.resources[t.resource] : "无资源"}${exhausted ? "，已枯竭" : ""}`}
               onClick={() => onSelect(t.id)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -122,7 +125,7 @@ export function Board({
               />
               {grid && t.resource && !wet && (
                 <text className="map-resource" x={t.x} y={t.y + 5}>
-                  {symbols[t.resource]}
+                  {exhausted ? "×" : symbols[t.resource]}
                 </text>
               )}
             </g>

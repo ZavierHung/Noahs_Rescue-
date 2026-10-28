@@ -80,6 +80,143 @@ test("HTTP creation, refresh, concurrent duplicate action, stale revision and pe
   );
   assert.equal(saved.games[0].revision, 2);
 });
+test("shared-world HTTP settlement is persisted once, resumes after restart, and enters god evidence", async (t) => {
+  const local = await testApi();
+  t.after(local.close);
+  let game = await local.service.create(setup);
+  const url = `${local.base}/api/expeditions/${game.id}`;
+  const edit = {
+    type: "set_world",
+    actor: "P1",
+    revision: game.revision,
+    attributes: { economy: 18, environment: 10, society: 10 },
+    reason: "主持人测试叠加阈值",
+  };
+  const responses = await Promise.all(
+    [0, 1].map(() =>
+      fetch(`${url}/actions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(edit),
+      }),
+    ),
+  );
+  assert.deepEqual(responses.map((r) => r.status).sort(), [200, 409]);
+  game = await local.service.get(game.id);
+  assert.deepEqual(game.attributes, {
+    economy: 18,
+    environment: 9,
+    society: 9,
+  });
+  assert.equal(game.activeDisasters.length, 2);
+  assert.equal(game.pending.kind, "disaster_gain");
+  const file = `${local.directory}/expeditions.json`;
+  const snapshot = await readFile(file, "utf8");
+  for (let i = 0; i < 3; i++) {
+    const read = await fetch(url);
+    assert.equal((await read.json()).revision, game.revision);
+  }
+  assert.equal(await readFile(file, "utf8"), snapshot);
+  const restarted = createExpeditionService({ store: local.store });
+  game = await restarted.get(game.id);
+  while (game.pending?.kind === "disaster_gain")
+    game = await restarted.action(game.id, {
+      type: "choose",
+      actor: game.activePlayerId,
+      revision: game.revision,
+      resource: "metal",
+    });
+  assert.equal(game.pending, null);
+  assert.equal(game.phase, "cards");
+  assert.equal(
+    game.players.reduce((n, p) => n + p.resources.metal, 0),
+    3,
+  );
+  assert.equal(
+    game.events.filter((e) => e.type === "disaster_tribute").length,
+    1,
+  );
+  const context = judgmentContext(game);
+  assert.deepEqual(context.attributes, game.attributes);
+  assert.equal(context.world.policyVersion, "shared-world-v2");
+  assert.ok(context.players.every((p) => !p.attributes && p.worldImpact));
+  assert.equal(
+    context.globalEvents.filter((e) => e.type === "world_manual").length,
+    1,
+  );
+  assert.ok(
+    context.globalEvents.some(
+      (e) => e.type === "action" && e.worldDelta?.economy === 8,
+    ),
+  );
+});
+test("HTTP rejects every non-current actor command without mutations, including pending responders", async (t) => {
+  const local = await testApi();
+  t.after(local.close);
+  let game = await local.service.create(setup);
+  const file = `${local.directory}/expeditions.json`;
+  const snapshot = await readFile(file, "utf8");
+  for (const type of [
+    "skip",
+    "play",
+    "discard",
+    "move",
+    "gather",
+    "donate",
+    "beacon",
+    "choose",
+    "pay_flood",
+    "blade_move",
+    "set_world",
+    "confirm_protection",
+  ]) {
+    const response = await fetch(
+      `${local.base}/api/expeditions/${game.id}/actions`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ type, actor: "P2", revision: game.revision }),
+      },
+    );
+    assert.equal(response.status, 400, type);
+    assert.match((await response.json()).error, /当前行动玩家/);
+  }
+  assert.equal(await readFile(file, "utf8"), snapshot);
+  game = await local.service.action(game.id, {
+    type: "set_world",
+    actor: "P1",
+    revision: game.revision,
+    attributes: { economy: 14, environment: 10, society: 10 },
+    reason: "响应玩家权限测试",
+  });
+  game = await local.service.action(game.id, {
+    type: "choose",
+    actor: "P1",
+    revision: game.revision,
+    resource: "wood",
+  });
+  assert.equal(game.turn, 0);
+  assert.equal(game.activePlayerId, "P2");
+  const pendingSnapshot = await readFile(file, "utf8");
+  await assert.rejects(
+    local.service.action(game.id, {
+      type: "choose",
+      actor: "P1",
+      revision: game.revision,
+      resource: "wood",
+    }),
+    /当前行动玩家/,
+  );
+  assert.equal(await readFile(file, "utf8"), pendingSnapshot);
+  game = await local.service.action(game.id, {
+    type: "choose",
+    actor: "P2",
+    revision: game.revision,
+    resource: "metal",
+  });
+  assert.equal(game.players[1].resources.metal, 1);
+  assert.equal(game.activePlayerId, "P3");
+});
 test("terminal judge sees complete global events, RAG and full persona; one verdict, one rebuttal; game sealed", async (t) => {
   const local = await testApi();
   t.after(local.close);

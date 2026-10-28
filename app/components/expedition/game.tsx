@@ -10,6 +10,9 @@ import {
   type Card,
 } from "@/lib/expedition";
 import { Board } from "./board";
+import { WorldPanel } from "./world-panel";
+import { DisasterChoice } from "./disaster-choice";
+import { PlayerInspector } from "./player-inspector";
 import { DisasterCards } from "../game/disaster-cards";
 import "./game.css";
 const keys: Resource[] = ["wood", "metal", "electricity", "seed"];
@@ -22,6 +25,7 @@ const phaseNames: Record<string, string> = {
   choice: "处理卡牌选择",
   flood: "洪水结算",
   judgment: "终局审判",
+  disaster: "灾难结算",
 };
 type Seat = { characterId: string; flagId: string; name: string };
 function BagFields({
@@ -90,6 +94,28 @@ export default function ExpeditionGame() {
     [tech, setTech] = useState<string | null>(null),
     [rebuttal, setRebuttal] = useState("");
   const [tab, setTab] = useState<"log" | "donations" | "rules">("log");
+  // null follows the server's current actor. A pinned inspection is local UI
+  // state only: it never changes game.turn, pending.actor or the command actor.
+  const [inspection, setInspection] = useState<{
+    gameId: string;
+    playerId: string;
+  } | null>(null);
+  const viewedPlayerId =
+    inspection &&
+    game &&
+    inspection.gameId === game.id &&
+    game.players.some((p) => p.id === inspection.playerId)
+      ? inspection.playerId
+      : game?.activePlayerId;
+  const inspectingOther = !!game && viewedPlayerId !== game.activePlayerId;
+  useEffect(() => {
+    if (
+      game &&
+      inspection?.gameId === game.id &&
+      inspection.playerId === game.activePlayerId
+    )
+      setInspection(null);
+  }, [game?.id, game?.activePlayerId, inspection]);
   const version = useRef(0);
   function accept(next: Game) {
     setGame((old) =>
@@ -106,13 +132,11 @@ export default function ExpeditionGame() {
       setCatalog(c);
       setGames(list);
       setSeats(
-        c.characters
-          .slice(0, 3)
-          .map((c, i) => ({
-            characterId: c.id,
-            flagId: `P${i * 2 + 1}`,
-            name: "",
-          })),
+        c.characters.slice(0, 3).map((c, i) => ({
+          characterId: c.id,
+          flagId: `P${i * 2 + 1}`,
+          name: "",
+        })),
       );
       const id = localStorage.getItem("noah-expedition-id");
       if (id) accept(await apiRequest<Game>(`/${id}`));
@@ -144,7 +168,16 @@ export default function ExpeditionGame() {
     setAmounts(blank());
     setSpend(blank());
     setTarget("");
-  }, [game?.activePlayerId, game?.phase, game?.pending?.kind]);
+    setGive(blank());
+    setReceive(blank());
+    setSelected(null);
+  }, [
+    game?.id,
+    game?.activePlayerId,
+    game?.phase,
+    game?.pending?.kind,
+    viewedPlayerId,
+  ]);
   useEffect(() => {
     if (!preview) return;
     const close = (e: KeyboardEvent) => {
@@ -154,23 +187,29 @@ export default function ExpeditionGame() {
     return () => document.removeEventListener("keydown", close);
   }, [preview]);
   async function act(type: string, data: Record<string, unknown> = {}) {
-    if (!game || busy) return;
+    if (!game || busy) return false;
+    if (game.status === "playing" && inspectingOther) {
+      setError("当前为只读查看，请返回当前行动玩家后操作");
+      return false;
+    }
     setBusy(true);
     setError("");
     try {
       accept(
         await apiRequest<Game>(`/${game.id}/actions`, "POST", {
+          ...data,
           type,
           actor: game.activePlayerId,
-          revision: game.revision,
-          ...data,
+          revision: data.revision ?? game.revision,
         }),
       );
+      return true;
     } catch (e) {
       setError((e as Error).message);
       try {
         accept(await apiRequest<Game>(`/${game.id}`));
       } catch {}
+      return false;
     } finally {
       setBusy(false);
     }
@@ -212,6 +251,7 @@ export default function ExpeditionGame() {
   const cat = catalog,
     g = game,
     p = g?.players.find((p) => p.id === g.activePlayerId),
+    viewedPlayer = g?.players.find((player) => player.id === viewedPlayerId),
     tile = cat.map.tiles.find((t) => t.id === (selected || p?.position));
   const techCard = cat.cards.technology.find((c) => c.id === tech),
     pending = g?.pending;
@@ -514,6 +554,36 @@ export default function ExpeditionGame() {
               </button>
             </div>
           </div>
+          <div className="player-view-status" aria-label="玩家查看与行动状态">
+            <div aria-live="polite">
+              <strong>
+                {g.status === "playing"
+                  ? `当前行动：${p?.id} · ${p?.name}`
+                  : "航程已结束 · 玩家信息只读"}
+              </strong>
+              <p>
+                {inspectingOther
+                  ? `正在查看 ${viewedPlayer?.id} · ${viewedPlayer?.name}，仅可查看。`
+                  : "当前跟随行动玩家；点击下方玩家卡可查看其他人的手牌与详情。"}
+                {g.status === "playing" &&
+                  g.pending &&
+                  " 正在处理系统指定的卡牌回应或结算，不代表切换正常回合。"}
+              </p>
+            </div>
+            {inspectingOther && (
+              <button onClick={() => setInspection(null)}>
+                {g.status === "playing" ? "返回当前行动玩家" : "返回默认视角"}
+              </button>
+            )}
+          </div>
+          <WorldPanel
+            key={`${g.id}-${viewedPlayerId}`}
+            game={g}
+            busy={busy}
+            readOnly={inspectingOther}
+            tile={tile}
+            act={act}
+          />
           <div className="game-layout">
             <section>
               <Board
@@ -536,34 +606,57 @@ export default function ExpeditionGame() {
                   </span>
                 </div>
               )}
-              <div className="player-roster">
+              <div className="player-roster" aria-label="玩家列表">
                 {g.players.map((player) => (
                   <article
                     key={player.id}
-                    className={player.id === g.activePlayerId ? "active" : ""}
+                    className={`${player.id === g.activePlayerId ? "active" : ""} ${player.id === viewedPlayerId ? "inspected" : ""}`}
                   >
-                    <img
-                      src={
-                        cat.characters.find((c) => c.id === player.characterId)
-                          ?.image
+                    <button
+                      className="roster-select"
+                      aria-label={`查看 ${player.id} 玩家详情`}
+                      aria-pressed={player.id === viewedPlayerId}
+                      onClick={() =>
+                        setInspection(
+                          player.id === g.activePlayerId
+                            ? null
+                            : { gameId: g.id, playerId: player.id },
+                        )
                       }
-                      alt={player.name}
-                    />
-                    <div>
-                      <strong>
-                        {player.id} · {player.name}
-                      </strong>
-                      <p>{bagText(player.resources)}</p>
-                      <small>
-                        经济 {player.attributes.economy} · 环境{" "}
-                        {player.attributes.environment} · 社会{" "}
-                        {player.attributes.society}
-                      </small>
-                      <p>
-                        已捐赠 {keys.reduce((n, r) => n + player.donated[r], 0)}{" "}
-                        份
-                      </p>
-                    </div>
+                    >
+                      <img
+                        src={
+                          cat.characters.find(
+                            (c) => c.id === player.characterId,
+                          )?.image
+                        }
+                        alt={player.name}
+                      />
+                      <span className="roster-summary">
+                        <strong>
+                          {player.id} · {player.name}
+                        </strong>
+                        <span className="roster-line">
+                          {bagText(player.resources)}
+                        </span>
+                        <small>
+                          出生 {player.spawn} · 当前格 {player.position}
+                        </small>
+                        <span className="roster-line">
+                          已捐赠{" "}
+                          {keys.reduce((n, r) => n + player.donated[r], 0)} 份
+                        </span>
+                        <span className="roster-view-label">
+                          {player.id === g.activePlayerId &&
+                          g.status === "playing"
+                            ? "当前行动"
+                            : "只读查看"}
+                          {player.id === viewedPlayerId
+                            ? " · 正在查看"
+                            : " · 点击查看手牌"}
+                        </span>
+                      </span>
+                    </button>
                   </article>
                 ))}
               </div>
@@ -584,463 +677,496 @@ export default function ExpeditionGame() {
                 </div>
                 <small>捐赠即时入库，洪水按骰点扣除实际物资。</small>
               </section>
+              {viewedPlayer && (inspectingOther || g.status !== "playing") && (
+                <PlayerInspector
+                  player={viewedPlayer}
+                  catalog={cat}
+                  onPreview={setPreview}
+                />
+              )}
               {g.status === "playing" && p ? (
-                <section className="action-panel">
-                  <p className="overline">{p.id} / 轮到你了</p>
-                  <h2>{p.name}</h2>
-                  <div className="phase-track">
-                    {["cards", "move", "gather", "donate"].map((s) => (
-                      <span className={g.phase === s ? "active" : ""} key={s}>
-                        {phaseNames[s]}
-                      </span>
-                    ))}
-                  </div>
-                  {pending ? (
-                    <div className="pending-choice">
-                      <h3>
-                        {pending.kind === "technology"
-                          ? "科技 · 抽二选一"
-                          : pending.kind === "trade"
-                            ? "收到资源交换请求"
-                            : pending.kind === "flood"
-                              ? "支付本次洪水损失"
-                              : pending.kind === "blade"
-                                ? "名刀触发 · 额外移动两格"
-                                : "请选择卡牌效果"}
-                      </h3>
-                      {pending.kind === "technology" && (
-                        <>
-                          <div className="tech-options">
-                            {pending.choices.map((id: string, i: number) => (
-                              <div
-                                key={i}
-                                className={tech === id ? "chosen" : ""}
-                              >
-                                <Artwork c={card(id)} />
-                                <button onClick={() => setTech(id)}>
-                                  {card(id).name}
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                          {techCard && (
-                            <>
-                              <p>{techCard.effect}</p>
-                              {tech === "alchemy-furnace" && (
-                                <>
-                                  <BagFields
-                                    value={spend}
-                                    onChange={setSpend}
-                                    label="炼金消耗"
-                                    max={p.resources}
-                                  />
+                !inspectingOther && (
+                  <section className="action-panel">
+                    <p className="overline">{p.id} / 轮到你了</p>
+                    <h2>{p.name}</h2>
+                    <div className="phase-track">
+                      {["cards", "move", "gather", "donate"].map((s) => (
+                        <span className={g.phase === s ? "active" : ""} key={s}>
+                          {phaseNames[s]}
+                        </span>
+                      ))}
+                    </div>
+                    {pending ? (
+                      <div className="pending-choice">
+                        <h3>
+                          {pending.kind === "technology"
+                            ? "科技 · 抽二选一"
+                            : pending.kind === "trade"
+                              ? "收到资源交换请求"
+                              : pending.kind === "flood"
+                                ? "支付本次洪水损失"
+                                : pending.kind === "blade"
+                                  ? "名刀触发 · 额外移动两格"
+                                  : "请选择卡牌效果"}
+                        </h3>
+                        <DisasterChoice
+                          game={g}
+                          player={p}
+                          catalog={cat}
+                          busy={busy}
+                          act={act}
+                        />
+                        {pending.kind === "technology" && (
+                          <>
+                            <div className="tech-options">
+                              {pending.choices.map((id: string, i: number) => (
+                                <div
+                                  key={i}
+                                  className={tech === id ? "chosen" : ""}
+                                >
+                                  <Artwork c={card(id)} />
+                                  <button onClick={() => setTech(id)}>
+                                    {card(id).name}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                            {techCard && (
+                              <>
+                                <p>{techCard.effect}</p>
+                                {tech === "alchemy-furnace" && (
+                                  <>
+                                    <BagFields
+                                      value={spend}
+                                      onChange={setSpend}
+                                      label="炼金消耗"
+                                      max={p.resources}
+                                    />
+                                    <label>
+                                      产出
+                                      <select
+                                        value={resource}
+                                        onChange={(e) =>
+                                          setResource(
+                                            e.target.value as Resource,
+                                          )
+                                        }
+                                      >
+                                        {keys.map((r) => (
+                                          <option key={r} value={r}>
+                                            {cat.resources[r]}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </label>
+                                  </>
+                                )}
+                                {tech === "recycling-claw" && (
                                   <label>
-                                    产出
+                                    相邻目标
                                     <select
-                                      value={resource}
+                                      aria-label="科技目标"
+                                      value={target}
                                       onChange={(e) =>
-                                        setResource(e.target.value as Resource)
+                                        setTarget(e.target.value)
                                       }
                                     >
-                                      {keys.map((r) => (
-                                        <option key={r} value={r}>
-                                          {cat.resources[r]}
-                                        </option>
-                                      ))}
+                                      <option value="">选择玩家</option>
+                                      {g.players
+                                        .filter((t) => t.id !== p.id)
+                                        .map((t) => (
+                                          <option key={t.id} value={t.id}>
+                                            {t.name}
+                                          </option>
+                                        ))}
                                     </select>
                                   </label>
-                                </>
-                              )}
-                              {tech === "recycling-claw" && (
-                                <label>
-                                  相邻目标
-                                  <select
-                                    aria-label="科技目标"
-                                    value={target}
-                                    onChange={(e) => setTarget(e.target.value)}
-                                  >
-                                    <option value="">选择玩家</option>
-                                    {g.players
-                                      .filter((t) => t.id !== p.id)
-                                      .map((t) => (
-                                        <option key={t.id} value={t.id}>
-                                          {t.name}
-                                        </option>
-                                      ))}
-                                  </select>
-                                </label>
-                              )}
+                                )}
+                                <button
+                                  className="primary"
+                                  disabled={busy}
+                                  onClick={() =>
+                                    void act("choose", {
+                                      techId: tech,
+                                      spend,
+                                      resource,
+                                      targetId: target,
+                                    })
+                                  }
+                                >
+                                  获得 {techCard.name} 的收益
+                                </button>
+                              </>
+                            )}
+                            <button
+                              disabled={busy}
+                              onClick={() =>
+                                void act("choose", { decline: true })
+                              }
+                            >
+                              放弃本次科技收益
+                            </button>
+                          </>
+                        )}
+                        {pending.kind === "trade" && (
+                          <>
+                            <p>
+                              {
+                                g.players.find((t) => t.id === pending.owner)
+                                  ?.name
+                              }{" "}
+                              给你：{bagText(pending.give)}
+                            </p>
+                            <p>希望你给出：{bagText(pending.receive)}</p>
+                            <div className="two-buttons">
                               <button
                                 className="primary"
                                 disabled={busy}
                                 onClick={() =>
-                                  void act("choose", {
-                                    techId: tech,
-                                    spend,
-                                    resource,
-                                    targetId: target,
-                                  })
+                                  void act("choose", { accept: true })
                                 }
                               >
-                                获得 {techCard.name} 的收益
+                                接受交换
                               </button>
-                            </>
-                          )}
-                          <button
-                            disabled={busy}
-                            onClick={() =>
-                              void act("choose", { decline: true })
-                            }
-                          >
-                            放弃本次科技收益
-                          </button>
-                        </>
-                      )}
-                      {pending.kind === "trade" && (
-                        <>
-                          <p>
-                            {
-                              g.players.find((t) => t.id === pending.owner)
-                                ?.name
-                            }{" "}
-                            给你：{bagText(pending.give)}
-                          </p>
-                          <p>希望你给出：{bagText(pending.receive)}</p>
-                          <div className="two-buttons">
-                            <button
-                              className="primary"
-                              disabled={busy}
-                              onClick={() =>
-                                void act("choose", { accept: true })
-                              }
-                            >
-                              接受交换
-                            </button>
-                            <button
-                              disabled={busy}
-                              onClick={() =>
-                                void act("choose", { accept: false })
-                              }
-                            >
-                              拒绝
-                            </button>
-                          </div>
-                        </>
-                      )}
-                      {pending.kind === "flood" && (
-                        <>
-                          <p>固定扣除：{bagText(pending.cost.mandatory)}</p>
-                          <p>
-                            {pending.cost.optional
-                              ? "再选择一种可用物资扣除 1："
-                              : "储备仓已减免 1 份，本次无需选扣。"}
-                            不足的固定资源按实际持有扣除，不产生负数。
-                          </p>
-                          {pending.cost.optional &&
-                          pending.cost.choices.some(
-                            (r: Resource) =>
-                              p.resources[r] > pending.cost.mandatory[r],
-                          ) ? (
-                            <div className="resource-options">
-                              {pending.cost.choices.map((r: Resource) => (
-                                <button
-                                  key={r}
-                                  disabled={
-                                    busy ||
-                                    p.resources[r] <= pending.cost.mandatory[r]
-                                  }
-                                  onClick={() =>
-                                    void act("pay_flood", { resource: r })
-                                  }
-                                >
-                                  扣除{cat.resources[r]} 1
-                                </button>
-                              ))}
+                              <button
+                                disabled={busy}
+                                onClick={() =>
+                                  void act("choose", { accept: false })
+                                }
+                              >
+                                拒绝
+                              </button>
                             </div>
-                          ) : (
+                          </>
+                        )}
+                        {pending.kind === "flood" && (
+                          <>
+                            <p>固定扣除：{bagText(pending.cost.mandatory)}</p>
+                            <p>
+                              {pending.cost.optional
+                                ? "再选择一种可用物资扣除 1："
+                                : "储备仓已减免 1 份，本次无需选扣。"}
+                              不足的固定资源按实际持有扣除，不产生负数。
+                            </p>
+                            {pending.cost.optional &&
+                            pending.cost.choices.some(
+                              (r: Resource) =>
+                                p.resources[r] > pending.cost.mandatory[r],
+                            ) ? (
+                              <div className="resource-options">
+                                {pending.cost.choices.map((r: Resource) => (
+                                  <button
+                                    key={r}
+                                    disabled={
+                                      busy ||
+                                      p.resources[r] <=
+                                        pending.cost.mandatory[r]
+                                    }
+                                    onClick={() =>
+                                      void act("pay_flood", { resource: r })
+                                    }
+                                  >
+                                    扣除{cat.resources[r]} 1
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <button
+                                className="primary"
+                                disabled={busy}
+                                onClick={() => void act("pay_flood")}
+                              >
+                                确认本次扣除 / 无可扣资源
+                              </button>
+                            )}
+                          </>
+                        )}
+                        {pending.kind === "blade" && (
+                          <>
+                            <p>点击地图选择目的地；不移动可选择当前格。</p>
                             <button
                               className="primary"
-                              disabled={busy}
-                              onClick={() => void act("pay_flood")}
-                            >
-                              确认本次扣除 / 无可扣资源
-                            </button>
-                          )}
-                        </>
-                      )}
-                      {pending.kind === "blade" && (
-                        <>
-                          <p>点击地图选择目的地；不移动可选择当前格。</p>
-                          <button
-                            className="primary"
-                            disabled={
-                              busy || !selected || !g.reachable[selected]
-                            }
-                            onClick={() =>
-                              void act("blade_move", { tileId: selected })
-                            }
-                          >
-                            确认名刀移动
-                          </button>
-                          <button
-                            onClick={() =>
-                              void act("blade_move", { tileId: p.position })
-                            }
-                          >
-                            放弃额外移动
-                          </button>
-                        </>
-                      )}
-                      {pending.kind === "supply" && (
-                        <>
-                          <p>公开补给池 · 每人选一份，最后一份弃置</p>
-                          <ResourceChoice
-                            available={pending.pool}
-                            onChoose={(r) =>
-                              void act("choose", { resource: r })
-                            }
-                          />
-                        </>
-                      )}
-                      {["prototype", "recover"].includes(pending.kind) &&
-                        pending.choices.map(
-                          (c: { uid: string; id: string }) => (
-                            <button
-                              key={c.uid}
-                              disabled={busy}
+                              disabled={
+                                busy || !selected || !g.reachable[selected]
+                              }
                               onClick={() =>
-                                void act("choose", { cardUid: c.uid })
+                                void act("blade_move", { tileId: selected })
                               }
                             >
-                              选择 {card(c.id).name} · {c.uid}
+                              确认名刀移动
                             </button>
-                          ),
+                            <button
+                              onClick={() =>
+                                void act("blade_move", { tileId: p.position })
+                              }
+                            >
+                              放弃额外移动
+                            </button>
+                          </>
                         )}
-                      {["repeller", "tide"].includes(pending.kind) && (
-                        <>
-                          <p>
-                            {pending.kind === "repeller"
-                              ? "弃置一份资源，或点击地图向远离方舟移动一格。"
-                              : "弃置一份资源；没有资源则弃一张手牌。"}
-                          </p>
-                          {keys.some((r) => p.resources[r] > 0) ? (
+                        {pending.kind === "supply" && (
+                          <>
+                            <p>公开补给池 · 每人选一份，最后一份弃置</p>
                             <ResourceChoice
-                              available={p.resources}
+                              available={pending.pool}
                               onChoose={(r) =>
                                 void act("choose", { resource: r })
                               }
                             />
-                          ) : pending.kind === "tide" && p.hand.length ? (
-                            p.hand.map((c) => (
+                          </>
+                        )}
+                        {["prototype", "recover"].includes(pending.kind) &&
+                          pending.choices.map(
+                            (c: { uid: string; id: string }) => (
                               <button
                                 key={c.uid}
+                                disabled={busy}
                                 onClick={() =>
                                   void act("choose", { cardUid: c.uid })
                                 }
                               >
-                                弃置 {card(c.id).name}
+                                选择 {card(c.id).name} · {c.uid}
                               </button>
-                            ))
-                          ) : (
-                            <button onClick={() => void act("choose")}>
-                              确认无可扣物资
-                            </button>
+                            ),
                           )}
-                          {pending.kind === "repeller" && (
+                        {["repeller", "tide"].includes(pending.kind) && (
+                          <>
+                            <p>
+                              {pending.kind === "repeller"
+                                ? "弃置一份资源，或点击地图向远离方舟移动一格。"
+                                : "弃置一份资源；没有资源则弃一张手牌。"}
+                            </p>
+                            {keys.some((r) => p.resources[r] > 0) ? (
+                              <ResourceChoice
+                                available={p.resources}
+                                onChoose={(r) =>
+                                  void act("choose", { resource: r })
+                                }
+                              />
+                            ) : pending.kind === "tide" && p.hand.length ? (
+                              p.hand.map((c) => (
+                                <button
+                                  key={c.uid}
+                                  onClick={() =>
+                                    void act("choose", { cardUid: c.uid })
+                                  }
+                                >
+                                  弃置 {card(c.id).name}
+                                </button>
+                              ))
+                            ) : (
+                              <button onClick={() => void act("choose")}>
+                                确认无可扣物资
+                              </button>
+                            )}
+                            {pending.kind === "repeller" && (
+                              <button
+                                disabled={
+                                  busy ||
+                                  !selected ||
+                                  selected === p.position ||
+                                  !g.reachable[selected]
+                                }
+                                onClick={() =>
+                                  void act("choose", { tileId: selected })
+                                }
+                              >
+                                向选中格远离方舟
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        {g.phase === "cards" && (
+                          <p>
+                            可使用手牌，或保留到后面。科技可以在自己的其它步骤中使用。
+                          </p>
+                        )}
+                        {g.phase === "move" && (
+                          <>
+                            <p>
+                              点击绿色可达格，选择移动 0—2
+                              格。滑板鞋可额外移动一格。
+                            </p>
                             <button
+                              className="primary"
                               disabled={
-                                busy ||
-                                !selected ||
-                                selected === p.position ||
-                                !g.reachable[selected]
+                                busy || !selected || !g.reachable[selected]
                               }
                               onClick={() =>
-                                void act("choose", { tileId: selected })
+                                void act("move", { tileId: selected })
                               }
                             >
-                              向选中格远离方舟
+                              移动到 {selected || "选中格"}
                             </button>
-                          )}
-                        </>
-                      )}
+                          </>
+                        )}
+                        {g.phase === "gather" && (
+                          <>
+                            <p>
+                              你所在格：{p.position}
+                              。只有未淹没的资源格可以采集；物资归个人所有。
+                              {!g.canGather &&
+                                "当前不能采集：空地、淹没格，或生态崩坏期间已被采集的资源格。"}
+                            </p>
+                            <button
+                              className="primary"
+                              disabled={busy || !g.canGather}
+                              onClick={() => void act("gather")}
+                            >
+                              采集当前位置资源
+                            </button>
+                          </>
+                        )}
+                        {g.phase === "donate" && (
+                          <>
+                            <BagFields
+                              value={amounts}
+                              onChange={setAmounts}
+                              label="上交"
+                              max={p.resources}
+                            />
+                            <button
+                              className="primary"
+                              disabled={
+                                busy || !keys.some((r) => amounts[r] > 0)
+                              }
+                              onClick={() => void act("donate", { amounts })}
+                            >
+                              上交材料并结束行动
+                            </button>
+                          </>
+                        )}
+                        <button
+                          className="skip-action"
+                          disabled={busy}
+                          onClick={() => void act("skip")}
+                        >
+                          {g.phase === "cards"
+                            ? "完成出牌，进入移动"
+                            : g.phase === "move"
+                              ? "本回合不移动"
+                              : g.phase === "gather"
+                                ? "本回合不采集"
+                                : "不上交，结束行动"}{" "}
+                          →
+                        </button>
+                      </>
+                    )}
+                    <div className="hand-heading">
+                      <h3>你的手牌</h3>
+                      <small>
+                        {p.hand.length} / {p.handLimit}
+                      </small>
                     </div>
-                  ) : (
-                    <>
-                      {g.phase === "cards" && (
-                        <p>
-                          可使用手牌，或保留到后面。科技可以在自己的其它步骤中使用。
-                        </p>
-                      )}
-                      {g.phase === "move" && (
-                        <>
-                          <p>
-                            点击绿色可达格，选择移动 0—2
-                            格。滑板鞋可额外移动一格。
-                          </p>
+                    <div className="hand-cards">
+                      {p.hand.map((c) => (
+                        <div key={c.uid}>
+                          <Artwork c={card(c.id)} />
+                          <strong>{card(c.id).name}</strong>
                           <button
-                            className="primary"
                             disabled={
-                              busy || !selected || !g.reachable[selected]
+                              busy ||
+                              pending?.kind.startsWith("disaster_") ||
+                              pending?.kind === "eco_block" ||
+                              (!!pending && c.id !== "technology")
                             }
                             onClick={() =>
-                              void act("move", { tileId: selected })
+                              c.id === "technology"
+                                ? void act("play", { cardUid: c.uid })
+                                : setInvitation(c.uid)
                             }
                           >
-                            移动到 {selected || "选中格"}
+                            使用
                           </button>
-                        </>
-                      )}
-                      {g.phase === "gather" && (
-                        <>
-                          <p>
-                            你所在格：{p.position}
-                            。只有未淹没的资源格可以采集；物资归个人所有。
-                          </p>
                           <button
-                            className="primary"
-                            disabled={busy}
-                            onClick={() => void act("gather")}
+                            className="quiet"
+                            disabled={
+                              busy ||
+                              pending?.kind.startsWith("disaster_") ||
+                              pending?.kind === "eco_block"
+                            }
+                            onClick={() =>
+                              void act("discard", { cardUid: c.uid })
+                            }
                           >
-                            采集当前位置资源
+                            弃置
                           </button>
-                        </>
-                      )}
-                      {g.phase === "donate" && (
-                        <>
-                          <BagFields
-                            value={amounts}
-                            onChange={setAmounts}
-                            label="上交"
-                            max={p.resources}
-                          />
-                          <button
-                            className="primary"
-                            disabled={busy || !keys.some((r) => amounts[r] > 0)}
-                            onClick={() => void act("donate", { amounts })}
+                        </div>
+                      ))}
+                    </div>
+                    {p.equipment.length > 0 && (
+                      <div className="equipment">
+                        <h3>已生效科技</h3>
+                        {p.equipment.map((id) => (
+                          <button key={id} onClick={() => setPreview(card(id))}>
+                            {card(id).name} ↗
+                          </button>
+                        ))}
+                        {p.equipment.includes("aid-beacon") && !pending && (
+                          <button onClick={() => setInvitation("beacon")}>
+                            使用互助信标交换
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {invitation && !pending && (
+                      <div className="trade-form">
+                        <h3>资源交换 · 需要对方同意</h3>
+                        <label>
+                          相邻玩家
+                          <select
+                            aria-label="邀约对象"
+                            value={target}
+                            onChange={(e) => setTarget(e.target.value)}
                           >
-                            上交材料并结束行动
-                          </button>
-                        </>
-                      )}
-                      <button
-                        className="skip-action"
-                        disabled={busy}
-                        onClick={() => void act("skip")}
-                      >
-                        {g.phase === "cards"
-                          ? "完成出牌，进入移动"
-                          : g.phase === "move"
-                            ? "本回合不移动"
-                            : g.phase === "gather"
-                              ? "本回合不采集"
-                              : "不上交，结束行动"}{" "}
-                        →
-                      </button>
-                    </>
-                  )}
-                  <div className="hand-heading">
-                    <h3>你的手牌</h3>
-                    <small>
-                      {p.hand.length} /{" "}
-                      {p.equipment.includes("space-ring") ? 8 : 5}
-                    </small>
-                  </div>
-                  <div className="hand-cards">
-                    {p.hand.map((c) => (
-                      <div key={c.uid}>
-                        <Artwork c={card(c.id)} />
-                        <strong>{card(c.id).name}</strong>
+                            <option value="">选择对象</option>
+                            {g.players
+                              .filter((t) => t.id !== p.id)
+                              .map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name}
+                                </option>
+                              ))}
+                          </select>
+                        </label>
+                        <BagFields
+                          value={give}
+                          onChange={setGive}
+                          label="给出"
+                          max={p.resources}
+                        />
+                        <BagFields
+                          value={receive}
+                          onChange={setReceive}
+                          label="请求"
+                        />
                         <button
-                          disabled={
-                            busy || (!!pending && c.id !== "technology")
-                          }
+                          className="primary"
+                          disabled={busy || !target}
                           onClick={() =>
-                            c.id === "technology"
-                              ? void act("play", { cardUid: c.uid })
-                              : setInvitation(c.uid)
+                            void act(
+                              invitation === "beacon" ? "beacon" : "play",
+                              {
+                                cardUid: invitation,
+                                targetId: target,
+                                give,
+                                receive,
+                              },
+                            )
                           }
                         >
-                          使用
+                          发送交换请求
                         </button>
-                        <button
-                          className="quiet"
-                          disabled={busy}
-                          onClick={() =>
-                            void act("discard", { cardUid: c.uid })
-                          }
-                        >
-                          弃置
+                        <button onClick={() => setInvitation(null)}>
+                          取消
                         </button>
                       </div>
-                    ))}
-                  </div>
-                  {p.equipment.length > 0 && (
-                    <div className="equipment">
-                      <h3>已生效科技</h3>
-                      {p.equipment.map((id) => (
-                        <button key={id} onClick={() => setPreview(card(id))}>
-                          {card(id).name} ↗
-                        </button>
-                      ))}
-                      {p.equipment.includes("aid-beacon") && !pending && (
-                        <button onClick={() => setInvitation("beacon")}>
-                          使用互助信标交换
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {invitation && !pending && (
-                    <div className="trade-form">
-                      <h3>资源交换 · 需要对方同意</h3>
-                      <label>
-                        相邻玩家
-                        <select
-                          aria-label="邀约对象"
-                          value={target}
-                          onChange={(e) => setTarget(e.target.value)}
-                        >
-                          <option value="">选择对象</option>
-                          {g.players
-                            .filter((t) => t.id !== p.id)
-                            .map((t) => (
-                              <option key={t.id} value={t.id}>
-                                {t.name}
-                              </option>
-                            ))}
-                        </select>
-                      </label>
-                      <BagFields
-                        value={give}
-                        onChange={setGive}
-                        label="给出"
-                        max={p.resources}
-                      />
-                      <BagFields
-                        value={receive}
-                        onChange={setReceive}
-                        label="请求"
-                      />
-                      <button
-                        className="primary"
-                        disabled={busy || !target}
-                        onClick={() =>
-                          void act(
-                            invitation === "beacon" ? "beacon" : "play",
-                            {
-                              cardUid: invitation,
-                              targetId: target,
-                              give,
-                              receive,
-                            },
-                          )
-                        }
-                      >
-                        发送交换请求
-                      </button>
-                      <button onClick={() => setInvitation(null)}>取消</button>
-                    </div>
-                  )}
-                </section>
+                    )}
+                  </section>
+                )
               ) : (
                 <section className="action-panel">
                   <p className="overline">FINAL JUDGMENT</p>
@@ -1144,7 +1270,7 @@ export default function ExpeditionGame() {
                   )}
                 </section>
               )}
-              <DisasterCards cards={g.activeDisasters} />
+              <DisasterCards cards={g.activeDisasters} automatic />
             </aside>
           </div>
         </>
@@ -1233,13 +1359,20 @@ export default function ExpeditionGame() {
             </p>
             <p>
               本地约定：六面旗子各一人、初始资源为 0、手牌上限 5、每次采集 1
-              份、资源格可逐回合重复采集。同行者同格或相邻即建立联络，方舟范围为中心安全区。资源池四类等概率；同名被动不叠加。可以从任何位置上交材料。
+              份；除生态崩坏在场限制外，资源格可逐回合重复采集。同行者同格或相邻即建立联络，方舟范围为中心安全区。资源池四类等概率；同名被动不叠加。可以从任何位置上交材料。
             </p>
             <p>
               淹没格禁止采集和逆水深入，滞留玩家下一回合可向内逃生，不立即死亡。终局仍在淹没区则不能登舟；席位由开局设置，未擅自设定方舟最低物资门槛。上述未在文档明确的细则可在下一轮修改。
             </p>
             <p>
-              地图采用原图＋规则格网；资源图标已人工标定，水域、区域边界为独立规则层。世界三属性为玩家属性均值，科技卡属性作用于使用者。旧灾难卡仍作提示，不自动执行未定义的连锁副作用。
+              地图采用原图＋规则格网。经济、环境、社会为全体玩家共享的世界值；科技直接影响世界。1—2
+              叠加普通负向与极低灾难，18—19
+              叠加普通正向与极高灾难。同档不重复执行进入效果；离开后重入可重新触发。生态管制的社会
+              −1 为持续修正，离场解除。
+            </p>
+            <p>
+              灾难会实际改变资源、科技、采集和移动。晶矿按金属、保障物资按四类自选处理。资源保护通过条件确认按钮执行。强制互助在每轮末、洪水前结算；稳态失衡进入时移动，本轮末不再重复。自然地块暂按所有资源格计算。细则与完整记录见
+              README 和全局日志。
             </p>
             <p>
               这是单机本地轮流操作版，不提供公网账号鉴权。小程序已保存在

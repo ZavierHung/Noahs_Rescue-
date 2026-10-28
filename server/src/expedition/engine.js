@@ -8,22 +8,33 @@ import {
   flooded,
   distance,
 } from "./map.js";
+import { bag, sum, random, log, requireRule } from "./runtime.js";
 import { resolveDisasters } from "../catalog.js";
-
-export const bag = () => Object.fromEntries(RESOURCES.map((r) => [r, 0]));
-const sum = (b) => RESOURCES.reduce((n, r) => n + (b[r] || 0), 0);
-const clamp = (n) => Math.max(1, Math.min(19, n));
+import {
+  DIMENSIONS,
+  active,
+  handLimit,
+  ensureWorld,
+  changeWorld,
+  setWorld,
+  refreshAttributes,
+  syncDisasters,
+  queueRoundDisasters,
+  pumpDisasters,
+  isDisasterChoice,
+  resolveDisasterChoice,
+  canGather,
+  gatherYield,
+  confirmProtection,
+} from "./world.js";
+export { bag, random } from "./runtime.js";
 const fail = (message) => {
   throw Object.assign(new Error(message), { status: 400 });
-};
-const requireRule = (condition, message) => {
-  if (!condition) fail(message);
 };
 export const playerAt = (g, id) => g.players.find((p) => p.id === id);
 export const activePlayer = (g) =>
   playerAt(g, g.pending?.actor || g.players[g.turn]?.id);
 const has = (p, id) => p.equipment.includes(id);
-const handLimit = (p) => (has(p, "space-ring") ? 8 : 5);
 const ACTION_NAMES = {
   skip: "跳过",
   play: "使用手牌",
@@ -35,6 +46,8 @@ const ACTION_NAMES = {
   donate: "上交物资",
   pay_flood: "结算洪水损失",
   blade_move: "名刀逃生",
+  set_world: "手动调节世界",
+  confirm_protection: "确认资源保护条件",
 };
 const PHASE_NAMES = {
   cards: "出牌",
@@ -44,22 +57,9 @@ const PHASE_NAMES = {
   choice: "卡牌选择",
   flood: "洪水",
   judgment: "审判",
-};
-export const random = (g) => {
-  g.rng = (Math.imul(g.rng, 1664525) + 1013904223) >>> 0;
-  return g.rng / 4294967296;
+  disaster: "灾难结算",
 };
 const pick = (g, rows) => rows[Math.floor(random(g) * rows.length)];
-const log = (g, actor, type, detail, data = {}) =>
-  g.events.push({
-    seq: g.events.length + 1,
-    round: g.round,
-    turn: g.turn,
-    actor,
-    type,
-    detail,
-    ...data,
-  });
 function add(p, resource, amount) {
   requireRule(RESOURCES.includes(resource), "无效资源");
   p.resources[resource] += amount;
@@ -101,7 +101,7 @@ function draw(g, p, count = 1) {
   for (let i = 0; i < count; i++) {
     const action = pick(g, CARDS.actions),
       instance = { uid: `C${++g.cardCounter}`, id: action.id };
-    if (p.hand.length >= handLimit(p)) {
+    if (p.hand.length >= handLimit(g, p)) {
       g.discard.push(instance);
       log(g, p.id, "draw_overflow", `手牌已达上限，${action.name}进入弃牌堆`, {
         card: instance,
@@ -174,19 +174,37 @@ function finishTurn(g) {
     turnStart(g);
     return;
   }
-  if ([3, 5, 7].includes(g.round)) floodStart(g);
-  else nextRound(g);
+  g.roundEnd = true;
+  queueRoundDisasters(g);
 }
-function updateWorld(g) {
-  g.attributes = Object.fromEntries(
-    ["economy", "environment", "society"].map((k) => [
-      k,
-      Math.round(
-        g.players.reduce((n, p) => n + p.attributes[k], 0) / g.players.length,
-      ),
-    ]),
-  );
-  g.activeDisasters = resolveDisasters(g.attributes, g.activeDisasters);
+function settleWorld(g) {
+  syncDisasters(g);
+  pumpDisasters(g);
+  // Interrupted flood choices can outlive their equipment or flooded position.
+  // Prune them on restoration so a confiscated blade cannot be used or deadlock.
+  if (g.pending?.kind === "blade") {
+    const remaining = g.pending.remaining.filter((id) => {
+      const p = playerAt(g, id);
+      return (
+        p &&
+        has(p, "famed-blade") &&
+        flooded(tileById(p.position), g.floodLevel)
+      );
+    });
+    if (remaining.length !== g.pending.remaining.length)
+      log(g, "system", "blade_queue_refresh", "灾难后重新检查名刀逃生资格", {
+        removed: g.pending.remaining.filter((id) => !remaining.includes(id)),
+      });
+    if (remaining.length) {
+      g.pending.remaining = remaining;
+      g.pending.actor = remaining[0];
+    } else finishFlood(g);
+  }
+  if (g.roundEnd && !isDisasterChoice(g) && !g.world.queue.length) {
+    delete g.roundEnd;
+    if ([3, 5, 7].includes(g.round)) floodStart(g);
+    else nextRound(g);
+  }
 }
 export function createGame(
   input,
@@ -220,7 +238,7 @@ export function createGame(
       position: flag.tileId,
       spawn: flag.id,
       resources: bag(),
-      attributes: { economy: 10, environment: 10, society: 10 },
+      worldImpact: { economy: 0, environment: 0, society: 0 },
       hand: [],
       equipment: [],
       donated: bag(),
@@ -254,6 +272,7 @@ export function createGame(
     activeDisasters: [],
     judgment: null,
   };
+  ensureWorld(g);
   log(g, "system", "create", "角色与旗子确认，游戏开始", {
     players: players.map((p) => ({
       id: p.id,
@@ -381,8 +400,10 @@ function technology(g, p, id, input) {
       });
     } else draw(g, p);
   }
-  for (const [dimension, delta] of Object.entries(card.status || {}))
-    p.attributes[dimension] = clamp(p.attributes[dimension] + delta);
+  changeWorld(g, card.status || {}, {
+    actor: p.id,
+    source: `科技：${card.name}`,
+  });
   log(g, p.id, "technology", `使用科技：${card.name}`, {
     cardId: id,
     status: card.status,
@@ -416,12 +437,88 @@ function resolveChoice(g, p, input) {
       pending.choices.includes(input.techId),
       "请从本次抽到的两张科技中选择",
     );
-    technology(g, p, input.techId, input);
-    if (g.pending) g.pending.resumePending = pending.resumePending || null;
-    else if (pending.resumePending) g.pending = pending.resumePending;
+    if (
+      active(g, "eco-conflict") &&
+      getTech(input.techId).status.environment < 0 &&
+      !has(p, input.techId)
+    ) {
+      // Validate on a disposable copy before asking anyone to spend resources.
+      const probe = structuredClone(g);
+      technology(probe, playerAt(probe, p.id), input.techId, input);
+      const responders = g.players.filter(
+        (other) => nearby(p, other) && sum(other.resources) > 0,
+      );
+      if (responders.length) {
+        g.pending = {
+          kind: "eco_block",
+          actor: responders[0].id,
+          remaining: responders.map((p) => p.id),
+          owner: p.id,
+          proposal: structuredClone(input),
+          technologyPending: pending,
+        };
+        log(
+          g,
+          p.id,
+          "ecology_response",
+          "生态管制冲突：相邻玩家可以支付一资源阻止本次科技",
+          { cardId: input.techId, responders: responders.map((p) => p.id) },
+        );
+        return;
+      }
+    }
+    finishTechnology(g, p, input, pending);
+  } else if (pending.kind === "eco_block") {
+    requireRule(typeof input.block === "boolean", "请选择阻止或放行");
+    if (input.block) {
+      requireRule(
+        RESOURCES.includes(input.resource) && p.resources[input.resource] > 0,
+        "阻止行动需支付一份现有资源",
+      );
+      take(p, input.resource);
+      log(
+        g,
+        p.id,
+        "ecology_block",
+        "支付资源，取消此次科技的全部收益和世界属性变化",
+        {
+          targetId: pending.owner,
+          cardId: pending.proposal.techId,
+          resource: input.resource,
+        },
+      );
+      restore(g, pending.technologyPending);
+    } else {
+      log(g, p.id, "ecology_pass", "放弃阻止本次科技", {
+        targetId: pending.owner,
+      });
+      pending.remaining.shift();
+      if (pending.remaining.length) pending.actor = pending.remaining[0];
+      else {
+        g.pending = pending.technologyPending;
+        finishTechnology(
+          g,
+          playerAt(g, pending.owner),
+          pending.proposal,
+          pending.technologyPending,
+        );
+      }
+    }
   } else if (pending.kind === "trade") {
     const owner = playerAt(g, pending.owner);
     if (input.accept === true) {
+      requireRule(
+        nearby(owner, p),
+        "位置已变化：交易双方必须同格或相邻，可以拒绝本次交易",
+      );
+      requireRule(
+        pending.beacon
+          ? has(owner, "aid-beacon") && !owner.roundFlags.beacon
+          : owner.hand.some(
+              (c) => c.uid === pending.cardUid && c.id === "invitation",
+            ),
+        "邀约卡或互助信标已失效，可以拒绝本次交易",
+      );
       const give = validateBag(pending.give),
         receive = validateBag(pending.receive);
       requireRule(
@@ -465,7 +562,7 @@ function resolveChoice(g, p, input) {
   } else if (pending.kind === "prototype" || pending.kind === "recover") {
     const chosen = pending.choices.find((c) => c.uid === input.cardUid);
     requireRule(chosen, "请选择有效的行动牌");
-    requireRule(p.hand.length < handLimit(p), "手牌已满，请先弃一张");
+    requireRule(p.hand.length < handLimit(g, p), "手牌已满，请先弃一张");
     p.hand.push(chosen);
     if (pending.kind === "recover")
       g.discard.splice(
@@ -507,6 +604,11 @@ function resolveChoice(g, p, input) {
     nextChoice(g);
   }
 }
+function finishTechnology(g, p, input, pending) {
+  technology(g, p, input.techId, input);
+  if (g.pending) g.pending.resumePending = pending.resumePending || null;
+  else if (pending.resumePending) g.pending = pending.resumePending;
+}
 export function floodCost(g, p) {
   const cost = bag();
   if (g.floodLevel >= 2) cost.seed++;
@@ -539,11 +641,35 @@ export function command(original, input) {
     Number.isInteger(input.revision) && input.revision === g.revision,
     "状态已更新，请刷新后重试",
   );
+  ensureWorld(g, !g.world);
+  // Legacy saves cached one card per dimension. Validate against all current
+  // continuous effects before the first action, without running entry effects.
+  // world.activeIds remains unchanged; entry settlement is still transactional.
+  refreshAttributes(g);
+  g.activeDisasters = resolveDisasters(
+    g.attributes,
+    g.activeDisasters,
+    () => 0,
+  );
   const p = activePlayer(g);
   requireRule(input.actor === p.id, "请由当前行动玩家操作");
   const before = structuredClone(g.players),
-    arkBefore = { ...g.ark };
-  if (
+    arkBefore = { ...g.ark },
+    worldBefore = { ...g.attributes };
+  if (isDisasterChoice(g)) {
+    resolveDisasterChoice(g, input);
+  } else if (g.pending?.kind === "eco_block") {
+    requireRule(input.type === "choose", "请先回应生态管制");
+    resolveChoice(g, p, input);
+  } else if (
+    input.type === "set_world" ||
+    input.type === "confirm_protection"
+  ) {
+    requireRule(!g.pending, "请先完成当前卡牌或洪水结算");
+    if (input.type === "set_world")
+      setWorld(g, input.attributes, p.id, input.reason);
+    else confirmProtection(g, p, input);
+  } else if (
     input.type === "play" &&
     p.hand.some((c) => c.uid === input.cardUid && c.id === "technology")
   ) {
@@ -596,6 +722,7 @@ export function command(original, input) {
     else finishFlood(g);
   } else if (g.pending?.kind === "blade") {
     requireRule(input.type === "blade_move", "请处理名刀的额外移动");
+    requireRule(has(p, "famed-blade"), "名刀已失效");
     const routes = reachable(p.position, 2, g.floodLevel, { escape: true });
     requireRule(routes[input.tileId], "无效的名刀逃生路径");
     p.position = input.tileId;
@@ -624,7 +751,9 @@ export function command(original, input) {
       const target = playerAt(g, input.targetId);
       requireRule(
         target && nearby(p, target),
-        "邀约需要建立联络：同格或相邻玩家",
+        active(g, "social-disorder")
+          ? "社会失序：只能与同格或相邻玩家互动"
+          : "邀约需要建立联络：同格或相邻玩家",
       );
       const give = validateBag(input.give),
         receive = validateBag(input.receive);
@@ -683,7 +812,11 @@ export function command(original, input) {
       tile.resource && !flooded(tile, g.floodLevel),
       "当前位置没有可采集的资源或已被洪水淹没",
     );
-    add(p, tile.resource, 1 + (has(p, "mining-drone") ? 1 : 0));
+    add(
+      p,
+      tile.resource,
+      gatherYield(g, p, 1 + (has(p, "mining-drone") ? 1 : 0)),
+    );
     g.phase = "donate";
   } else if (input.type === "donate") {
     requireRule(g.phase === "donate", "请在上交材料步骤操作");
@@ -704,17 +837,11 @@ export function command(original, input) {
     log(g, p.id, "donation", "向方舟上交材料", { donation: record });
     finishTurn(g);
   } else fail("未知游戏操作");
-  updateWorld(g);
+  settleWorld(g);
   const effects = g.players.map((after, i) => ({
     playerId: after.id,
     resources: Object.fromEntries(
       RESOURCES.map((r) => [r, after.resources[r] - before[i].resources[r]]),
-    ),
-    attributes: Object.fromEntries(
-      Object.keys(after.attributes).map((k) => [
-        k,
-        after.attributes[k] - before[i].attributes[k],
-      ]),
     ),
     from: before[i].position,
     to: after.position,
@@ -734,6 +861,11 @@ export function command(original, input) {
       phaseAfter: g.phase,
       command: { ...input },
       effects,
+      worldBefore,
+      worldAfter: { ...g.attributes },
+      worldDelta: Object.fromEntries(
+        DIMENSIONS.map((k) => [k, g.attributes[k] - worldBefore[k]]),
+      ),
       arkDelta: Object.fromEntries(
         RESOURCES.map((r) => [r, g.ark[r] - arkBefore[r]]),
       ),
@@ -744,6 +876,21 @@ export function command(original, input) {
 }
 export function viewGame(g) {
   const result = structuredClone(g);
+  ensureWorld(result);
+  // Historical games keep their saved final values; active games expose global state.
+  if (result.status === "playing") {
+    refreshAttributes(result);
+    result.activeDisasters = resolveDisasters(
+      result.attributes,
+      result.activeDisasters,
+      () => 0,
+    );
+  }
+  result.players.forEach((p) => {
+    p.handLimit = handLimit(result, p);
+  });
+  result.canGather =
+    result.status === "playing" && canGather(result, activePlayer(result));
   delete result.rng;
   const p = activePlayer(g);
   result.activePlayerId = p?.id;

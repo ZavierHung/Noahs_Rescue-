@@ -9,6 +9,7 @@ import {
 } from "./engine.js";
 import { CHARACTERS, RESOURCES } from "./catalog.js";
 import { tileById, distance } from "./map.js";
+import { handLimit } from "./world.js";
 const available = (p) => RESOURCES.find((r) => p.resources[r] > 0);
 export function botAction(g) {
   const p = activePlayer(g),
@@ -17,6 +18,13 @@ export function botAction(g) {
   const input = { actor: p.id, revision: g.revision };
   if (pending) {
     const kind = pending.kind;
+    if (kind.startsWith("disaster_"))
+      return {
+        ...input,
+        type: "choose",
+        resource: kind === "disaster_gain" ? "metal" : available(p),
+      };
+    if (kind === "eco_block") return { ...input, type: "choose", block: false };
     if (kind === "flood") {
       const cost = floodCost(g, p);
       return {
@@ -72,7 +80,7 @@ export function botAction(g) {
         accept: RESOURCES.every((r) => p.resources[r] >= pending.receive[r]),
       };
     if (["prototype", "recover"].includes(kind)) {
-      if (p.hand.length >= (p.equipment.includes("space-ring") ? 8 : 5))
+      if (p.hand.length >= handLimit(g, p))
         return { ...input, type: "discard", cardUid: p.hand[0].uid };
       return { ...input, type: "choose", cardUid: pending.choices[0].uid };
     }
@@ -114,6 +122,7 @@ export function botAction(g) {
     return {
       ...input,
       type:
+        v.canGather &&
         tileById(p.position).resource &&
         !(
           (tileById(p.position).zone || 4) >= 4 - g.floodLevel &&

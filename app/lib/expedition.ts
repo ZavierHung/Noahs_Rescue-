@@ -1,6 +1,10 @@
 export const WEB_VERSION = "0.3.0-local";
 export type Resource = "wood" | "metal" | "electricity" | "seed";
 export type Bag = Record<Resource, number>;
+export type WorldAttributes = Record<
+  "economy" | "environment" | "society",
+  number
+>;
 export type Character = {
   id: string;
   name: string;
@@ -34,7 +38,8 @@ export type Player = {
   position: string;
   spawn: string;
   resources: Bag;
-  attributes: Record<string, number>;
+  worldImpact: WorldAttributes;
+  handLimit: number;
   hand: { uid: string; id: string }[];
   equipment: string[];
   donated: Bag;
@@ -66,6 +71,13 @@ export type Game = {
   pending: any;
   judgment: any;
   activeDisasters: import("./disasters").Disaster[];
+  attributes: WorldAttributes;
+  world: {
+    base: WorldAttributes;
+    modifiers: WorldAttributes;
+    harvested: Record<string, number>;
+  };
+  canGather: boolean;
 };
 export type Catalog = {
   characters: Character[];

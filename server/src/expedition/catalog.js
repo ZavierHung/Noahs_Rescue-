@@ -23,6 +23,7 @@ export const publicCatalog = () => ({
   resources: LABELS,
   map: { ...MAP, tiles: TILES, flags: FLAGS },
   rules: {
+    disasterPolicy: read("disaster-rules"),
     rounds: 8,
     floodRounds: [3, 5, 7],
     drawAtStart: [1, 2, 5, 6, 7, 8],
