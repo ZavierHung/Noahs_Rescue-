@@ -12,6 +12,13 @@ import { bag, sum, random, log, requireRule } from "./runtime.js";
 import { gameplayState, historyView } from "./history.js";
 import { peerReviewView } from "./peer-review.js";
 import { buildLearningOutcome } from "./learning-outcome.js";
+import { buildOpportunityContext } from "./opportunity-context.js";
+import {
+  initializePublicEvents,
+  beginPublicEvent,
+  resolvePublicEvent,
+  publicEventView,
+} from "./public-events.js";
 import { resolveDisasters } from "../catalog.js";
 import {
   DEFAULT_RULES,
@@ -75,6 +82,7 @@ const PHASE_NAMES = {
   judgment: "审判",
   disaster: "灾难结算",
   evacuation: "终局紧急撤离",
+  public_event: "公共事件",
 };
 const pick = (g, rows) => rows[Math.floor(random(g) * rows.length)];
 function snapshotNewEvents(g, start = 0) {
@@ -177,6 +185,7 @@ function nextRound(g) {
     p.roundFlags = { beacon: false, noInvite: false, noConflictWith: [] };
   if ([2, 5, 6, 7, 8].includes(g.round)) for (const p of g.players) draw(g, p);
   turnStart(g);
+  beginPublicEvent(g);
 }
 function finishFlood(g) {
   const blades = g.players.filter(
@@ -325,8 +334,10 @@ export function createGame(
   };
   if (input.learningMode === true) {
     g.learningMode = true;
-    g.learningVersion = "student-learning-v1";
+    g.learningVersion = "student-learning-v2";
     g.peerReview = { version: 1, submissions: [] };
+    initializePublicEvents(g, seed);
+    g.opportunityContext = buildOpportunityContext(g);
   }
   ensureWorld(g);
   log(g, "system", "create", "角色与旗子确认，游戏开始", {
@@ -820,6 +831,8 @@ export function command(original, input) {
     else nextRound(g);
   } else if (isDisasterChoice(g)) {
     resolveDisasterChoice(g, input);
+  } else if (g.pending?.kind === "public_event") {
+    resolvePublicEvent(g, input);
   } else if (g.pending?.kind === "eco_block") {
     requireRule(input.type === "choose", "请先回应生态管制");
     resolveChoice(g, p, input);
@@ -1136,6 +1149,7 @@ export function viewGame(g) {
   result.canGather =
     result.status === "playing" && canGather(result, activePlayer(result));
   delete result.rng;
+  if (g.publicEvents) result.publicEvents = publicEventView(g);
   const p = activePlayer(g);
   result.activePlayerId = p?.id;
   result.peerReviewSummary = peerReviewView(g);

@@ -12,12 +12,29 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const args = process.argv.slice(2);
+if (args.includes("--help")) {
+  console.log(`Offline learning-game experiment (no saves, keys or LLM calls)
+  --learning          Enable the current new-game learning rules (v2).
+  --matches N         Number of independent matches, 2–2000; default 20.
+  --start N           First fixed seed; default 1. Use 1001 for the holdout set.
+  --policy NAME       mixed (default), balanced, cautious or generous.
+  --flag-offset N     Rotate only spawn flags by 0–5 seats; default 0.
+                      This is a map-opportunity diagnostic, not a balance fix.
+  --output PATH       Explicit generated JSON output; otherwise stdout only.
+
+Compare flag offsets with the same code version, policy and initial seeds.
+Later game histories may diverge, so this is not a fully isolated causal study.
+The historical v1 +1-flag report used commit 118a4f3 and its separate diagnostic
+script; this current v2 command adds public events and cannot reproduce v1 numbers.`);
+  process.exit(0);
+}
 const option = (name, fallback) =>
   args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
 const matches = Number(option("--matches", 20));
 const start = Number(option("--start", 1));
 const policy = option("--policy", "mixed");
 const learningMode = args.includes("--learning");
+const flagOffset = Number(option("--flag-offset", 0));
 const output = option("--output", null);
 if (
   !Number.isInteger(matches) ||
@@ -25,6 +42,9 @@ if (
   matches > 2000 ||
   !Number.isInteger(start) ||
   start < 1 ||
+  !Number.isInteger(flagOffset) ||
+  flagOffset < 0 ||
+  flagOffset > 5 ||
   !["mixed", "balanced", "cautious", "generous"].includes(policy)
 )
   throw Error("invalid experiment options");
@@ -55,6 +75,7 @@ for (let seed = start; seed < start + matches; seed++) {
     players: 6,
     policy,
     learningMode,
+    flagOffset,
   });
   const context = judgmentContext(g);
   const verdict = validateBoarding(fallbackBoarding(context), context);
@@ -66,6 +87,15 @@ for (let seed = start; seed < start + matches; seed++) {
   }));
   if (g.events.filter((event) => event.type === "flood").length !== 3)
     throw Error(`flood schedule did not complete at seed ${seed}`);
+  if (
+    g.publicEvents &&
+    (g.publicEvents.choices.length !== 3 ||
+      new Set(g.publicEvents.choices.map((choice) => choice.cardId)).size !==
+        3 ||
+      JSON.stringify(g.publicEvents.choices.map((choice) => choice.round)) !==
+        "[2,4,6]")
+  )
+    throw Error(`public event schedule did not complete at seed ${seed}`);
   rows.push({
     seed,
     commands,
@@ -75,6 +105,7 @@ for (let seed = start; seed < start + matches; seed++) {
     seats: g.seats,
     ark: sum(g.ark),
     world: g.attributes,
+    learningVersion: g.learningVersion || null,
     roundWorld,
     actionCounts: count(actions, (event) => event.command.type),
     technology: count(
@@ -89,6 +120,15 @@ for (let seed = start; seed < start + matches; seed++) {
       .length,
     boostedGather: g.events.filter((event) => event.type === "mining_boost")
       .length,
+    publicEvents: count(
+      g.events.filter((event) => event.type === "public_event_choice"),
+      (event) => `${event.cardId}:${event.optionId}`,
+    ),
+    publicEventDeciders: count(
+      g.events.filter((event) => event.type === "public_event_choice"),
+      (event) => event.decisionActor,
+    ),
+    publicEventChoices: g.publicEvents?.choices || [],
     worldExtremes: Object.fromEntries(
       dimensions.map((dimension) => [
         dimension,
@@ -107,6 +147,7 @@ for (let seed = start; seed < start + matches; seed++) {
     ),
     players: g.players.map((player) => ({
       id: player.id,
+      spawn: player.spawn,
       donated: sum(player.donated),
       inventory: sum(player.resources),
       injury: player.survival.remainingInjury,
@@ -136,9 +177,20 @@ const totals = (key) =>
     ]),
   );
 const report = {
-  version: "learning-simulation-v1",
+  version: "learning-simulation-v2",
   mode: "offline deterministic mixed-style agents; real rules; local fallback boarding; no forced outcomes; no LLM",
   learningMode,
+  learningVersion: rows[0]?.learningVersion,
+  flagOffset,
+  spawnDiagnostic: {
+    mode:
+      flagOffset === 0
+        ? "ordinary fixed spawns"
+        : "explicit rotated-flag diagnostic",
+    rule: "Only flag assignment rotates. Compare the same code version, initial seeds and policy; later histories may diverge.",
+    historicalV1:
+      "The earlier v1 +1-flag diagnostic used commit 118a4f3 and a separate fixed-offset runner. Current v2 public events are not a reproduction of those historical numbers.",
+  },
   policy,
   matches,
   seedRange: [start, start + matches - 1],
@@ -147,9 +199,10 @@ const report = {
   limitations: [
     "These are deterministic software agents, not students: they do not establish enjoyment or learning gains.",
     "Intervals are normal approximations over independent match rates, not individual players; 20 matches are a smoke-sized sample.",
-    "Seats, initial flags and turn order are fixed. Per-seat differences confound map geography, order, policy and random cards.",
+    `Seats and turn order are fixed; flags have a fixed offset of ${flagOffset}. Per-seat differences confound map geography, order, policy and random cards.`,
     "Agents choose the first usable technology, accept legal invitations and decline ecological vetoes; they are not optimal/adversarial players.",
     "Learning agents boost only when current environment exceeds 6 and donated supplies cannot fill every seat; they never inspect future RNG or target survival rates.",
+    "For public events, agents prefer a non-harming positive world effect when its dimension is below 10; otherwise choose public supplies. This is not a universal ethical preference.",
     "Peer review and LLM discussions are tested separately; these trajectories end at rule-based offline boarding.",
   ],
   metrics: {
@@ -175,8 +228,12 @@ const report = {
     actionCounts: totals("actionCounts"),
     technology: totals("technology"),
     disasters: totals("disasters"),
+    publicEvents: totals("publicEvents"),
+    publicEventDeciders: totals("publicEventDeciders"),
+    publicEventChoices: sum(rows.map((row) => row.publicEventChoices.length)),
     perSeat: Array.from({ length: 6 }, (_, index) => ({
       id: `P${index + 1}`,
+      spawn: `P${((index + flagOffset) % 6) + 1}`,
       survival: mean(rows.map((row) => Number(row.players[index].alive))),
       boarding: mean(rows.map((row) => Number(!!row.players[index].board))),
       donation: mean(rows.map((row) => row.players[index].donated)),

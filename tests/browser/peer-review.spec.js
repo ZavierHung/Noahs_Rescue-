@@ -124,7 +124,7 @@ test("learning council: ratings and comments, read-only inspection, refresh, dec
     ).toContainText("并非模型已经理解");
     await expect(outcome).toContainText("共同守护");
     await expect(outcome).toContainText("公共保障");
-    await expect(outcome).toContainText("生态责任");
+    await expect(outcome).toContainText("环境成本约束");
     await panel
       .getByLabel("玩家登船陈述")
       .fill(
@@ -164,6 +164,16 @@ test("learning council: ratings and comments, read-only inspection, refresh, dec
     expect(saved.ark).toEqual(game.ark);
     expect(saved.learningOutcome.boarding.final).toBe(true);
     await page.setViewportSize({ width: 390, height: 844 });
+    await outcome.getByText("出生条件如何影响机会？", { exact: true }).click();
+    const opportunity = outcome.getByRole("table");
+    await expect(opportunity).toContainText("不是玩家能力评分");
+    await expect(opportunity.getByRole("row")).toHaveCount(4);
+    await expect(
+      opportunity.getByRole("row", { name: "P1 / P1 11 3" }),
+    ).toBeVisible();
+    await expect(
+      opportunity.getByRole("row", { name: "P2 / P2 12 0" }),
+    ).toBeVisible();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,

@@ -56,7 +56,7 @@ test("learning mode is opt-in, initializes peer review, and keeps old modes/rule
     next = make();
   assert.equal(legacy.learningMode, undefined);
   assert.equal(legacy.peerReview, undefined);
-  assert.equal(next.learningVersion, "student-learning-v1");
+  assert.equal(next.learningVersion, "student-learning-v2");
   assert.deepEqual(next.peerReview, { version: 1, submissions: [] });
   assert.deepEqual(next.rules, legacy.rules);
   assert.deepEqual(next.attributes, legacy.attributes);

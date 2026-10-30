@@ -23,6 +23,7 @@ if (
 const data = fileURLToPath(new URL("../server/data/", import.meta.url));
 const promptChecks = [];
 let expectedPeerReviews = [];
+let expectedOpportunityContext = null;
 const judge = createBoardingJudge({
   godRepository: createGodRepository(data),
   retriever: await createAcademicRetriever(),
@@ -45,8 +46,13 @@ const judge = createBoardingJudge({
                 input.context.peerReviews.trust ===
                   "unverified_player_opinions" &&
                 input.context.peerReviews.complete === true &&
+                isDeepStrictEqual(
+                  input.context.opportunityContext,
+                  expectedOpportunityContext,
+                ) &&
                 input.rolePrompt.includes("不能按评分均值") &&
-                input.rolePrompt.includes("未生存者可以评价同伴"),
+                input.rolePrompt.includes("未生存者可以评价同伴") &&
+                input.rolePrompt.includes("不衡量努力、能力或人格"),
             });
             return {
               ...fallbackBoarding(input.context, input.god),
@@ -66,8 +72,10 @@ let commands = 0,
   waivers = 0,
   survivorCount = 0,
   boardedCount = 0,
-  playerCount = 0;
+  playerCount = 0,
+  publicEventChoices = 0;
 const matches = [];
+const learningVersions = new Set();
 function assertBoarding(reviewed) {
   const context = reviewed.judgment.context;
   const decisions = reviewed.judgment.verdict.decisions;
@@ -99,6 +107,14 @@ for (let seed = 1; seed <= count; seed++) {
   const service = createExpeditionService({ store, judge });
   let reviewed = await service.get(result.game.id);
   if (learningMode) {
+    if (!result.game.opportunityContext?.mapHash)
+      throw new Error(
+        "new learning game did not freeze its opportunity context",
+      );
+    expectedOpportunityContext = structuredClone(
+      result.game.opportunityContext,
+    );
+    learningVersions.add(result.game.learningVersion);
     while (!reviewed.peerReviewSummary.complete) {
       const actor = reviewed.peerReviewSummary.activeReviewerId;
       const actorIndex = reviewed.players.findIndex(
@@ -191,6 +207,10 @@ for (let seed = 1; seed <= count; seed++) {
     survivorCount += survivors;
     boardedCount += boarded;
     playerCount += reviewed.players.length;
+    const matchPublicChoices = reviewed.events.filter(
+      (event) => event.type === "public_event_choice",
+    ).length;
+    publicEventChoices += matchPublicChoices;
     matches.push({
       seed,
       players: reviewed.players.length,
@@ -201,6 +221,13 @@ for (let seed = 1; seed <= count; seed++) {
       waivers: expectedPeerReviews.filter((entry) => entry.waived).length,
       discussions: judgment.conversations.length,
       outcome: reviewed.learningOutcome.tier,
+      publicEventChoices: matchPublicChoices,
+      collectiveDecisionNetDelta:
+        reviewed.learningOutcome.ecology.collectiveDecisionNetDelta,
+      environmentGoal: reviewed.learningOutcome.goals.find(
+        (goal) => goal.id === "ecological_responsibility",
+      ).achieved,
+      opportunitySnapshotVersion: reviewed.opportunityContext.version,
     });
   }
   if (
@@ -238,12 +265,15 @@ console.log(
       ...(learningMode
         ? {
             learningMode: true,
+            learningVersions: [...learningVersions],
             playersPerMatch: 6,
             policy: "balanced deterministic bot; seeds 1 through matches",
             peerReviews,
             peerReviewEntries,
             waivers,
             promptContractChecks: promptChecks.length,
+            publicEventChoices,
+            opportunitySnapshots: matches.length,
             testAdapter:
               "offline-rule-contract-probe; llm.used is an adapter-contract marker only, NOT a real model call",
             realLLMCalls: 0,

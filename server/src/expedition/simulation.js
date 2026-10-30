@@ -43,6 +43,24 @@ export function botAction(g, { policy = "balanced", seed = 1 } = {}) {
   };
   if (pending) {
     const kind = pending.kind;
+    if (kind === "public_event") {
+      // Pick from visible consequences: prefer repairing a below-neutral
+      // dimension, otherwise add supplies. This is a reproducible simple
+      // policy, not an optimal moral judgment or a target-rate adjustment.
+      const repair = pending.card.options.find(
+        (option) =>
+          Object.entries(option.effects.world).some(
+            ([key, delta]) => delta > 0 && g.attributes[key] < 10,
+          ) && Object.values(option.effects.world).every((delta) => delta >= 0),
+      );
+      const option =
+        repair ||
+        pending.card.options.find((option) =>
+          Object.values(option.effects.ark).some((amount) => amount > 0),
+        ) ||
+        pending.card.options[0];
+      return { ...input, type: "choose", optionId: option.id };
+    }
     if (kind.startsWith("disaster_"))
       return {
         ...input,
@@ -233,13 +251,16 @@ export function simulate({
   rules,
   policy = "balanced",
   learningMode = false,
+  flagOffset = 0,
 } = {}) {
+  if (!Number.isInteger(flagOffset) || flagOffset < 0 || flagOffset > 5)
+    throw Error("flagOffset must be an integer from 0 to 5");
   let game = createGame(
     {
       learningMode,
       players: CHARACTERS.slice(0, players).map((c, i) => ({
         characterId: c.id,
-        flagId: `P${i + 1}`,
+        flagId: `P${((i + flagOffset) % 6) + 1}`,
       })),
     },
     { seed, rules },

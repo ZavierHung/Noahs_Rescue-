@@ -1,0 +1,133 @@
+{
+  "version": "public-events-v1",
+  "rounds": [2, 4, 6],
+  "policy": "六张事件每局不放回抽三张；独立随机源；轮换玩家代表共同体作一次二选一。公共物资不计私人捐赠，公共世界变化不自动记为决策者个人贡献。",
+  "cards": [
+    {
+      "id": "driftwood-habitat",
+      "title": "潮后的漂流木",
+      "description": "岸边出现一小批可用漂流木。收集为方舟添料，还是留作岸边栖地？",
+      "concept": "机会成本与生态系统服务：同一物资可以有建材价值，也可以有栖地价值。",
+      "limitations": "这里只模拟已确认安全的少量漂流木；保留木材不必然改善所有海岸，实际处理需评估当地生态与安全。",
+      "options": [
+        {
+          "id": "salvage",
+          "label": "回收建材",
+          "summary": "方舟木头+1；放弃本次栖地修复。",
+          "effects": { "ark": { "wood": 1 }, "world": {} }
+        },
+        {
+          "id": "restore",
+          "label": "保留栖地",
+          "summary": "环境+1；本次不增加方舟物资。",
+          "effects": { "ark": {}, "world": { "environment": 1 } }
+        }
+      ]
+    },
+    {
+      "id": "sealed-warehouse",
+      "title": "封存的旧仓库",
+      "description": "旧仓库中有可回收金属，但拆解会产生污染。继续回收，还是封存治理？",
+      "concept": "污染外部性与代际责任：短期公共收益不应掩盖共同承担的环境成本。",
+      "limitations": "污染幅度是游戏情景假设，不是实际拆解工程的排放系数；环境修复也不等于现实污染可以瞬间逆转。",
+      "options": [
+        {
+          "id": "salvage",
+          "label": "拆解回收",
+          "summary": "方舟金属+2，环境−1。",
+          "effects": { "ark": { "metal": 2 }, "world": { "environment": -1 } }
+        },
+        {
+          "id": "restore",
+          "label": "封存治理",
+          "summary": "环境+1；放弃本次金属回收。",
+          "effects": { "ark": {}, "world": { "environment": 1 } }
+        }
+      ]
+    },
+    {
+      "id": "public-nursery",
+      "title": "公共苗圃",
+      "description": "一份种苗可以装入方舟，也可以留在当地修复植被。你们保留哪一种可能？",
+      "concept": "自然资本与时间取舍：应急储备和原地生态恢复都有公共价值。",
+      "limitations": "方舟种子只按本游戏物资容量规则计数，不会复活玩家或自动治疗；现实植被恢复需要时间和合适物种。",
+      "options": [
+        {
+          "id": "salvage",
+          "label": "装入方舟",
+          "summary": "方舟种子+1；不是给玩家治疗。",
+          "effects": { "ark": { "seed": 1 }, "world": {} }
+        },
+        {
+          "id": "restore",
+          "label": "原地复植",
+          "summary": "环境+1；本次不增加方舟物资。",
+          "effects": { "ark": {}, "world": { "environment": 1 } }
+        }
+      ]
+    },
+    {
+      "id": "shared-energy",
+      "title": "余电时隙",
+      "description": "临时电站有一份余电，既可储入方舟，也可支援公共照明与联络。",
+      "concept": "能源正义与公共品：集中储备和分散服务之间存在分配取舍。",
+      "limitations": "社会+1代表情景中公共服务改善，不意味着电力分配必定增加信任；本事件不改变个人电力或洪水欠缴。",
+      "options": [
+        {
+          "id": "salvage",
+          "label": "方舟蓄电",
+          "summary": "方舟电力+1；放弃本次公共服务增益。",
+          "effects": { "ark": { "electricity": 1 }, "world": {} }
+        },
+        {
+          "id": "restore",
+          "label": "支援公共服务",
+          "summary": "社会+1；本次不增加方舟物资。",
+          "effects": { "ark": {}, "world": { "society": 1 } }
+        }
+      ]
+    },
+    {
+      "id": "temporary-bridge",
+      "title": "临时渡桥",
+      "description": "一座临时渡桥还能服务附近居民，也能拆出方舟所需木料。",
+      "concept": "公共基础设施与程序公平：一个共同项目的收益可能损害另一群人的可达性。",
+      "limitations": "社会变化是游戏对社区服务损失的简化；事件不暗中改变地图路线、玩家位置、生命或洪水规则。",
+      "options": [
+        {
+          "id": "salvage",
+          "label": "拆桥取材",
+          "summary": "方舟木头+2，社会−1；地图路线不变。",
+          "effects": { "ark": { "wood": 2 }, "world": { "society": -1 } }
+        },
+        {
+          "id": "restore",
+          "label": "保留通行服务",
+          "summary": "社会+1；放弃本次木料。",
+          "effects": { "ark": {}, "world": { "society": 1 } }
+        }
+      ]
+    },
+    {
+      "id": "repair-workshop",
+      "title": "维修工坊的选择",
+      "description": "工坊能交出一份现成金属，或继续运行维持维修与就业，但运转仍需要能源。",
+      "concept": "经济韧性与生产外部性：维持就业和维修能力有价值，也可能付出环境成本。",
+      "limitations": "经济+1与环境−1只描述本次依赖高排放能源的工坊；并非所有就业增长或维修都会损害环境。",
+      "options": [
+        {
+          "id": "salvage",
+          "label": "交付现有金属",
+          "summary": "方舟金属+1；放弃本次工坊扩展。",
+          "effects": { "ark": { "metal": 1 }, "world": {} }
+        },
+        {
+          "id": "restore",
+          "label": "继续维修生产",
+          "summary": "经济+1，环境−1；不增加方舟物资。",
+          "effects": { "ark": {}, "world": { "economy": 1, "environment": -1 } }
+        }
+      ]
+    }
+  ]
+}

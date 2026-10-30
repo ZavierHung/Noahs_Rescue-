@@ -28,7 +28,11 @@ function CardArt({ card, large = false }: { card: Disaster; large?: boolean }) {
   return (
     <img
       className={large ? "disaster-art-full" : "disaster-art"}
-      src={`/images/disasters/${card.image.file}`}
+      src={
+        card.image.file.startsWith("/images/")
+          ? card.image.file
+          : `/images/disasters/${card.image.file}`
+      }
       alt={`${card.name}灾难卡`}
       width={card.image.width}
       height={card.image.height}
@@ -106,7 +110,7 @@ export function DisasterCards({
             </DialogClose>
           </div>
           <DialogDescription>
-            文档原卡 · 保持原图比例，可滚动查看完整卡面。
+            卡面展示 · 保持原图比例，可滚动查看完整卡面；规则以本版实际效果为准。
           </DialogDescription>
           {selected && (
             <>

@@ -77,3 +77,21 @@
   line-height: 1.6;
   display: block;
 }
+.opportunity-scroll {
+  overflow-x: auto;
+}
+.opportunity-context table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.opportunity-context caption {
+  text-align: left;
+  margin: 10px 0;
+}
+.opportunity-context th,
+.opportunity-context td {
+  padding: 8px;
+  border-bottom: 1px solid #d6ccb4;
+  text-align: left;
+}

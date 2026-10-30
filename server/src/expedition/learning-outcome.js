@@ -1,7 +1,7 @@
 import { arkCapacity, survivalState } from "./rules.js";
 import { buildJudgmentFacts } from "./judgment-facts.js";
 
-export const LEARNING_OUTCOME_VERSION = "learning-outcome-v1";
+export const LEARNING_OUTCOME_VERSION = "learning-outcome-v2";
 
 // A transparent learning scorecard, not a second moral ranking. The rule-based
 // challenges never grant a seat and a popular peer rating never changes them.
@@ -27,11 +27,49 @@ export function buildLearningOutcome(game) {
     (sum, event) => sum + (event.actualDelta?.environment || 0),
     0,
   );
+  const publicChanges = game.events.filter(
+    (event) =>
+      event.type === "world_change" &&
+      event.actor === "system" &&
+      event.cause?.type === "public_event",
+  );
+  const verifiedPublicChanges = publicChanges.filter((event) =>
+    game.events.some(
+      (choice) =>
+        choice.type === "public_event_choice" &&
+        choice.worldChangeEventSeq === event.seq &&
+        choice.cardId === event.cause.cardId &&
+        choice.decisionActor === event.cause.decisionActor &&
+        choice.actor === event.cause.decisionActor &&
+        players.some((player) => player.id === choice.decisionActor),
+    ),
+  );
+  const collectiveSequences = new Set(
+    verifiedPublicChanges.map((event) => event.seq),
+  );
+  const collectiveChanges = facts.systemWorldChanges.filter((event) =>
+    collectiveSequences.has(event.seq),
+  );
+  const collectiveDecisionNetDelta = collectiveChanges.reduce(
+    (sum, event) => sum + (event.actualDelta?.environment || 0),
+    0,
+  );
+  const collectiveDecisionActions = collectiveChanges.filter(
+    (event) =>
+      Number.isFinite(event.actualDelta?.environment) &&
+      event.actualDelta.environment !== 0,
+  ).length;
   const manualAdjustments = game.events.filter(
     (event) => event.type === "world_manual",
   ).length;
-  const unknownChanges = changes.some((event) => event.actualDelta === null);
+  const unknownChanges =
+    changes.some((event) => event.actualDelta === null) ||
+    collectiveChanges.some((event) => event.actualDelta === null) ||
+    publicChanges.length !== verifiedPublicChanges.length;
   const ecologyAssessable = !manualAdjustments && !unknownChanges;
+  const hasEnvironmentActions =
+    repairActions + damageActions + collectiveDecisionActions > 0;
+  const combinedNetChange = playerNetChange + collectiveDecisionNetDelta;
   const goals = [
     {
       id: "collective_survival",
@@ -47,11 +85,16 @@ export function buildLearningOutcome(game) {
     },
     {
       id: "ecological_responsibility",
-      title: "生态责任",
-      achieved: ecologyAssessable ? playerNetChange >= 0 : null,
+      title: "环境成本约束",
+      achieved:
+        ecologyAssessable && hasEnvironmentActions
+          ? combinedNetChange >= 0
+          : null,
       detail: !ecologyAssessable
         ? "本局有手动世界调节或缺失变化证据，生态目标不评定；保留实际行为供讨论。"
-        : `玩家实际环境净影响 ${playerNetChange >= 0 ? "+" : ""}${playerNetChange}；练习目标为不把净环境成本留给共同体，不把系统灾难归罪于个人。`,
+        : !hasEnvironmentActions
+          ? "没有可核对的实际环境代价或修复行为，本项目待讨论；空净值不等于已经履行生态责任。"
+          : `玩家直接环境净影响 ${playerNetChange >= 0 ? "+" : ""}${playerNetChange}；共同选择净影响 ${collectiveDecisionNetDelta >= 0 ? "+" : ""}${collectiveDecisionNetDelta}。练习目标为两者合计不额外透支环境；自动灾难不归罪个人，共同影响不冒充个人修复。`,
     },
   ];
   const achieved = goals.filter((goal) => goal.achieved === true).length;
@@ -86,6 +129,8 @@ export function buildLearningOutcome(game) {
       repairActions,
       damageActions,
       manualAdjustments,
+      collectiveDecisionNetDelta,
+      collectiveDecisionActions,
     },
     personal: facts.players.map((player) => {
       const negative = player.worldChanges.find(

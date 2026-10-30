@@ -90,8 +90,61 @@ export type HistoryAudit = {
   detail: string;
   events?: Event[];
 };
+export type PublicEventOption = {
+  id: string;
+  label: string;
+  summary: string;
+  effects: {
+    ark: Partial<Bag>;
+    world: Partial<WorldAttributes>;
+  };
+};
+export type PublicEventCard = {
+  id: string;
+  title: string;
+  description: string;
+  concept: string;
+  limitations: string;
+  options: PublicEventOption[];
+};
+export type PublicEventPending = {
+  kind: "public_event";
+  actor: string;
+  sequence: number;
+  resume: "cards";
+  card: PublicEventCard;
+};
 export type Game = {
   learningMode?: boolean;
+  learningVersion?: string;
+  opportunityContext?: {
+    version?: string;
+    mapHash?: string;
+    mapVersion?: string;
+    basis: string;
+    limitations: string;
+    players: {
+      playerId: string;
+      flagId: string;
+      available: boolean;
+      initialTileId?: string;
+      minimumStepsToSafeZone?: number | null;
+      resourceTilesWithinTwoSteps?: number;
+      resourceTypesWithinTwoSteps?: string[];
+    }[];
+  };
+  publicEvents?: {
+    version: string;
+    rounds: number[];
+    startingDeciderId: string;
+    offeredRounds: number[];
+    choices: {
+      round: number;
+      cardId: string;
+      optionId: string;
+      decisionActor: string;
+    }[];
+  };
   learning?: Record<string, unknown>;
   peerReviewSummary?: {
     enabled: boolean;
@@ -201,6 +254,8 @@ export type LearningOutcome = {
     repairActions: number;
     damageActions: number;
     manualAdjustments: number;
+    collectiveDecisionNetDelta?: number;
+    collectiveDecisionActions?: number;
   };
   personal: {
     playerId: string;

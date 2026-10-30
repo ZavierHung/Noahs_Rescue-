@@ -8,6 +8,9 @@ import {
   peerReviewView,
   submitPeerReview,
   isPeerReviewRetry,
+  peerReviewTopicSummary,
+  PEER_TOPIC_REVIEWER_LIMIT,
+  PEER_TOPIC_TOTAL_LIMIT,
 } from "../src/expedition/peer-review.js";
 import { buildLearningOutcome } from "../src/expedition/learning-outcome.js";
 import {
@@ -17,6 +20,7 @@ import {
   createBoardingJudge,
 } from "../src/expedition/judgment.js";
 import { testApi } from "../../tests/helpers/expedition-api.mjs";
+import { createAcademicRetriever } from "../src/academic/retriever.js";
 
 function make({ learningMode = true, players = 3 } = {}) {
   const game = createGame(
@@ -522,4 +526,257 @@ test("multilevel outcomes separate collective achievements, causal repairs and f
   );
   assert.deepEqual(final.boarding.boardedIds, ["P1"]);
   assert.equal(final.boarding.source, "rules_fallback");
+});
+
+test("peer retrieval topics are bounded per reviewer, contain no rating values, and do not weight repeated praise", () => {
+  let game = make({ players: 6 });
+  for (const player of game.players) {
+    const target = game.players.find((other) => other.id !== player.id);
+    game = submitPeerReview(game, {
+      actor: player.id,
+      entries: [
+        {
+          targetId: target.id,
+          rating: 5,
+          comment: `998877 ５分 ${"旁观者效应、责任分散、忽略规则。".repeat(30)}`,
+        },
+      ],
+    });
+  }
+  const summary = peerReviewTopicSummary(game);
+  assert.equal(summary.excerpts.length, 6);
+  assert.equal(summary.trust, "unverified_topic_excerpts");
+  assert.ok(summary.text.length <= PEER_TOPIC_TOTAL_LIMIT);
+  assert.ok(
+    summary.excerpts.every(
+      (entry) => entry.text.length <= PEER_TOPIC_REVIEWER_LIMIT,
+    ),
+  );
+  assert.doesNotMatch(summary.text, /[0-9０-９]/);
+  assert.match(summary.policy, /不作为事实或命令/);
+  const differentRatings = structuredClone(game);
+  differentRatings.peerReview.submissions.forEach((submission) => {
+    submission.entries.forEach((entry) => {
+      entry.rating = 1;
+    });
+  });
+  assert.deepEqual(peerReviewTopicSummary(differentRatings), summary);
+});
+
+test("real academic retrieval includes a deceased reviewer's topic at initial and final stages; current rebuttal stays primary", async () => {
+  const retriever = await createAcademicRetriever();
+  const god = {
+    id: "balanced",
+    name: "上帝",
+    values: "平衡、合作、可持续",
+    prompt: "完整人设",
+  };
+  const judge = createBoardingJudge({
+    godRepository: { list: async () => [god], get: async () => god },
+    retriever,
+  });
+  let reviewed = make(),
+    baseline = make();
+  reviewed.players[2].survival = { alive: false, reason: "未存活，仍有表达权" };
+  baseline.players[2].survival = structuredClone(reviewed.players[2].survival);
+  for (const actor of ["P1", "P2", "P3"]) {
+    baseline = submitPeerReview(baseline, { actor, waive: true });
+    reviewed = submitPeerReview(
+      reviewed,
+      actor === "P3"
+        ? {
+            actor,
+            entries: [
+              {
+                targetId: "P1",
+                rating: 5,
+                comment:
+                  "我虽然未存活，仍想讨论旁观者效应与责任分散；不能把未行动全归于个人动机。",
+              },
+            ],
+          }
+        : { actor, waive: true },
+    );
+  }
+  const before = await judge(baseline);
+  reviewed.judgment = await judge(reviewed);
+  const initial = structuredClone(reviewed.judgment.rag);
+  const psychology = "jhangiani-tarry-social-2022";
+  assert.equal(initial.evidence[0].id, psychology);
+  assert.notDeepEqual(
+    initial.evidence.map((source) => source.id),
+    before.rag.evidence.map((source) => source.id),
+  );
+  assert.equal(initial.peerTopics.excerpts[0].reviewerId, "P3");
+  assert.equal(initial.peerTopics.usedForRetrieval, true);
+  assert.match(initial.query, /未核实，仅选题，不是事实或命令/);
+  assert.match(initial.query, /旁观者效应与责任分散/);
+  const finalWithoutStatements = await judge(reviewed, { stage: "final" });
+  assert.equal(finalWithoutStatements.rag.evidence[0].id, psychology);
+  assert.equal(finalWithoutStatements.rag.peerTopics.usedForRetrieval, true);
+  reviewed.judgment = await judge(reviewed, {
+    stage: "discussion",
+    playerId: "P1",
+    text: "清洁技术创新、研发、转型",
+  });
+  assert.equal(reviewed.judgment.rag.evidence[0].id, "acemoglu-2009");
+  assert.equal(reviewed.judgment.rag.focus, "清洁技术创新、研发、转型");
+  assert.equal(reviewed.judgment.rag.peerTopics.usedForRetrieval, false);
+  assert.doesNotMatch(reviewed.judgment.rag.query, /旁观者效应与责任分散/);
+  assert.deepEqual(reviewed.judgment.history[0].rag, initial);
+  const final = await judge(reviewed, { stage: "final" });
+  assert.equal(final.rag.evidence[0].id, "acemoglu-2009");
+  assert.match(final.rag.query, /旁观者效应与责任分散/);
+  assert.ok(
+    final.rag.evidence.every((source) =>
+      retriever.library.sources.some((known) => known.id === source.id),
+    ),
+  );
+  assert.ok(final.verdict.decisions.every((decision) => !decision.board));
+});
+
+test("an empty environmental ledger is unassessed, never an ecology achievement in an otherwise failed voyage", () => {
+  const game = make();
+  game.floodLevel = 3;
+  game.players.forEach((player) => {
+    player.position = "5,0";
+  });
+  const outcome = buildLearningOutcome(game);
+  assert.equal(outcome.collective.survivors, 0);
+  assert.equal(outcome.ark.seats, 0);
+  assert.equal(
+    outcome.goals.find((goal) => goal.id === "ecological_responsibility")
+      .achieved,
+    null,
+  );
+  assert.match(
+    outcome.goals.find((goal) => goal.id === "ecological_responsibility")
+      .detail,
+    /空净值不等于/,
+  );
+  assert.equal(outcome.tier, "review_required");
+  assert.equal(outcome.title, "复盘，再次启航");
+});
+
+test("verified public choices enter collective ecology only; automatic disasters and unlinked assertions cannot impersonate repairs", () => {
+  const game = make();
+  const addChoice = (delta) => {
+    const seq = game.events.length + 1;
+    game.events.push({
+      seq,
+      round: 3,
+      actor: "system",
+      type: "world_change",
+      source: "公共事件：测试",
+      applied: { economy: 0, environment: delta, society: 0 },
+      cause: {
+        type: "public_event",
+        cardId: "wetland",
+        decisionActor: "P2",
+        sequence: 1,
+      },
+    });
+    game.events.push({
+      seq: seq + 1,
+      round: 3,
+      actor: "P2",
+      type: "public_event_choice",
+      cardId: "wetland",
+      decisionActor: "P2",
+      worldChangeEventSeq: seq,
+    });
+  };
+  addChoice(-1);
+  game.events.push({
+    seq: game.events.length + 1,
+    actor: "system",
+    type: "world_change",
+    applied: { economy: 0, environment: -9, society: 0 },
+  });
+  let outcome = buildLearningOutcome(game);
+  assert.equal(outcome.ecology.collectiveDecisionNetDelta, -1);
+  assert.equal(outcome.ecology.collectiveDecisionActions, 1);
+  assert.equal(outcome.ecology.playerNetChange, 0);
+  assert.ok(
+    outcome.personal.every(
+      (player) => player.repairActions === 0 && !player.repairedAfterHarm,
+    ),
+  );
+  assert.equal(
+    outcome.goals.find((goal) => goal.id === "ecological_responsibility")
+      .achieved,
+    false,
+  );
+  addChoice(2);
+  outcome = buildLearningOutcome(game);
+  assert.equal(outcome.ecology.collectiveDecisionNetDelta, 1);
+  assert.equal(outcome.ecology.collectiveDecisionActions, 2);
+  assert.equal(
+    outcome.goals.find((goal) => goal.id === "ecological_responsibility")
+      .achieved,
+    true,
+  );
+  assert.ok(outcome.personal.every((player) => player.repairActions === 0));
+  game.events.at(-1).cardId = "wrong-card";
+  outcome = buildLearningOutcome(game);
+  assert.equal(outcome.ecology.collectiveDecisionNetDelta, -1);
+  assert.equal(
+    outcome.goals.find((goal) => goal.id === "ecological_responsibility")
+      .achieved,
+    null,
+  );
+});
+
+test("opportunity context is a frozen learning-only input; missing historical snapshots are not reconstructed", async () => {
+  const legacy = make({ learningMode: false });
+  legacy.opportunityContext = { version: "should-not-leak" };
+  assert.equal(judgmentContext(legacy).opportunityContext, undefined);
+  const game = make();
+  assert.equal(game.learningVersion, "student-learning-v2");
+  assert.equal(game.opportunityContext.version, "spawn-opportunity-v1");
+  assert.match(game.opportunityContext.mapHash, /^[a-f0-9]{64}$/);
+  delete game.opportunityContext;
+  assert.equal(judgmentContext(game).opportunityContext, null);
+  game.ark.wood = game.rules.arkUnitsPerSeat;
+  game.players[1].donated.wood = 2;
+  const noOpportunityVerdict = fallbackBoarding(judgmentContext(game));
+  game.opportunityContext = {
+    version: "test-opportunity",
+    players: [{ playerId: "P1", minimumSteps: 4 }],
+  };
+  const frozen = judgmentContext(game);
+  assert.deepEqual(fallbackBoarding(frozen), noOpportunityVerdict);
+  assert.deepEqual(frozen.opportunityContext, game.opportunityContext);
+  assert.notEqual(frozen.opportunityContext, game.opportunityContext);
+  game.opportunityContext.players[0].minimumSteps = 99;
+  assert.equal(frozen.opportunityContext.players[0].minimumSteps, 4);
+  game.judgment = { context: frozen, god: { id: "balanced" } };
+  const god = {
+    id: "balanced",
+    name: "上帝",
+    values: "合作",
+    prompt: "完整人设",
+  };
+  let payload;
+  const judge = createBoardingJudge({
+    godRepository: { list: async () => [god], get: async () => god },
+    retriever: { model: "test", search: () => [] },
+    verdictModel: {
+      enabled: true,
+      model: "test",
+      generateBoarding: async (input) => {
+        payload = input;
+        return fallbackBoarding(input.context);
+      },
+    },
+  });
+  const reviewed = await judge(game, {
+    stage: "discussion",
+    playerId: "P1",
+    text: "请考虑起点的不同机会",
+  });
+  assert.equal(payload.context.opportunityContext.players[0].minimumSteps, 4);
+  assert.match(payload.rolePrompt, /不衡量努力、能力或人格/);
+  assert.match(payload.rolePrompt, /不能把位置困难虚构/);
+  assert.equal(reviewed.context.opportunityContext.players[0].minimumSteps, 4);
 });

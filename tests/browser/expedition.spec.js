@@ -300,6 +300,15 @@ test("full eight-round browser flow, three flood settlements and terminal god re
     await expect(page.locator(".journey-strip")).toContainText(
       `第 ${round} / 8`,
     );
+    if ([2, 4, 6].includes(round)) {
+      const eventPanel = page.getByRole("region", { name: "公共事件二选一" });
+      await expect(eventPanel).toBeVisible();
+      await eventPanel
+        .getByRole("button", { name: /^选择公共方案：/ })
+        .first()
+        .click();
+      await expect(eventPanel).toHaveCount(0);
+    }
     await page.getByRole("button", { name: "完成出牌，进入移动" }).click();
     await expect(page.locator(".journey-strip")).toContainText("选择移动");
     // Move toward the center to survive shrinkage, using real reachable hexes.
@@ -340,6 +349,9 @@ test("full eight-round browser flow, three flood settlements and terminal god re
   await page
     .getByRole("button", { name: "完成交互，请上帝敲定最终名单" })
     .click();
+  await expect(page.locator(".boarding-panel > .overline")).toContainText(
+    "最终名单",
+  );
   const [summary] = await local.service.list(),
     finished = await local.service.get(summary.id);
   expect(finished.status).toBe("finished");

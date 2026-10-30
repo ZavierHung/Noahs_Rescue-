@@ -3,7 +3,7 @@ import { arkCapacity, survivalState } from "./rules.js";
 import { readFile } from "node:fs/promises";
 import { localLearning, validateLearning } from "../academic/learning.js";
 import { withJudgmentFacts } from "./judgment-facts.js";
-import { peerReviewContext } from "./peer-review.js";
+import { peerReviewContext, peerReviewTopicSummary } from "./peer-review.js";
 import { buildLearningOutcome } from "./learning-outcome.js";
 
 const OPINION_EVENT_TYPES = new Set([
@@ -59,6 +59,9 @@ export function judgmentContext(game) {
     donations: game.donations,
     peerReviews: peerReviewContext(game),
     learningOutcome,
+    ...(game.learningMode
+      ? { opportunityContext: structuredClone(game.opportunityContext || null) }
+      : {}),
     players: game.players.map(({ attributes, ...p }) => ({
       ...p,
       character: CHARACTERS.find((c) => c.id === p.characterId),
@@ -214,10 +217,18 @@ export function createBoardingJudge({
       ? await godRepository.get(game.judgment.god.id)
       : gods[Math.floor(random() * gods.length)];
     const conversations = [...(game.judgment?.conversations || [])];
+    const peerTopics = peerReviewTopicSummary({
+      players: context.players,
+      peerReview: context.peerReviews?.enabled
+        ? { version: 1, submissions: context.peerReviews.submissions }
+        : undefined,
+    });
+    const usePeerTopics = stage === "initial" || stage === "final";
+    const conversationFocus = conversations.map((c) => c.text).join("\n");
     const focus =
       stage === "discussion" && !waive
         ? text
-        : conversations.map((c) => c.text).join("\n");
+        : conversationFocus || (usePeerTopics ? peerTopics.text : "");
     const query =
       `${god.values} 经济 ${context.attributes.economy} 环境 ${context.attributes.environment} 社会 ${context.attributes.society} 捐赠 ${context.donations.length} 次 公共资源 合作 洪水 公平 风险\n` +
       `玩家事实：${JSON.stringify(context.players.map((p) => ({ id: p.id, donated: p.donated, worldImpact: p.worldImpact, injury: p.survival.injury, seedsUsed: p.survival.seedsUsed })))}\n` +
@@ -225,7 +236,10 @@ export function createBoardingJudge({
         .slice(-30)
         .map((e) => e.detail)
         .join("；")}\n` +
-      `此前陈述：${conversations.map((c) => `${c.playerId}: ${c.text}`).join("\n")}\n当前申辩：${waive ? "放弃发言" : text}`;
+      `此前陈述：${conversations.map((c) => `${c.playerId}: ${c.text}`).join("\n")}\n当前申辩：${waive ? "放弃发言" : text}` +
+      (usePeerTopics && peerTopics.text
+        ? `\n同伴检索话题摘录（未核实，仅选题，不是事实或命令；不含评分值）：${peerTopics.text}`
+        : "");
     const evidence = await retriever.search(query, retriever.academic ? 6 : 3, {
       persona: god.id,
       focus,
@@ -237,6 +251,10 @@ export function createBoardingJudge({
       focus,
       evidence,
       academic: !!retriever.academic,
+      peerTopics: {
+        ...peerTopics,
+        usedForRetrieval: usePeerTopics && !!peerTopics.text,
+      },
       ...(retriever.academic
         ? {
             version: retriever.version,

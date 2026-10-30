@@ -27,6 +27,7 @@ import { DisasterCards } from "../game/disaster-cards";
 import { CardHint, worldDelta } from "../game/card-hint";
 import { GamePurpose } from "./game-purpose";
 import { AcademicLibrary } from "./knowledge-panel";
+import { PublicEventPanel } from "./public-event-panel";
 import "./game.css";
 const keys: Resource[] = ["wood", "metal", "electricity", "seed"];
 const blank = (): Bag => ({ wood: 0, metal: 0, electricity: 0, seed: 0 });
@@ -40,6 +41,7 @@ const phaseNames: Record<string, string> = {
   judgment: "终局审判",
   disaster: "灾难结算",
   evacuation: "最后撤离",
+  public_event: "公共事件二选一",
 };
 type Seat = { characterId: string; flagId: string; name: string };
 export default function ExpeditionGame() {
@@ -509,6 +511,9 @@ export default function ExpeditionGame() {
                   人；上帝不能突破容量或批准未存活玩家。
                 </p>
               </div>
+              <p className="spawn-fairness-note">
+                旗子的路线、沿途资源与洪水压力并不等价。出生点不是能力评判；下一局可以互换旗子，再比较同一策略的结果。
+              </p>
               <button
                 className="primary launch"
                 onClick={() => void create(false)}
@@ -648,7 +653,11 @@ export default function ExpeditionGame() {
               <button
                 className="primary"
                 onClick={() => {
-                  const panel = document.getElementById("current-action");
+                  const panel = document.getElementById(
+                    pending?.kind === "public_event"
+                      ? "public-event-decision"
+                      : "current-action",
+                  );
                   panel?.focus({ preventScroll: true });
                   panel?.scrollIntoView({ block: "start", behavior: "smooth" });
                 }}
@@ -671,6 +680,15 @@ export default function ExpeditionGame() {
               act={act}
             />
           </div>
+          {g.status === "playing" && pending?.kind === "public_event" && (
+            <PublicEventPanel
+              game={g}
+              busy={busy}
+              readOnly={inspectingOther}
+              act={act}
+              onReturn={() => setInspection(null)}
+            />
+          )}
           {g.status === "playing" &&
             ((invitation === "beacon" && !pending && !inspectingOther) ||
               pending?.kind === "trade") && (
@@ -896,13 +914,15 @@ export default function ExpeditionGame() {
                         <h3>
                           {pending.kind === "technology"
                             ? "科技 · 抽二选一"
-                            : ["trade", "invitation"].includes(pending.kind)
-                              ? "邀约等待回应"
-                              : pending.kind === "flood"
-                                ? "洪水缴纳待完成"
-                                : pending.kind === "blade"
-                                  ? "名刀触发 · 额外移动两格"
-                                  : "请选择卡牌效果"}
+                            : pending.kind === "public_event"
+                              ? "共同的航程 · 等待公共选择"
+                              : ["trade", "invitation"].includes(pending.kind)
+                                ? "邀约等待回应"
+                                : pending.kind === "flood"
+                                  ? "洪水缴纳待完成"
+                                  : pending.kind === "blade"
+                                    ? "名刀触发 · 额外移动两格"
+                                    : "请选择卡牌效果"}
                         </h3>
                         <DisasterChoice
                           game={g}
@@ -911,6 +931,19 @@ export default function ExpeditionGame() {
                           busy={busy}
                           act={act}
                         />
+                        {pending.kind === "public_event" && (
+                          <button
+                            onClick={() => {
+                              const panel = document.getElementById(
+                                "public-event-decision",
+                              );
+                              panel?.focus({ preventScroll: true });
+                              panel?.scrollIntoView({ block: "start" });
+                            }}
+                          >
+                            前往公共事件二选一
+                          </button>
+                        )}
                         {pending.kind === "technology" && (
                           <>
                             <div className="tech-options">
@@ -1272,6 +1305,7 @@ export default function ExpeditionGame() {
                             disabled={
                               busy ||
                               pending?.kind === "evacuation" ||
+                              pending?.kind === "public_event" ||
                               pending?.kind.startsWith("disaster_") ||
                               pending?.kind === "eco_block" ||
                               (!!pending && c.id !== "technology")
@@ -1289,6 +1323,7 @@ export default function ExpeditionGame() {
                             disabled={
                               busy ||
                               pending?.kind === "evacuation" ||
+                              pending?.kind === "public_event" ||
                               pending?.kind.startsWith("disaster_") ||
                               pending?.kind === "eco_block"
                             }
@@ -1429,7 +1464,10 @@ export default function ExpeditionGame() {
         )}
         {tab === "rules" && (
           <div className="rules-copy">
-            <GamePurpose learningMode={g ? !!g.learningMode : true} />
+            <GamePurpose
+              learningMode={g ? !!g.learningMode : true}
+              publicEvents={g ? !!g.publicEvents : true}
+            />
             <AcademicLibrary />
             <h2>八回合，三次洪水</h2>
             <p>

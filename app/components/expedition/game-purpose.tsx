@@ -1,7 +1,9 @@
 export function GamePurpose({
   learningMode = true,
+  publicEvents = true,
 }: {
   learningMode?: boolean;
+  publicEvents?: boolean;
 }) {
   return (
     <section className="game-purpose" aria-label="游戏核心目标">
@@ -33,6 +35,12 @@ export function GamePurpose({
             <span>互评与申辩要指向真实行为；登船结果不是学习成绩。</span>
           </div>
         </div>
+      )}
+      {learningMode && publicEvents && (
+        <p>
+          第 2、4、6
+          回合各遇到一次公共事件：轮值玩家在两个已知方案中选一个。每局只有三次，结果影响全体；公共收益不算个人捐赠。
+        </p>
       )}
       <small>
         这是一场合作与公平的教育实验，不是“财富最多者赢”，也不评价现实中谁更值得生存。游戏是简化模型，不是现实社会的定律。悬停或键盘聚焦卡牌可查看本版效果；手机可点击卡图查看。未更新的历史卡面以「本版实际规则」为准。

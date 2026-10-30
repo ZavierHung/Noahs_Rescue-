@@ -241,6 +241,42 @@ export function LearningOutcomePanel({ game: g }: { game: Game }) {
           ))}
         </div>
       </details>
+      {g.opportunityContext && (
+        <details className="opportunity-context">
+          <summary>出生条件如何影响机会？</summary>
+          <p className="fineprint">{g.opportunityContext.basis}</p>
+          <div className="opportunity-scroll">
+            <table>
+              <caption>创建本局时的地图条件，不是玩家能力评分</caption>
+              <thead>
+                <tr>
+                  <th>玩家 / 旗点</th>
+                  <th>到安全区最少步数</th>
+                  <th>两步内资源格</th>
+                </tr>
+              </thead>
+              <tbody>
+                {g.opportunityContext.players.map((p) => (
+                  <tr key={p.playerId}>
+                    <th scope="row">
+                      {p.playerId} / {p.flagId}
+                    </th>
+                    <td>
+                      {p.available
+                        ? (p.minimumStepsToSafeZone ?? "无可达路径")
+                        : "无数据"}
+                    </td>
+                    <td>
+                      {p.available ? p.resourceTilesWithinTwoSteps : "无数据"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="fineprint">{g.opportunityContext.limitations}</p>
+        </details>
+      )}
     </section>
   );
 }
