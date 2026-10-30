@@ -57,6 +57,7 @@ export default function ExpeditionGame() {
       name: string;
       image: string;
       implementedEffect?: string;
+      effectSummary?: string;
       effect?: string;
       status?: Record<string, number>;
     } | null>(null);
@@ -176,7 +177,7 @@ export default function ExpeditionGame() {
     if (!game || busy) return false;
     if (
       (game.status === "playing" ||
-        ["discuss", "undo", "redo"].includes(type)) &&
+        ["discuss", "peer_review", "undo", "redo"].includes(type)) &&
       inspectingOther
     ) {
       setError("当前为只读查看，请返回当前行动玩家后操作");
@@ -219,7 +220,7 @@ export default function ExpeditionGame() {
       setBusy(false);
     }
   }
-  async function create() {
+  async function create(quick = false) {
     if (busy) return;
     setBusy(true);
     setError("");
@@ -227,7 +228,14 @@ export default function ExpeditionGame() {
       version.current++;
       accept(
         await apiRequest<Game>("", "POST", {
-          players: seats,
+          players: quick
+            ? catalog!.characters.slice(0, 6).map((c, i) => ({
+                characterId: c.id,
+                flagId: `P${i + 1}`,
+                name: "",
+              }))
+            : seats,
+          learningMode: true,
         }),
       );
     } catch (e) {
@@ -261,10 +269,35 @@ export default function ExpeditionGame() {
         <button onClick={() => void load()}>重试连接</button>
       </main>
     );
-  const cat = catalog,
-    g = game,
+  // Project the rules for this saved game into every card surface, including
+  // the read-only inspector and keyboard tooltips. Old saves keep their art
+  // and effects; the catalogue itself is never mutated.
+  const g = game,
+    displayCard = (c: Card): Card =>
+      g?.learningMode
+        ? {
+            ...c,
+            image: c.learningImage || c.image,
+            effect: c.learningEffect || c.effect,
+            implementedEffect: c.learningEffect || c.implementedEffect,
+            effectSummary: c.learningSummary || c.effectSummary,
+            status: c.learningStatus || c.status,
+          }
+        : c,
+    cat = {
+      ...catalog,
+      cards: {
+        actions: catalog.cards.actions.map(displayCard),
+        technology: catalog.cards.technology.map(displayCard),
+      },
+    },
     p = g?.players.find((p) => p.id === g.activePlayerId),
     viewedPlayer = g?.players.find((player) => player.id === viewedPlayerId),
+    peerReviewing =
+      g?.status === "awaiting_judgment" &&
+      !!g.peerReviewSummary?.enabled &&
+      !g.peerReviewSummary.complete,
+    discussing = g?.status === "review" && !!g.reviewRemaining?.length,
     tile = cat.map.tiles.find((t) => t.id === (selected || p?.position));
   const techCard = cat.cards.technology.find((c) => c.id === tech),
     pending = g?.pending;
@@ -346,6 +379,21 @@ export default function ExpeditionGame() {
             </p>
           </section>
           <GamePurpose />
+          <div className="quick-start" aria-label="快速开始学习航程">
+            <div>
+              <strong>先玩一局，再讨论为什么</strong>
+              <p>
+                自动安排六位角色与六面旗子；本地轮流操作，不会覆盖已有航程。
+              </p>
+            </div>
+            <button
+              className="primary"
+              disabled={busy}
+              onClick={() => void create(true)}
+            >
+              六人快速开局 →
+            </button>
+          </div>
           <section className="setup-layout">
             <div>
               <div className="section-label">
@@ -463,7 +511,7 @@ export default function ExpeditionGame() {
               </div>
               <button
                 className="primary launch"
-                onClick={() => void create()}
+                onClick={() => void create(false)}
                 disabled={busy}
               >
                 确认角色与旗子 · 开始航程 →
@@ -527,7 +575,11 @@ export default function ExpeditionGame() {
               <h2>
                 第 {g.round} / 8 回合{" "}
                 <span>
-                  {g.status === "playing" ? phaseNames[g.phase] : "终局议事厅"}
+                  {g.status === "playing"
+                    ? phaseNames[g.phase]
+                    : peerReviewing
+                      ? "玩家互评"
+                      : "终局议事厅"}
                 </span>
               </h2>
             </div>
@@ -562,12 +614,20 @@ export default function ExpeditionGame() {
               <strong>
                 {g.status === "playing"
                   ? `当前行动：${p?.id} · ${p?.name}`
-                  : "航程已结束 · 玩家信息只读"}
+                  : peerReviewing
+                    ? `当前互评：${p?.id} · ${p?.name}`
+                    : discussing
+                      ? `当前发言：${p?.id} · ${p?.name}`
+                      : "航程已结束 · 玩家信息只读"}
               </strong>
               <p>
                 {inspectingOther
                   ? `正在查看 ${viewedPlayer?.id} · ${viewedPlayer?.name}，仅可查看。`
-                  : "当前跟随行动玩家；点击下方玩家卡可查看其他人的手牌与详情。"}
+                  : g.status === "playing"
+                    ? `现在：${phaseNames[g.phase] || "完成当前选择"}。点击玩家头像可只读查看其他人的信息。`
+                    : peerReviewing
+                      ? "每位玩家依次评价自己观察到的行为，也可以跳过；意见供上帝参考，不直接决定席位。"
+                      : "先看团队与个人的航程结果，再依据真实行动参与讨论。"}
                 {g.status === "playing" &&
                   g.pending &&
                   " 正在处理系统指定的卡牌回应或结算，不代表切换正常回合。"}
@@ -575,7 +635,25 @@ export default function ExpeditionGame() {
             </div>
             {inspectingOther && (
               <button onClick={() => setInspection(null)}>
-                {g.status === "playing" ? "返回当前行动玩家" : "返回默认视角"}
+                {g.status === "playing"
+                  ? "返回当前行动玩家"
+                  : peerReviewing
+                    ? "返回互评视角"
+                    : discussing
+                      ? "返回发言视角"
+                      : "返回默认视角"}
+              </button>
+            )}
+            {!inspectingOther && g.status === "playing" && (
+              <button
+                className="primary"
+                onClick={() => {
+                  const panel = document.getElementById("current-action");
+                  panel?.focus({ preventScroll: true });
+                  panel?.scrollIntoView({ block: "start", behavior: "smooth" });
+                }}
+              >
+                前往本步操作 ↓
               </button>
             )}
           </div>
@@ -584,13 +662,15 @@ export default function ExpeditionGame() {
               {tradeNotice}
             </p>
           )}
-          <HistoryPanel
-            key={g.id}
-            game={g}
-            busy={busy}
-            readOnly={inspectingOther}
-            act={act}
-          />
+          <div className="history-compact">
+            <HistoryPanel
+              key={g.id}
+              game={g}
+              busy={busy}
+              readOnly={inspectingOther}
+              act={act}
+            />
+          </div>
           {g.status === "playing" &&
             ((invitation === "beacon" && !pending && !inspectingOther) ||
               pending?.kind === "trade") && (
@@ -730,8 +810,14 @@ export default function ExpeditionGame() {
                           </span>
                           <span className="roster-view-label">
                             {player.id === g.activePlayerId &&
-                            g.status === "playing"
-                              ? "当前行动"
+                            (g.status === "playing" ||
+                              peerReviewing ||
+                              discussing)
+                              ? peerReviewing
+                                ? "当前互评"
+                                : discussing
+                                  ? "当前发言"
+                                  : "当前行动"
                               : "只读查看"}
                             {player.id === viewedPlayerId
                               ? " · 正在查看"
@@ -776,7 +862,12 @@ export default function ExpeditionGame() {
               )}
               {g.status === "playing" && p ? (
                 !inspectingOther && (
-                  <section className="action-panel">
+                  <section
+                    className="action-panel"
+                    id="current-action"
+                    tabIndex={-1}
+                    aria-label="当前玩家操作"
+                  >
                     <p className="overline">{p.id} / 轮到你了</p>
                     <h2>{p.name}</h2>
                     <ResourceBag value={p.resources} />
@@ -1099,12 +1190,37 @@ export default function ExpeditionGame() {
                               disabled={busy || !g.canGather}
                               onClick={() => void act("gather")}
                             >
-                              采集当前位置资源
+                              {g.learningMode &&
+                              p.equipment.includes("mining-drone")
+                                ? "常规采集 · 不额外消耗环境"
+                                : "采集当前位置资源"}
                             </button>
+                            {g.learningMode &&
+                              p.equipment.includes("mining-drone") && (
+                                <div className="learning-tradeoff">
+                                  <p>
+                                    <strong>多拿一份，谁来承担代价？</strong>
+                                    <br />
+                                    启用无人机：本次同类资源额外 +1，共享环境
+                                    −1；常规采集不会产生这项额外代价。
+                                  </p>
+                                  <button
+                                    disabled={busy || !g.canGather}
+                                    onClick={() =>
+                                      void act("gather", { boost: true })
+                                    }
+                                  >
+                                    无人机增产 · 资源 +1 / 环境 −1
+                                  </button>
+                                </div>
+                              )}
                           </>
                         )}
                         {g.phase === "donate" && (
                           <>
+                            <p className="fineprint">
+                              公共库存增加席位；留给自己的物资可应对洪水，种子还可终局救生。捐得多不等于人的价值更高。
+                            </p>
                             <BagFields
                               value={amounts}
                               onChange={setAmounts}
@@ -1149,6 +1265,9 @@ export default function ExpeditionGame() {
                         <div key={c.uid}>
                           <Artwork c={card(c.id)} />
                           <strong>{card(c.id).name}</strong>
+                          <small className="card-one-line">
+                            {card(c.id).effectSummary}
+                          </small>
                           <button
                             disabled={
                               busy ||
@@ -1310,7 +1429,7 @@ export default function ExpeditionGame() {
         )}
         {tab === "rules" && (
           <div className="rules-copy">
-            <GamePurpose />
+            <GamePurpose learningMode={g ? !!g.learningMode : true} />
             <AcademicLibrary />
             <h2>八回合，三次洪水</h2>
             <p>

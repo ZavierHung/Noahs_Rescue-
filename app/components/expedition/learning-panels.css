@@ -1,0 +1,79 @@
+.peer-review-panel,
+.learning-outcome,
+.learning-spotlight {
+  border: 1px solid #c6b17f;
+  border-radius: 14px;
+  padding: 18px;
+  margin: 18px 0;
+  background: linear-gradient(135deg, #fffaf0, #eee8d8);
+  color: #253e38;
+}
+.learning-spotlight {
+  border-left: 4px solid #527765;
+  background: #eef2e8;
+}
+.peer-review-grid,
+.learning-goals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+.peer-review-grid fieldset,
+.learning-goals article {
+  border: 1px solid #c9c2ad;
+  border-radius: 10px;
+  padding: 12px;
+  min-width: 0;
+  background: #fffcf4;
+}
+.peer-review-grid label {
+  display: grid;
+  gap: 5px;
+  font-size: 0.86rem;
+  margin: 9px 0;
+}
+.peer-review-grid textarea,
+.peer-review-grid input,
+.peer-review-grid select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #b5b9aa;
+  border-radius: 7px;
+  background: #fffef9;
+  color: #193d35;
+  font: inherit;
+}
+.peer-review-grid legend {
+  font-weight: 700;
+  padding: 0 5px;
+}
+.learning-goals article[data-achieved="true"] {
+  border-top: 3px solid #52856b;
+}
+.learning-goals article[data-achieved="false"] {
+  border-top: 3px solid #a47d44;
+}
+.learning-goals p,
+.peer-review-record p {
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+.peer-review-record {
+  border-bottom: 1px dashed #c9c2ad;
+  padding: 10px 0;
+  overflow-wrap: anywhere;
+}
+.peer-review-panel summary,
+.learning-outcome summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 0;
+}
+.learning-outcome small,
+.learning-spotlight small {
+  line-height: 1.6;
+  display: block;
+}

@@ -3,6 +3,9 @@ export type Disaster = {
   name: string;
   effect: string;
   effectSummary?: string;
+  learningEffect?: string;
+  learningSummary?: string;
+  learningImage?: { file: string; width: number; height: number };
   dimension: "economy" | "environment" | "society";
   dimensionLabel: string;
   band: string;

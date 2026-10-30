@@ -1,8 +1,10 @@
 # Noah’s Rescue · 网页地图版
 
-当前版本：**0.3.0-local**。入口：[http://localhost:3000/](http://localhost:3000/)。原世界属性与上帝调试台移至 [/lab](http://localhost:3000/lab)。
+当前版本：**0.4.0-local**。入口：[http://localhost:3000/](http://localhost:3000/)。原世界属性与上帝调试台移至 [/lab](http://localhost:3000/lab)。
 
-小程序及其共享房间实现已完整封存在 Git 分支 `archive/miniprogram-v0.2`（快照 `9733568`）。当前 `feature/web-hex-map` 不再导入小程序代码，也不读写旧 `rooms.json`。本轮只做本地网页，没有部署或推送。
+小程序及其共享房间实现封存在 `archive/miniprogram-v0.2`（快照 `9733568`）。网页基线已提交至 `main@c32f6d3`；学习迭代在 `feature/student-learning-iterations`，不导入小程序代码，也不读写旧 `rooms.json`。仅本地运行，未公开部署。
+
+本轮新增：玩家评分评论、多层次教育结果、三张重绘且有取舍的新规则卡、紧凑行动 UI。新对局默认学习模式，旧局保持原规则。每批 20 局的反馈、局限和开发记录见 [学生视角迭代报告](docs/STUDENT_ITERATION_REPORT.md)。这些指标不是学生成绩，未登船不代表没有价值。
 
 ## 快速开始
 

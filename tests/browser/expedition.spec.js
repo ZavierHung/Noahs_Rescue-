@@ -24,6 +24,16 @@ test.afterEach(async ({ page }) => {
   await page.close();
   await local.close();
 });
+async function openHostControls(page) {
+  const controls = page.locator(".world-lab");
+  if (!(await controls.evaluate((node) => node.open)))
+    await controls
+      .getByText("主持／实验模式（手动调整不计玩家贡献）", { exact: true })
+      .click();
+  await expect(
+    page.getByRole("slider", { name: "世界经济滑条" }),
+  ).toBeVisible();
+}
 test("card hints cover characters, both actions and every technology; keyboard and hover never perform actions", async ({
   page,
 }, info) => {
@@ -317,6 +327,11 @@ test("full eight-round browser flow, three flood settlements and terminal god re
         .click();
     }
   }
+  // UI-created games use the learning flow: a lone player has nobody to
+  // evaluate, so explicitly waive rather than bypassing the review gate.
+  await page
+    .getByRole("button", { name: "未观察到，跳过互评", exact: true })
+    .click();
   await page.getByRole("button", { name: "请上帝审判这段航程" }).click();
   await expect(page.locator(".boarding-decision")).toHaveCount(1);
   await expect(page.locator(".action-panel")).toContainText("本地规则审议");
@@ -375,6 +390,7 @@ test("manual world sliders apply once, stack disaster cards, persist globally, a
     .click();
   const panel = page.getByRole("region", { name: "全局共享世界状态" });
   await expect(page.getByLabel("全局经济当前值")).toHaveText("10");
+  await openHostControls(page);
   const slider = page.getByRole("slider", { name: "世界经济滑条" });
   await slider.focus();
   for (let i = 0; i < 8; i++) await slider.press("ArrowRight");
@@ -404,6 +420,7 @@ test("manual world sliders apply once, stack disaster cards, persist globally, a
       (e) => e.type === "disaster_resource" && e.mode === "disaster_gain",
     ),
   ).toHaveLength(3);
+  await openHostControls(page);
   await page.getByLabel("世界经济数值").fill("19");
   await page.getByLabel("世界调节原因").fill("同档不重复");
   await page.getByRole("button", { name: "应用世界分数并结算灾难" }).click();
@@ -417,6 +434,7 @@ test("manual world sliders apply once, stack disaster cards, persist globally, a
   await page.reload();
   await expect(page.getByLabel("全局经济当前值")).toHaveText("19");
   await expect(page.locator(".player-roster")).not.toContainText("经济");
+  await openHostControls(page);
   await page.getByLabel("世界环境数值").fill("17");
   await page.getByLabel("世界调节原因").fill("测试资源保护");
   await page.getByRole("button", { name: "应用世界分数并结算灾难" }).click();
@@ -587,6 +605,7 @@ test("inspect player cards and inventories read-only, clear action drafts, then 
       name: /^(使用|弃置|使用互助信标交换|发送交换请求|完成出牌，进入移动 →)$/,
     }),
   ).toHaveCount(0);
+  await openHostControls(page);
   await expect(
     page.getByRole("slider", { name: "世界经济滑条" }),
   ).toBeDisabled();
@@ -639,6 +658,7 @@ test("inspect player cards and inventories read-only, clear action drafts, then 
     .click();
   await expect(page.locator(".action-panel .overline")).toContainText("P1");
   await expect(page.locator(".trade-form")).toHaveCount(0);
+  await openHostControls(page);
   await expect(
     page.getByRole("slider", { name: "世界经济滑条" }),
   ).toBeEnabled();
@@ -1044,12 +1064,14 @@ test("stale undo confirmation cannot roll back another action; same-phase rollba
   ).toBeDisabled();
   await page.getByRole("button", { name: "取消，保持现状" }).click();
   expect((await local.service.get(g.id)).revision).toBe(view.revision);
+  await openHostControls(page);
   const slider = page.getByLabel("世界经济滑条");
   await slider.fill("15");
   await expect(slider).toHaveValue("15");
   await page.getByRole("button", { name: /撤回上一步/ }).click();
   await page.getByRole("button", { name: "确认撤回", exact: true }).click();
   await expect(page.getByLabel("全局经济当前值")).toHaveText("11");
+  await openHostControls(page);
   await expect(slider).toHaveValue("11");
 });
 test("flood warning shows ark loss, fixed and selectable costs, discount and real payment with icons", async ({

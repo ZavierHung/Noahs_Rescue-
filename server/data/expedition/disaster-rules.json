@@ -4,6 +4,17 @@
   "grantResources": ["wood", "metal", "electricity", "seed"],
   "naturalResources": ["wood", "metal", "electricity", "seed"],
   "protectionMode": "manual-confirmation",
+  "learningVersion": "student-learning-v1",
+  "learningEffects": {
+    "eco-collapse": {
+      "effect": "环境1–6：所有资源格采后须休养完整一轮。第r轮采集，第r与r+1轮不可再采，第r+2轮恢复；历史按全体玩家共享，退出灾难后解除。模拟再生机制，不代表金属、电力能自然长出。",
+      "summary": "环境1–6：资源格采后休养一整轮；第r轮采，第r+1轮禁采，第r+2轮恢复。采集历史全局共享。",
+      "image": "/images/disasters/eco-collapse-learning.png",
+      "imageWidth": 1061,
+      "imageHeight": 1483,
+      "cooldownRounds": 2
+    }
+  },
   "notes": [
     "用户确认：晶矿对应金属；保障物资由各玩家从四类现有资源中自选一份。",
     "用户确认：资源保护先用条件确认按钮，必须填写实际事件原因，不把普通采集或捐赠自动视为保护。",

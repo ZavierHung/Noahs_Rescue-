@@ -4,6 +4,11 @@ import { publicCatalog } from "./catalog.js";
 import { requireRule } from "./runtime.js";
 import { judgmentContext, validateBoarding } from "./judgment.js";
 import { gameplayState, recordAction, restoreHistory } from "./history.js";
+import {
+  isPeerReviewRetry,
+  peerReviewView,
+  submitPeerReview,
+} from "./peer-review.js";
 
 export function createExpeditionService({ store, judge }) {
   const queues = new Map();
@@ -78,12 +83,15 @@ export function createExpeditionService({ store, judge }) {
         const original = await get(id);
         if (input.type === "judge" && original.judgment)
           return viewGame(original);
+        if (isPeerReviewRetry(original, input)) return viewGame(original);
         if (input.revision !== original.revision)
           throw Object.assign(new Error("状态已更新，请刷新后重试"), {
             status: 409,
           });
         let updated;
-        if (["undo", "redo"].includes(input.type)) {
+        if (input.type === "peer_review") {
+          updated = submitPeerReview(original, input);
+        } else if (["undo", "redo"].includes(input.type)) {
           updated = restoreHistory(original, input);
         } else if (
           ["judge", "discuss", "rebut", "finalize"].includes(input.type)
@@ -96,6 +104,11 @@ export function createExpeditionService({ store, judge }) {
               : original.status === "review",
             initial ? "只能在第八回合结束时审判" : "终局审议已经结束或尚未开始",
           );
+          if (initial)
+            requireRule(
+              peerReviewView(original).complete,
+              "请先让每位玩家提交或明确跳过互评，再开始上帝初审",
+            );
           const context = judgmentContext(original);
           const responded = new Set(
             original.judgment?.conversations?.map((c) => c.playerId) || [],

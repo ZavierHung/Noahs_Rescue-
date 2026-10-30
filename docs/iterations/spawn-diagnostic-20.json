@@ -1,0 +1,1016 @@
+{
+  "diagnostic": "Only flags rotated +1. Same seats, mixed policy and initial RNG seeds. Not a balancing change or independent causal experiment; later RNG trajectories can diverge.",
+  "seeds": [
+    1,
+    20
+  ],
+  "matches": 20,
+  "survival": 0.8333333333333334,
+  "boarding": 0.5083333333333333,
+  "perSeat": [
+    {
+      "id": "P1",
+      "spawn": "P2",
+      "survival": 0.95,
+      "boarding": 0.4,
+      "donation": 8.25
+    },
+    {
+      "id": "P2",
+      "spawn": "P3",
+      "survival": 0.8,
+      "boarding": 0.5,
+      "donation": 10.35
+    },
+    {
+      "id": "P3",
+      "spawn": "P4",
+      "survival": 0.85,
+      "boarding": 0.75,
+      "donation": 13.25
+    },
+    {
+      "id": "P4",
+      "spawn": "P5",
+      "survival": 0.75,
+      "boarding": 0.35,
+      "donation": 10
+    },
+    {
+      "id": "P5",
+      "spawn": "P6",
+      "survival": 0.75,
+      "boarding": 0.25,
+      "donation": 11.1
+    },
+    {
+      "id": "P6",
+      "spawn": "P1",
+      "survival": 0.9,
+      "boarding": 0.8,
+      "donation": 14.35
+    }
+  ],
+  "rows": [
+    {
+      "seed": 1,
+      "commands": 358,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 3
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": true,
+          "donation": 12
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": false,
+          "donation": 10
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": true,
+          "donation": 12
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": false,
+          "donation": 12
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 12
+        }
+      ]
+    },
+    {
+      "seed": 2,
+      "commands": 336,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": true,
+          "donation": 12
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": false,
+          "donation": 9
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 13
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": false,
+          "board": false,
+          "donation": 10
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": false,
+          "board": false,
+          "donation": 7
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 9
+        }
+      ]
+    },
+    {
+      "seed": 3,
+      "commands": 355,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": true,
+          "donation": 7
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": false,
+          "donation": 7
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": false,
+          "board": false,
+          "donation": 16
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": true,
+          "donation": 9
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": true,
+          "donation": 9
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": false,
+          "board": false,
+          "donation": 21
+        }
+      ]
+    },
+    {
+      "seed": 4,
+      "commands": 363,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 8
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": true,
+          "donation": 18
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 15
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": false,
+          "donation": 11
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": true,
+          "donation": 20
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 17
+        }
+      ]
+    },
+    {
+      "seed": 5,
+      "commands": 330,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": true,
+          "donation": 13
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": false,
+          "donation": 9
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 15
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": false,
+          "board": false,
+          "donation": 13
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": false,
+          "donation": 10
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 13
+        }
+      ]
+    },
+    {
+      "seed": 6,
+      "commands": 339,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 5
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": false,
+          "donation": 6
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 12
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": false,
+          "donation": 7
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": false,
+          "donation": 8
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 17
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "commands": 353,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 9
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": true,
+          "donation": 16
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 13
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": false,
+          "donation": 8
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": true,
+          "donation": 18
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 19
+        }
+      ]
+    },
+    {
+      "seed": 8,
+      "commands": 337,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 13
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": true,
+          "donation": 11
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 13
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": false,
+          "donation": 10
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": false,
+          "donation": 8
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 14
+        }
+      ]
+    },
+    {
+      "seed": 9,
+      "commands": 335,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": true,
+          "donation": 8
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": false,
+          "donation": 6
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": false,
+          "board": false,
+          "donation": 17
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": true,
+          "donation": 8
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": false,
+          "board": false,
+          "donation": 6
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 18
+        }
+      ]
+    },
+    {
+      "seed": 10,
+      "commands": 330,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 5
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": false,
+          "board": false,
+          "donation": 13
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 15
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": true,
+          "donation": 9
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": false,
+          "board": false,
+          "donation": 14
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 12
+        }
+      ]
+    },
+    {
+      "seed": 11,
+      "commands": 310,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": true,
+          "donation": 10
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": true,
+          "donation": 9
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 12
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": false,
+          "board": false,
+          "donation": 13
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": false,
+          "donation": 8
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": false,
+          "donation": 6
+        }
+      ]
+    },
+    {
+      "seed": 12,
+      "commands": 363,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 6
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": true,
+          "donation": 8
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 18
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": false,
+          "donation": 9
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": false,
+          "donation": 9
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 17
+        }
+      ]
+    },
+    {
+      "seed": 13,
+      "commands": 342,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 6
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": true,
+          "donation": 14
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 13
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": false,
+          "donation": 7
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": false,
+          "board": false,
+          "donation": 14
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 14
+        }
+      ]
+    },
+    {
+      "seed": 14,
+      "commands": 328,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 10
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": true,
+          "donation": 11
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": false,
+          "donation": 10
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": true,
+          "donation": 15
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": false,
+          "donation": 12
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 12
+        }
+      ]
+    },
+    {
+      "seed": 15,
+      "commands": 377,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": false,
+          "board": false,
+          "donation": 8
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": true,
+          "donation": 10
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 15
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": false,
+          "donation": 11
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": false,
+          "donation": 9
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 20
+        }
+      ]
+    },
+    {
+      "seed": 16,
+      "commands": 359,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 5
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": false,
+          "board": false,
+          "donation": 13
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 10
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": true,
+          "donation": 7
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": false,
+          "board": false,
+          "donation": 17
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 12
+        }
+      ]
+    },
+    {
+      "seed": 17,
+      "commands": 344,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": true,
+          "donation": 10
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": false,
+          "board": false,
+          "donation": 4
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 10
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": false,
+          "board": false,
+          "donation": 15
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": false,
+          "donation": 8
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": false,
+          "donation": 8
+        }
+      ]
+    },
+    {
+      "seed": 18,
+      "commands": 335,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": true,
+          "donation": 9
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": true,
+          "donation": 9
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": false,
+          "board": false,
+          "donation": 17
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": true,
+          "donation": 7
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": true,
+          "donation": 10
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": false,
+          "board": false,
+          "donation": 22
+        }
+      ]
+    },
+    {
+      "seed": 19,
+      "commands": 358,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": false,
+          "donation": 4
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": false,
+          "board": false,
+          "donation": 13
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 10
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": true,
+          "board": false,
+          "donation": 7
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": true,
+          "donation": 14
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 11
+        }
+      ]
+    },
+    {
+      "seed": 20,
+      "commands": 365,
+      "players": [
+        {
+          "id": "P1",
+          "spawn": "P2",
+          "alive": true,
+          "board": true,
+          "donation": 14
+        },
+        {
+          "id": "P2",
+          "spawn": "P3",
+          "alive": true,
+          "board": false,
+          "donation": 9
+        },
+        {
+          "id": "P3",
+          "spawn": "P4",
+          "alive": true,
+          "board": true,
+          "donation": 11
+        },
+        {
+          "id": "P4",
+          "spawn": "P5",
+          "alive": false,
+          "board": false,
+          "donation": 12
+        },
+        {
+          "id": "P5",
+          "spawn": "P6",
+          "alive": true,
+          "board": false,
+          "donation": 9
+        },
+        {
+          "id": "P6",
+          "spawn": "P1",
+          "alive": true,
+          "board": true,
+          "donation": 13
+        }
+      ]
+    }
+  ]
+}

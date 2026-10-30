@@ -144,6 +144,10 @@
     {
       "id": "mining-drone",
       "name": "采矿无人机",
+      "learningEffect": "部署时经济+1，环境不变；普通采集没有额外收益。采集时可主动选择增产：同类资源额外+1，同时环境−1。增产仍受灾难地块和产量限制；被拒绝的采集不消耗环境。同名不叠加。",
+      "learningSummary": "部署经济+1；普通采集不加成。可选增产：同类资源额外+1，环境−1。",
+      "learningStatus": { "economy": 1 },
+      "learningImage": "/images/expedition/cards/mining-drone-learning.png",
       "type": "常驻被动",
       "flavor": "每一次敲击，都是向大地索取更多。",
       "effect": "每回合第一次【采集】时，额外获得 1 个该类资源。",
@@ -242,6 +246,10 @@
     {
       "id": "shared-supply-pod",
       "name": "共享补给舱",
+      "learningEffect": "公开随机生成玩家人数+1份四类等概率资源，按发放开始时各玩家现存库存总数从少到多，每人选一份；同量按座位顺序。使用者不再自动优先。剩余一份弃置；不是交易，社会失序不阻断。",
+      "learningSummary": "随机补给人数+1份，库存少者先选，每人1份；同量按座位。余下弃置。",
+      "learningStatus": { "society": 2, "economy": 1, "environment": -2 },
+      "learningImage": "/images/expedition/cards/shared-supply-pod-learning.png",
       "type": "单次触发，使用后弃置",
       "flavor": "灾难面前，分配比储备更考验秩序。",
       "effect": "从资源池公开抽取玩家人数 +1 个资源，从你开始顺时针每名玩家选择 1 个资源获得，剩余资源弃置。",

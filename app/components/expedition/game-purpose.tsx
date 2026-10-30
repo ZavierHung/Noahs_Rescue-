@@ -1,4 +1,8 @@
-export function GamePurpose() {
+export function GamePurpose({
+  learningMode = true,
+}: {
+  learningMode?: boolean;
+}) {
   return (
     <section className="game-purpose" aria-label="游戏核心目标">
       <p className="overline">SURVIVE · BUILD · DELIBERATE</p>
@@ -10,11 +14,28 @@ export function GamePurpose() {
         经济、环境、社会是所有人共享的世界状态，不是个人得分，也不是越高越好：过高与过低都会触发相应灾难。个人获利、公共贡献与生态代价，需要一起权衡。
       </p>
       <p>
-        终局流程：生存结算 → 上帝初判 → 每位幸存者陈述或放弃 →
+        终局流程：生存结算 → {learningMode ? "玩家互评 → " : ""}上帝初判 →
+        每位幸存者陈述或放弃 →
         最终名单。上帝按人设、真实行动记录与学术材料讨论，只能选择幸存者且不得超载。
       </p>
+      {learningMode && (
+        <div className="purpose-outcomes">
+          <div>
+            <strong>一起撑过洪水</strong>
+            <span>看生存与共同建设，不只比谁更富有。</span>
+          </div>
+          <div>
+            <strong>看见选择的代价</strong>
+            <span>私人收益、生态影响与公平，未必能同时最大化。</span>
+          </div>
+          <div>
+            <strong>用证据说服同伴</strong>
+            <span>互评与申辩要指向真实行为；登船结果不是学习成绩。</span>
+          </div>
+        </div>
+      )}
       <small>
-        这是一场合作与公平的教育实验，不是“财富最多者赢”，也不评价现实中谁更值得生存。卡面可能是旧文案，以悬停提示和「本版实际规则」为准；手机可点击卡图查看。
+        这是一场合作与公平的教育实验，不是“财富最多者赢”，也不评价现实中谁更值得生存。游戏是简化模型，不是现实社会的定律。悬停或键盘聚焦卡牌可查看本版效果；手机可点击卡图查看。未更新的历史卡面以「本版实际规则」为准。
       </small>
     </section>
   );

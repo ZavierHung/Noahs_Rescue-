@@ -10,6 +10,8 @@ import {
 } from "./map.js";
 import { bag, sum, random, log, requireRule } from "./runtime.js";
 import { gameplayState, historyView } from "./history.js";
+import { peerReviewView } from "./peer-review.js";
+import { buildLearningOutcome } from "./learning-outcome.js";
 import { resolveDisasters } from "../catalog.js";
 import {
   DEFAULT_RULES,
@@ -36,6 +38,7 @@ import {
   canGather,
   gatherYield,
   confirmProtection,
+  disastersForGame,
 } from "./world.js";
 export { bag, random } from "./runtime.js";
 const fail = (message) => {
@@ -45,6 +48,8 @@ export const playerAt = (g, id) => g.players.find((p) => p.id === id);
 export const activePlayer = (g) =>
   playerAt(g, g.pending?.actor || g.players[g.turn]?.id);
 const has = (p, id) => p.equipment.includes(id);
+const technologyStatus = (g, card) =>
+  g.learningMode && card.learningStatus ? card.learningStatus : card.status;
 const ACTION_NAMES = {
   skip: "跳过",
   play: "使用手牌",
@@ -318,6 +323,11 @@ export function createGame(
     activeDisasters: [],
     judgment: null,
   };
+  if (input.learningMode === true) {
+    g.learningMode = true;
+    g.learningVersion = "student-learning-v1";
+    g.peerReview = { version: 1, submissions: [] };
+  }
   ensureWorld(g);
   log(g, "system", "create", "角色与旗子确认，游戏开始", {
     players: players.map((p) => ({
@@ -328,6 +338,7 @@ export function createGame(
     })),
     capacity: arkCapacity(g),
     rules: g.rules,
+    ...(g.learningMode ? { learningVersion: g.learningVersion } : {}),
   });
   for (const p of players) draw(g, p);
   snapshotNewEvents(g);
@@ -404,10 +415,18 @@ function technology(g, p, id, input) {
     const pool = bag();
     for (let i = 0; i < g.players.length + 1; i++) pool[pick(g, RESOURCES)]++;
     const start = g.players.indexOf(p),
-      order = Array.from(
-        { length: g.players.length },
-        (_, i) => g.players[(start + i) % g.players.length].id,
-      );
+      order = g.learningMode
+        ? [...g.players]
+            .sort(
+              (a, b) =>
+                sum(a.resources) - sum(b.resources) ||
+                g.players.indexOf(a) - g.players.indexOf(b),
+            )
+            .map((other) => other.id)
+        : Array.from(
+            { length: g.players.length },
+            (_, i) => g.players[(start + i) % g.players.length].id,
+          );
     g.pending = {
       kind: "supply",
       actor: order[0],
@@ -417,9 +436,27 @@ function technology(g, p, id, input) {
       owner: p.id,
     };
     g.phase = "choice";
-    log(g, p.id, "supply_pool", "公开补给池，按顺序各选择一份", {
-      pool: structuredClone(pool),
-    });
+    log(
+      g,
+      p.id,
+      "supply_pool",
+      g.learningMode
+        ? "公开补给池，库存最少者优先各选择一份（同量按座位）"
+        : "公开补给池，按顺序各选择一份",
+      {
+        pool: structuredClone(pool),
+        order: [...order],
+        ...(g.learningMode
+          ? {
+              policy: "lowest-inventory-first",
+              inventoryAtOffer: g.players.map((other) => ({
+                playerId: other.id,
+                total: sum(other.resources),
+              })),
+            }
+          : {}),
+      },
+    );
   } else if (id === "ecological-repeller" || id === "black-tide-alarm") {
     const targets = g.players.filter((t) =>
       id === "ecological-repeller"
@@ -481,13 +518,14 @@ function technology(g, p, id, input) {
       });
     } else draw(g, p);
   }
-  changeWorld(g, card.status || {}, {
+  const status = technologyStatus(g, card);
+  changeWorld(g, status || {}, {
     actor: p.id,
     source: `科技：${card.name}`,
   });
   log(g, p.id, "technology", `使用科技：${card.name}`, {
     cardId: id,
-    status: card.status,
+    status,
   });
 }
 function restore(g, pending) {
@@ -520,7 +558,7 @@ function resolveChoice(g, p, input) {
     );
     if (
       active(g, "eco-conflict") &&
-      getTech(input.techId).status.environment < 0 &&
+      technologyStatus(g, getTech(input.techId)).environment < 0 &&
       !has(p, input.techId)
     ) {
       // Validate on a disposable copy before asking anyone to spend resources.
@@ -752,10 +790,9 @@ export function command(original, input) {
   // continuous effects before the first action, without running entry effects.
   // world.activeIds remains unchanged; entry settlement is still transactional.
   refreshAttributes(g);
-  g.activeDisasters = resolveDisasters(
-    g.attributes,
-    g.activeDisasters,
-    () => 0,
+  g.activeDisasters = disastersForGame(
+    g,
+    resolveDisasters(g.attributes, g.activeDisasters, () => 0),
   );
   const p = activePlayer(g);
   g.rules ||= structuredClone(DEFAULT_RULES);
@@ -980,15 +1017,42 @@ export function command(original, input) {
       tile.resource && !flooded(tile, g.floodLevel),
       "当前位置没有可采集的资源或已被洪水淹没",
     );
+    if (g.learningMode && input.boost !== undefined)
+      requireRule(typeof input.boost === "boolean", "增产选项必须是布尔值");
+    const boost = g.learningMode
+      ? input.boost === true
+      : has(p, "mining-drone");
+    requireRule(!boost || has(p, "mining-drone"), "增产需要已部署采矿无人机");
     add(
       p,
       tile.resource,
-      gatherYield(
-        g,
-        p,
-        rulesFor(g).baseGather + (has(p, "mining-drone") ? 1 : 0),
-      ),
+      gatherYield(g, p, rulesFor(g).baseGather + (boost ? 1 : 0)),
     );
+    if (g.learningMode && boost) {
+      const environmentBefore = g.attributes.environment;
+      changeWorld(
+        g,
+        { environment: -1 },
+        {
+          actor: p.id,
+          source: "采矿无人机增产：共同承担生态成本",
+        },
+      );
+      const actualEnvironmentCost =
+        environmentBefore - g.attributes.environment;
+      log(
+        g,
+        p.id,
+        "mining_boost",
+        `主动增产同类资源一份，环境实际降低${actualEnvironmentCost}分`,
+        {
+          resource: tile.resource,
+          requestedBonus: 1,
+          requestedEnvironmentCost: 1,
+          actualEnvironmentCost,
+        },
+      );
+    }
     g.phase = "donate";
   } else if (input.type === "donate") {
     requireRule(g.phase === "donate", "请在上交材料步骤操作");
@@ -1057,10 +1121,9 @@ export function viewGame(g) {
   // Historical games keep their saved final values; active games expose global state.
   if (result.status === "playing") {
     refreshAttributes(result);
-    result.activeDisasters = resolveDisasters(
-      result.attributes,
-      result.activeDisasters,
-      () => 0,
+    result.activeDisasters = disastersForGame(
+      result,
+      resolveDisasters(result.attributes, result.activeDisasters, () => 0),
     );
   }
   result.players.forEach((p) => {
@@ -1075,6 +1138,14 @@ export function viewGame(g) {
   delete result.rng;
   const p = activePlayer(g);
   result.activePlayerId = p?.id;
+  result.peerReviewSummary = peerReviewView(g);
+  result.learningOutcome = buildLearningOutcome(g);
+  if (
+    g.status === "awaiting_judgment" &&
+    result.peerReviewSummary.enabled &&
+    !result.peerReviewSummary.complete
+  )
+    result.activePlayerId = result.peerReviewSummary.activeReviewerId;
   if (g.status === "review") {
     const responded = new Set(
       g.judgment?.conversations?.map((c) => c.playerId) || [],

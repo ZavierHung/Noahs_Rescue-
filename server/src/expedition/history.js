@@ -10,7 +10,13 @@ export function gameplayState(game) {
 const stacks = (g) => g.historyState || { version: 1, undo: [], redo: [] };
 const actorId = (g) => g.pending?.actor || g.players[g.turn]?.id;
 const locked = (g) =>
-  !!g.judgment || !["playing", "awaiting_judgment"].includes(g.status);
+  !!g.judgment ||
+  !!g.peerReview?.submissions?.length ||
+  !["playing", "awaiting_judgment"].includes(g.status);
+const lockReason = (game) =>
+  game.peerReview?.submissions?.length && !game.judgment
+    ? "同伴互评已提交，行为证据已锁定，不能撤回或重做"
+    : "上帝审议已开始，航程证据已锁定，不能撤回或重做";
 const summary = ({ snapshot, events, eventCount, ...entry }) => entry;
 function checkpoint(game) {
   // Events are append-only in gameplay. Store just this command's event suffix
@@ -25,9 +31,7 @@ export function historyView(game) {
   return {
     limit: HISTORY_LIMIT,
     actorId: actorId(game),
-    lockedReason: disabled
-      ? "上帝审议已开始，航程证据已锁定，不能撤回或重做"
-      : "",
+    lockedReason: disabled ? lockReason(game) : "",
     undoCount: disabled ? 0 : state.undo.length,
     redoCount: disabled ? 0 : state.redo.length,
     undo: !disabled && state.undo.length ? summary(state.undo.at(-1)) : null,
@@ -72,7 +76,7 @@ export function recordAction(original, updated, input) {
 }
 
 export function restoreHistory(original, input) {
-  requireRule(!locked(original), "上帝审议已开始，不能撤回或重做");
+  requireRule(!locked(original), lockReason(original));
   requireRule(
     input.actor === actorId(original),
     "请由当前行动玩家操作撤回或重做",

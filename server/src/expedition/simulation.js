@@ -191,6 +191,18 @@ export function botAction(g, { policy = "balanced", seed = 1 } = {}) {
         )
           ? "gather"
           : "skip",
+      // Visible-state-only choice: do not intensify a damaged ecosystem, and
+      // only boost toward a still-missing ark seat. Never read future RNG.
+      ...(g.learningMode
+        ? {
+            boost:
+              p.equipment.includes("mining-drone") &&
+              g.attributes.environment > 6 &&
+              Object.values(g.ark).reduce((a, b) => a + b, 0) <
+                rulesFor(g).arkUnitsPerSeat *
+                  Math.min(g.players.length, rulesFor(g).arkMaxSeats),
+          }
+        : {}),
     };
   if (g.phase === "donate") {
     const amounts = { ...p.resources };
@@ -220,9 +232,11 @@ export function simulate({
   players = 6,
   rules,
   policy = "balanced",
+  learningMode = false,
 } = {}) {
   let game = createGame(
     {
+      learningMode,
       players: CHARACTERS.slice(0, players).map((c, i) => ({
         characterId: c.id,
         flagId: `P${i + 1}`,

@@ -67,7 +67,7 @@ export function WorldPanel({
           全体玩家共享 · 生效分数 1—19 · {g.activeDisasters.length} 张灾难
         </span>
       </div>
-      <div className="world-attributes">
+      <div className="world-attributes world-overview">
         {dimensions.map(({ key, label }) => {
           const value = g.attributes[key],
             severity =
@@ -82,6 +82,28 @@ export function WorldPanel({
                 <h3>{label}</h3>
                 <output aria-label={`全局${label}当前值`}>{value}</output>
               </div>
+              <small>
+                {value <= 2 || value >= 18
+                  ? "极端 · 两张同向灾难"
+                  : severity === "warning"
+                    ? "偏离稳定区 · 灾难生效"
+                    : "稳定区 7—13"}
+                {g.world.modifiers[key]
+                  ? ` · 持续修正 ${g.world.modifiers[key]}`
+                  : ""}
+              </small>
+            </article>
+          );
+        })}
+      </div>
+      <details className="world-lab">
+        <summary>主持／实验模式（手动调整不计玩家贡献）</summary>
+        <p className="fineprint">
+          用于课堂实验或主持修正，不是玩家获取优势的行动。只改预览不会生效；填写原因并确认后，系统才修改世界并结算灾难。
+        </p>
+        <div className="world-attributes">
+          {dimensions.map(({ key, label }) => (
+            <article className="world-attribute" key={key}>
               <label>
                 {label}基础值：{draft[key]}
                 <input
@@ -115,54 +137,54 @@ export function WorldPanel({
               <small>
                 {g.world.modifiers[key]
                   ? `持续修正 ${g.world.modifiers[key]}（生态管制冲突）；生效分数用于触发灾难`
-                  : value <= 2 || value >= 18
+                  : g.attributes[key] <= 2 || g.attributes[key] >= 18
                     ? "极端阈值：同向两张灾难叠加"
-                    : severity === "warning"
+                    : g.attributes[key] <= 6 || g.attributes[key] >= 14
                       ? "偏离稳定区：普通灾难生效"
                       : "当前处于稳定区"}
               </small>
             </article>
-          );
-        })}
-      </div>
-      <div className="world-edit">
-        <label>
-          调节原因
-          <input
-            aria-label="世界调节原因"
-            maxLength={500}
-            value={reason}
-            disabled={locked}
-            placeholder="例如：测试经济极高时的叠加灾难"
-            onChange={(e) => setReason(e.target.value)}
-          />
-        </label>
-        <button
-          className="primary"
-          disabled={locked || !dirty || stale || !reason.trim()}
-          onClick={() => void save()}
-        >
-          应用世界分数并结算灾难
-        </button>
-        <button
-          disabled={busy}
-          onClick={() => {
-            setDirty(false);
-            setReason("");
-          }}
-        >
-          恢复当前值
-        </button>
-      </div>
-      <p className="fineprint" role="status">
-        {readOnly
-          ? "正在只读查看其他玩家；返回当前行动玩家后才能调节世界分数或确认保护条件。"
-          : stale
-            ? "状态已被其它操作更新，请恢复当前值后重新调整。"
-            : g.pending
-              ? "请先完成当前卡牌或灾难选择，再手动调分。"
-              : "拖动只预览，点击应用后统一结算。极低叠加普通负向；极高叠加普通正向。同档调整不会重复发放或扣除。"}
-      </p>
+          ))}
+        </div>
+        <div className="world-edit">
+          <label>
+            调节原因
+            <input
+              aria-label="世界调节原因"
+              maxLength={500}
+              value={reason}
+              disabled={locked}
+              placeholder="例如：测试经济极高时的叠加灾难"
+              onChange={(e) => setReason(e.target.value)}
+            />
+          </label>
+          <button
+            className="primary"
+            disabled={locked || !dirty || stale || !reason.trim()}
+            onClick={() => void save()}
+          >
+            应用世界分数并结算灾难
+          </button>
+          <button
+            disabled={busy}
+            onClick={() => {
+              setDirty(false);
+              setReason("");
+            }}
+          >
+            恢复当前值
+          </button>
+        </div>
+        <p className="fineprint" role="status">
+          {readOnly
+            ? "正在只读查看其他玩家；返回当前行动玩家后才能调节世界分数或确认保护条件。"
+            : stale
+              ? "状态已被其它操作更新，请恢复当前值后重新调整。"
+              : g.pending
+                ? "请先完成当前卡牌或灾难选择，再手动调分。"
+                : "拖动只预览，点击应用后统一结算。极低叠加普通负向；极高叠加普通正向。同档调整不会重复发放或扣除。"}
+        </p>
+      </details>
       {g.activeDisasters.some((c) => c.id === "resource-protection") && (
         <div className="protection-confirmation">
           <h3>资源保护 · 条件确认</h3>

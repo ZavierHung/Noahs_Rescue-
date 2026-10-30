@@ -2,6 +2,11 @@
 import { useEffect, useState } from "react";
 import type { Game } from "@/lib/expedition";
 import { AcademicEvidence } from "./knowledge-panel";
+import {
+  PeerReviewPanel,
+  LearningOutcomePanel,
+  LearningSpotlight,
+} from "./learning-panels";
 export function BoardingPanel({
   game: g,
   busy,
@@ -39,6 +44,14 @@ export function BoardingPanel({
         {g.players.length} 人。
       </div>
       <p>上帝只从幸存者中决定名单，不触发灾难或奖惩，也不能增加容量。</p>
+      <LearningOutcomePanel game={g} />
+      <PeerReviewPanel
+        game={g}
+        busy={busy}
+        readOnly={readOnly}
+        onReturn={onReturn}
+        act={act}
+      />
       <details>
         <summary>查看生存结算</summary>
         {g.players.map((p) => (
@@ -61,11 +74,21 @@ export function BoardingPanel({
           </p>
           <button
             className="primary"
-            disabled={busy}
+            disabled={
+              busy ||
+              readOnly ||
+              (g.peerReviewSummary?.enabled === true &&
+                !g.peerReviewSummary.complete)
+            }
             onClick={() => void act("judge")}
           >
             {busy ? "上帝正在查阅全局记录…" : "请上帝审判这段航程"}
           </button>
+          {g.peerReviewSummary?.enabled && !g.peerReviewSummary.complete && (
+            <p className="fineprint">
+              先让每位伙伴提交或跳过互评，再请上帝综合记录给出初判。
+            </p>
+          )}
         </>
       ) : (
         <>
@@ -74,6 +97,7 @@ export function BoardingPanel({
             {j.llm.used ? "M3 模型审议" : "本地规则审议（未使用 LLM）"}
           </span>
           <p>{j.verdict.statement}</p>
+          <LearningSpotlight game={g} />
           <details className="academic-current">
             <summary>本阶段学术依据与行为分析</summary>
             <AcademicEvidence
@@ -146,7 +170,7 @@ export function BoardingPanel({
                 ))}
               <button
                 className="primary"
-                disabled={busy || remaining.length > 0}
+                disabled={busy || readOnly || remaining.length > 0}
                 onClick={() => void act("finalize")}
               >
                 {busy ? "正在审议…" : "完成交互，请上帝敲定最终名单"}

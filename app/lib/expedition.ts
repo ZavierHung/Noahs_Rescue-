@@ -1,4 +1,4 @@
-export const WEB_VERSION = "0.3.0-local";
+export const WEB_VERSION = "0.4.0-local";
 export type Resource = "wood" | "metal" | "electricity" | "seed";
 export type Bag = Record<Resource, number>;
 export type WorldAttributes = Record<
@@ -23,6 +23,10 @@ export type Card = {
   status: Record<string, number>;
   implementedEffect?: string;
   effectSummary?: string;
+  learningEffect?: string;
+  learningSummary?: string;
+  learningStatus?: Record<string, number>;
+  learningImage?: string;
 };
 export type Tile = {
   id: string;
@@ -87,6 +91,21 @@ export type HistoryAudit = {
   events?: Event[];
 };
 export type Game = {
+  learningMode?: boolean;
+  learning?: Record<string, unknown>;
+  peerReviewSummary?: {
+    enabled: boolean;
+    complete: boolean;
+    remaining: string[];
+    activeReviewerId: string | null;
+    submissions: {
+      reviewerId: string;
+      waived: boolean;
+      entries: PeerReviewEntry[];
+      revision: number;
+    }[];
+  };
+  learningOutcome?: LearningOutcome | null;
   id: string;
   revision: number;
   history: {
@@ -152,6 +171,56 @@ export type Game = {
     beaconBlockedReason: string;
     response: { reason: string } | null;
   };
+};
+export type PeerReviewEntry = {
+  targetId: string;
+  rating: number | null;
+  comment: string;
+  evidence: number[];
+};
+export type LearningOutcome = {
+  version: string;
+  tier: string;
+  title: string;
+  goals: {
+    id: string;
+    title: string;
+    achieved: boolean | null;
+    detail: string;
+  }[];
+  collective: { survivors: number; total: number; survivalRate: number };
+  ark: {
+    seats: number;
+    units: number;
+    unitsPerSeat: number;
+    canAccommodateSurvivors: boolean;
+  };
+  ecology: {
+    environment: number;
+    playerNetChange: number;
+    repairActions: number;
+    damageActions: number;
+    manualAdjustments: number;
+  };
+  personal: {
+    playerId: string;
+    survived: boolean;
+    boarded: boolean | null;
+    donatedUnits: number;
+    cooperationCount: number;
+    repairActions: number;
+    repairedAfterHarm: boolean;
+    peerReviewSubmitted: boolean;
+    peerReviewWaived: boolean;
+    discussionSubmitted: boolean;
+  }[];
+  boarding: {
+    final: boolean;
+    decided: boolean;
+    boardedIds: string[];
+    source: string;
+  };
+  disclaimer: string;
 };
 export type Catalog = {
   floodCard: {

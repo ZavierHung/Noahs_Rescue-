@@ -1,0 +1,4571 @@
+{
+  "version": "learning-simulation-v1",
+  "mode": "offline deterministic mixed-style agents; real rules; local fallback boarding; no forced outcomes; no LLM",
+  "learningMode": true,
+  "policy": "mixed",
+  "matches": 20,
+  "seedRange": [
+    1,
+    20
+  ],
+  "denominator": 120,
+  "rules": {
+    "version": "boarding-v3",
+    "baseMove": 2,
+    "baseGather": 1,
+    "finalEvacuationSteps": 1,
+    "floodInjuryTolerance": 5,
+    "seedRecovery": 1,
+    "arkUnitsPerSeat": 17,
+    "arkMaxSeats": 6,
+    "invitationNearestCount": 2
+  },
+  "limitations": [
+    "These are deterministic software agents, not students: they do not establish enjoyment or learning gains.",
+    "Intervals are normal approximations over independent match rates, not individual players; 20 matches are a smoke-sized sample.",
+    "Seats, initial flags and turn order are fixed. Per-seat differences confound map geography, order, policy and random cards.",
+    "Agents choose the first usable technology, accept legal invitations and decline ecological vetoes; they are not optimal/adversarial players.",
+    "Learning agents boost only when current environment exceeds 6 and donated supplies cannot fill every seat; they never inspect future RNG or target survival rates.",
+    "Peer review and LLM discussions are tested separately; these trajectories end at rule-based offline boarding."
+  ],
+  "metrics": {
+    "survival": {
+      "mean": 0.8,
+      "ci95": [
+        0.7346666666666667,
+        0.8653333333333334
+      ]
+    },
+    "boarding": {
+      "mean": 0.5083333333333334,
+      "ci95": [
+        0.464155397002179,
+        0.5525112696644878
+      ]
+    },
+    "commands": 346.5,
+    "ark": 61.15,
+    "seats": 3.1,
+    "invitations": 23.1,
+    "boostedGather": 1.4,
+    "donationGini": 0.1821095281093727,
+    "donationSpread": 10.15,
+    "roundExtremeCounts": {
+      "economy": {
+        "low": 0,
+        "high": 52,
+        "total": 160
+      },
+      "environment": {
+        "low": 27,
+        "high": 0,
+        "total": 160
+      },
+      "society": {
+        "low": 0,
+        "high": 5,
+        "total": 160
+      }
+    },
+    "actionCounts": {
+      "play": 878,
+      "choose": 1809,
+      "skip": 1570,
+      "move": 960,
+      "gather": 625,
+      "donate": 685,
+      "pay_flood": 360,
+      "evacuate": 26,
+      "blade_move": 17
+    },
+    "technology": {
+      "rapid-prototyper": 30,
+      "mining-drone": 24,
+      "ecological-repeller": 37,
+      "famed-blade": 39,
+      "space-ring": 26,
+      "black-tide-alarm": 35,
+      "shared-supply-pod": 41,
+      "aid-beacon": 25,
+      "skateboard-shoes": 32,
+      "alchemy-furnace": 16,
+      "reserve-crate": 30,
+      "ruins-blueprint": 37,
+      "recycling-claw": 7
+    },
+    "disasters": {
+      "develop-first": 24,
+      "eco-collapse": 31,
+      "wealth-gap": 23,
+      "steady-imbalance": 21,
+      "welfare-pressure": 14,
+      "mutual-aid": 3,
+      "social-disorder": 4,
+      "resource-protection": 5
+    },
+    "perSeat": [
+      {
+        "id": "P1",
+        "survival": 1,
+        "boarding": 0.9,
+        "donation": 13.8
+      },
+      {
+        "id": "P2",
+        "survival": 0.65,
+        "boarding": 0.2,
+        "donation": 8.4
+      },
+      {
+        "id": "P3",
+        "survival": 0.75,
+        "boarding": 0.2,
+        "donation": 9.95
+      },
+      {
+        "id": "P4",
+        "survival": 0.9,
+        "boarding": 0.85,
+        "donation": 13.9
+      },
+      {
+        "id": "P5",
+        "survival": 0.8,
+        "boarding": 0.3,
+        "donation": 9.45
+      },
+      {
+        "id": "P6",
+        "survival": 0.7,
+        "boarding": 0.6,
+        "donation": 11.65
+      }
+    ]
+  },
+  "rows": [
+    {
+      "seed": 1,
+      "commands": 343,
+      "events": 639,
+      "alive": 4,
+      "boarded": 2,
+      "seats": 2,
+      "ark": 50,
+      "world": {
+        "economy": 19,
+        "environment": 7,
+        "society": 9
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 12,
+          "environment": 8,
+          "society": 10
+        },
+        {
+          "round": 2,
+          "economy": 14,
+          "environment": 8,
+          "society": 8
+        },
+        {
+          "round": 3,
+          "economy": 14,
+          "environment": 7,
+          "society": 8
+        },
+        {
+          "round": 4,
+          "economy": 17,
+          "environment": 4,
+          "society": 11
+        },
+        {
+          "round": 5,
+          "economy": 18,
+          "environment": 7,
+          "society": 10
+        },
+        {
+          "round": 6,
+          "economy": 16,
+          "environment": 9,
+          "society": 9
+        },
+        {
+          "round": 7,
+          "economy": 18,
+          "environment": 7,
+          "society": 10
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 7,
+          "society": 9
+        }
+      ],
+      "actionCounts": {
+        "play": 43,
+        "choose": 88,
+        "skip": 75,
+        "move": 48,
+        "gather": 33,
+        "donate": 36,
+        "pay_flood": 18,
+        "evacuate": 2
+      },
+      "technology": {
+        "rapid-prototyper": 2,
+        "mining-drone": 1,
+        "ecological-repeller": 3,
+        "famed-blade": 2,
+        "space-ring": 2,
+        "black-tide-alarm": 2,
+        "shared-supply-pod": 2,
+        "aid-beacon": 1,
+        "skateboard-shoes": 2,
+        "alchemy-furnace": 2,
+        "reserve-crate": 1
+      },
+      "disasters": {
+        "develop-first": 1,
+        "eco-collapse": 1,
+        "wealth-gap": 2
+      },
+      "invitations": 22,
+      "boostedGather": 4,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 94,
+          "lowRounds": 0,
+          "highRounds": 3
+        },
+        "environment": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 8,
+          "inventory": 4,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 59,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 1,
+            "society": -1
+          },
+          "equipment": []
+        },
+        {
+          "id": "P2",
+          "donated": 11,
+          "inventory": 0,
+          "injury": 5,
+          "alive": true,
+          "board": false,
+          "actions": 56,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 1,
+            "society": 0
+          },
+          "equipment": [
+            "famed-blade",
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 6,
+          "inventory": 1,
+          "injury": 0,
+          "alive": false,
+          "board": false,
+          "actions": 59,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -2,
+            "society": 1
+          },
+          "equipment": []
+        },
+        {
+          "id": "P4",
+          "donated": 14,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -3,
+            "society": 0
+          },
+          "equipment": [
+            "mining-drone",
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 8,
+          "inventory": 0,
+          "injury": 5,
+          "alive": true,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": -2,
+            "environment": 3,
+            "society": 0
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 9,
+          "inventory": 0,
+          "injury": 0,
+          "alive": false,
+          "board": false,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 5,
+            "environment": -2,
+            "society": 1
+          },
+          "equipment": [
+            "aid-beacon",
+            "space-ring",
+            "famed-blade"
+          ]
+        }
+      ],
+      "donationSpread": 8,
+      "donationGini": 0.1488095238095238
+    },
+    {
+      "seed": 2,
+      "commands": 339,
+      "events": 644,
+      "alive": 4,
+      "boarded": 2,
+      "seats": 2,
+      "ark": 49,
+      "world": {
+        "economy": 19,
+        "environment": 1,
+        "society": 9
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 13,
+          "environment": 8,
+          "society": 11
+        },
+        {
+          "round": 2,
+          "economy": 15,
+          "environment": 7,
+          "society": 11
+        },
+        {
+          "round": 3,
+          "economy": 15,
+          "environment": 7,
+          "society": 11
+        },
+        {
+          "round": 4,
+          "economy": 15,
+          "environment": 6,
+          "society": 11
+        },
+        {
+          "round": 5,
+          "economy": 15,
+          "environment": 7,
+          "society": 10
+        },
+        {
+          "round": 6,
+          "economy": 15,
+          "environment": 6,
+          "society": 9
+        },
+        {
+          "round": 7,
+          "economy": 19,
+          "environment": 2,
+          "society": 10
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 1,
+          "society": 9
+        }
+      ],
+      "actionCounts": {
+        "play": 46,
+        "choose": 80,
+        "skip": 81,
+        "move": 48,
+        "gather": 33,
+        "donate": 30,
+        "pay_flood": 18,
+        "evacuate": 3
+      },
+      "technology": {
+        "famed-blade": 2,
+        "aid-beacon": 2,
+        "space-ring": 2,
+        "ruins-blueprint": 4,
+        "black-tide-alarm": 2,
+        "reserve-crate": 2,
+        "ecological-repeller": 2,
+        "mining-drone": 1,
+        "rapid-prototyper": 1
+      },
+      "disasters": {
+        "develop-first": 1,
+        "eco-collapse": 4,
+        "wealth-gap": 1,
+        "steady-imbalance": 1
+      },
+      "invitations": 25,
+      "boostedGather": 2,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 86,
+          "lowRounds": 0,
+          "highRounds": 2
+        },
+        "environment": {
+          "lowActions": 65,
+          "highActions": 0,
+          "lowRounds": 2,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 14,
+          "inventory": 0,
+          "injury": 4,
+          "alive": true,
+          "board": true,
+          "actions": 61,
+          "worldImpact": {
+            "economy": 4,
+            "environment": -1,
+            "society": 1
+          },
+          "equipment": [
+            "space-ring",
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 5,
+          "inventory": 0,
+          "injury": 1,
+          "alive": false,
+          "board": false,
+          "actions": 50,
+          "worldImpact": {
+            "economy": 0,
+            "environment": -1,
+            "society": 0
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 5,
+          "inventory": 2,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 54,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -2,
+            "society": 0
+          },
+          "equipment": []
+        },
+        {
+          "id": "P4",
+          "donated": 14,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 67,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 2,
+            "society": -2
+          },
+          "equipment": [
+            "famed-blade",
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 6,
+          "inventory": 0,
+          "injury": 4,
+          "alive": true,
+          "board": false,
+          "actions": 50,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -2,
+            "society": 2
+          },
+          "equipment": [
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 11,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -4,
+            "society": -1
+          },
+          "equipment": [
+            "reserve-crate",
+            "mining-drone",
+            "famed-blade"
+          ]
+        }
+      ],
+      "donationSpread": 9,
+      "donationGini": 0.23333333333333334
+    },
+    {
+      "seed": 3,
+      "commands": 371,
+      "events": 719,
+      "alive": 4,
+      "boarded": 4,
+      "seats": 5,
+      "ark": 85,
+      "world": {
+        "economy": 19,
+        "environment": 1,
+        "society": 15
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 14,
+          "environment": 8,
+          "society": 10
+        },
+        {
+          "round": 2,
+          "economy": 16,
+          "environment": 8,
+          "society": 10
+        },
+        {
+          "round": 3,
+          "economy": 16,
+          "environment": 7,
+          "society": 10
+        },
+        {
+          "round": 4,
+          "economy": 15,
+          "environment": 7,
+          "society": 10
+        },
+        {
+          "round": 5,
+          "economy": 15,
+          "environment": 6,
+          "society": 12
+        },
+        {
+          "round": 6,
+          "economy": 16,
+          "environment": 3,
+          "society": 14
+        },
+        {
+          "round": 7,
+          "economy": 18,
+          "environment": 2,
+          "society": 14
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 1,
+          "society": 15
+        }
+      ],
+      "actionCounts": {
+        "play": 42,
+        "choose": 118,
+        "skip": 72,
+        "move": 48,
+        "gather": 32,
+        "donate": 40,
+        "pay_flood": 18,
+        "evacuate": 1
+      },
+      "technology": {
+        "ecological-repeller": 2,
+        "space-ring": 2,
+        "famed-blade": 2,
+        "shared-supply-pod": 4,
+        "ruins-blueprint": 2,
+        "skateboard-shoes": 1,
+        "mining-drone": 1,
+        "black-tide-alarm": 1,
+        "alchemy-furnace": 2,
+        "aid-beacon": 1
+      },
+      "disasters": {
+        "develop-first": 1,
+        "eco-collapse": 1,
+        "welfare-pressure": 3,
+        "wealth-gap": 1,
+        "steady-imbalance": 2
+      },
+      "invitations": 23,
+      "boostedGather": 3,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 96,
+          "lowRounds": 0,
+          "highRounds": 2
+        },
+        "environment": {
+          "lowActions": 87,
+          "highActions": 0,
+          "lowRounds": 2,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 16,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 61,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 1,
+            "society": -2
+          },
+          "equipment": [
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 7,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 60,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -5,
+            "society": 5
+          },
+          "equipment": []
+        },
+        {
+          "id": "P3",
+          "donated": 19,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 60,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 1,
+            "society": 0
+          },
+          "equipment": [
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 16,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 65,
+          "worldImpact": {
+            "economy": 4,
+            "environment": -3,
+            "society": 1
+          },
+          "equipment": [
+            "famed-blade",
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 12,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 64,
+          "worldImpact": {
+            "economy": -2,
+            "environment": 4,
+            "society": 0
+          },
+          "equipment": [
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 21,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 61,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -5,
+            "society": 2
+          },
+          "equipment": [
+            "mining-drone",
+            "space-ring"
+          ]
+        }
+      ],
+      "donationSpread": 14,
+      "donationGini": 0.16666666666666666
+    },
+    {
+      "seed": 4,
+      "commands": 365,
+      "events": 738,
+      "alive": 5,
+      "boarded": 4,
+      "seats": 4,
+      "ark": 73,
+      "world": {
+        "economy": 19,
+        "environment": 2,
+        "society": 13
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 14,
+          "environment": 6,
+          "society": 11
+        },
+        {
+          "round": 2,
+          "economy": 17,
+          "environment": 1,
+          "society": 15
+        },
+        {
+          "round": 3,
+          "economy": 17,
+          "environment": 1,
+          "society": 15
+        },
+        {
+          "round": 4,
+          "economy": 19,
+          "environment": 1,
+          "society": 19
+        },
+        {
+          "round": 5,
+          "economy": 18,
+          "environment": 2,
+          "society": 19
+        },
+        {
+          "round": 6,
+          "economy": 19,
+          "environment": 2,
+          "society": 16
+        },
+        {
+          "round": 7,
+          "economy": 19,
+          "environment": 1,
+          "society": 16
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 2,
+          "society": 13
+        }
+      ],
+      "actionCounts": {
+        "play": 47,
+        "choose": 106,
+        "skip": 79,
+        "move": 48,
+        "gather": 28,
+        "donate": 37,
+        "pay_flood": 18,
+        "evacuate": 2
+      },
+      "technology": {
+        "space-ring": 1,
+        "shared-supply-pod": 4,
+        "reserve-crate": 3,
+        "famed-blade": 1,
+        "mining-drone": 2,
+        "aid-beacon": 2,
+        "rapid-prototyper": 1,
+        "ruins-blueprint": 3,
+        "alchemy-furnace": 1,
+        "recycling-claw": 2,
+        "ecological-repeller": 2
+      },
+      "disasters": {
+        "develop-first": 1,
+        "eco-collapse": 1,
+        "welfare-pressure": 1,
+        "steady-imbalance": 2,
+        "wealth-gap": 1,
+        "mutual-aid": 1
+      },
+      "invitations": 24,
+      "boostedGather": 0,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 226,
+          "lowRounds": 0,
+          "highRounds": 5
+        },
+        "environment": {
+          "lowActions": 269,
+          "highActions": 0,
+          "lowRounds": 7,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 92,
+          "lowRounds": 0,
+          "highRounds": 2
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 9,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 62,
+          "worldImpact": {
+            "economy": 4,
+            "environment": -2,
+            "society": 1
+          },
+          "equipment": [
+            "aid-beacon",
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 13,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 0,
+            "society": 2
+          },
+          "equipment": [
+            "space-ring",
+            "aid-beacon",
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 12,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 62,
+          "worldImpact": {
+            "economy": 0,
+            "environment": -1,
+            "society": 2
+          },
+          "equipment": []
+        },
+        {
+          "id": "P4",
+          "donated": 14,
+          "inventory": 2,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 65,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 0,
+            "society": -1
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 17,
+          "inventory": 0,
+          "injury": 5,
+          "alive": true,
+          "board": true,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -2,
+            "society": 2
+          },
+          "equipment": []
+        },
+        {
+          "id": "P6",
+          "donated": 14,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 68,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -1,
+            "society": -2
+          },
+          "equipment": [
+            "famed-blade",
+            "mining-drone",
+            "reserve-crate"
+          ]
+        }
+      ],
+      "donationSpread": 8,
+      "donationGini": 0.09915611814345991
+    },
+    {
+      "seed": 5,
+      "commands": 351,
+      "events": 691,
+      "alive": 6,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 61,
+      "world": {
+        "economy": 18,
+        "environment": 2,
+        "society": 14
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 15,
+          "environment": 7,
+          "society": 11
+        },
+        {
+          "round": 2,
+          "economy": 16,
+          "environment": 6,
+          "society": 13
+        },
+        {
+          "round": 3,
+          "economy": 16,
+          "environment": 6,
+          "society": 13
+        },
+        {
+          "round": 4,
+          "economy": 18,
+          "environment": 2,
+          "society": 14
+        },
+        {
+          "round": 5,
+          "economy": 19,
+          "environment": 3,
+          "society": 13
+        },
+        {
+          "round": 6,
+          "economy": 18,
+          "environment": 3,
+          "society": 12
+        },
+        {
+          "round": 7,
+          "economy": 19,
+          "environment": 1,
+          "society": 14
+        },
+        {
+          "round": 8,
+          "economy": 18,
+          "environment": 2,
+          "society": 14
+        }
+      ],
+      "actionCounts": {
+        "play": 44,
+        "choose": 96,
+        "skip": 86,
+        "move": 48,
+        "gather": 26,
+        "donate": 32,
+        "pay_flood": 18,
+        "blade_move": 1
+      },
+      "technology": {
+        "aid-beacon": 1,
+        "space-ring": 2,
+        "famed-blade": 3,
+        "skateboard-shoes": 2,
+        "reserve-crate": 3,
+        "shared-supply-pod": 3,
+        "ruins-blueprint": 3,
+        "black-tide-alarm": 1,
+        "alchemy-furnace": 1
+      },
+      "disasters": {
+        "develop-first": 1,
+        "eco-collapse": 1,
+        "welfare-pressure": 2,
+        "wealth-gap": 1,
+        "steady-imbalance": 3
+      },
+      "invitations": 24,
+      "boostedGather": 0,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 221,
+          "lowRounds": 0,
+          "highRounds": 5
+        },
+        "environment": {
+          "lowActions": 168,
+          "highActions": 0,
+          "lowRounds": 3,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 19,
+          "inventory": 2,
+          "injury": 1,
+          "alive": true,
+          "board": true,
+          "actions": 69,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "space-ring",
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 7,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 64,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -3,
+            "society": 2
+          },
+          "equipment": [
+            "aid-beacon",
+            "skateboard-shoes",
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 9,
+          "inventory": 2,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 58,
+          "worldImpact": {
+            "economy": 0,
+            "environment": -2,
+            "society": 1
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 15,
+          "inventory": 0,
+          "injury": 3,
+          "alive": true,
+          "board": true,
+          "actions": 52,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": [
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 6,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 52,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 1,
+            "society": 1
+          },
+          "equipment": [
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 11,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 56,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -2,
+            "society": 1
+          },
+          "equipment": [
+            "famed-blade"
+          ]
+        }
+      ],
+      "donationSpread": 13,
+      "donationGini": 0.2263681592039801
+    },
+    {
+      "seed": 6,
+      "commands": 333,
+      "events": 621,
+      "alive": 6,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 52,
+      "world": {
+        "economy": 19,
+        "environment": 4,
+        "society": 5
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 12,
+          "environment": 10,
+          "society": 11
+        },
+        {
+          "round": 2,
+          "economy": 14,
+          "environment": 9,
+          "society": 10
+        },
+        {
+          "round": 3,
+          "economy": 14,
+          "environment": 9,
+          "society": 10
+        },
+        {
+          "round": 4,
+          "economy": 15,
+          "environment": 8,
+          "society": 9
+        },
+        {
+          "round": 5,
+          "economy": 16,
+          "environment": 7,
+          "society": 8
+        },
+        {
+          "round": 6,
+          "economy": 19,
+          "environment": 4,
+          "society": 6
+        },
+        {
+          "round": 7,
+          "economy": 17,
+          "environment": 6,
+          "society": 6
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 4,
+          "society": 5
+        }
+      ],
+      "actionCounts": {
+        "play": 45,
+        "choose": 76,
+        "skip": 80,
+        "move": 48,
+        "gather": 31,
+        "donate": 33,
+        "pay_flood": 18,
+        "blade_move": 2
+      },
+      "technology": {
+        "skateboard-shoes": 2,
+        "shared-supply-pod": 2,
+        "famed-blade": 4,
+        "ruins-blueprint": 4,
+        "reserve-crate": 4,
+        "black-tide-alarm": 2,
+        "ecological-repeller": 1,
+        "mining-drone": 1,
+        "alchemy-furnace": 1,
+        "recycling-claw": 1
+      },
+      "disasters": {
+        "develop-first": 1,
+        "eco-collapse": 1,
+        "wealth-gap": 2,
+        "social-disorder": 1
+      },
+      "invitations": 17,
+      "boostedGather": 1,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 74,
+          "lowRounds": 0,
+          "highRounds": 2
+        },
+        "environment": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 9,
+          "inventory": 4,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": 4,
+            "environment": -2,
+            "society": -2
+          },
+          "equipment": [
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 9,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 1,
+            "society": -1
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "famed-blade",
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 10,
+          "inventory": 1,
+          "injury": 4,
+          "alive": true,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -2,
+            "society": 2
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 11,
+          "inventory": 1,
+          "injury": 3,
+          "alive": true,
+          "board": true,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 1,
+            "society": -2
+          },
+          "equipment": [
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 7,
+          "inventory": 2,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 51,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 0,
+            "society": -1
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 12,
+          "inventory": 0,
+          "injury": 4,
+          "alive": true,
+          "board": true,
+          "actions": 58,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -3,
+            "society": 1
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        }
+      ],
+      "donationSpread": 5,
+      "donationGini": 0.09195402298850575
+    },
+    {
+      "seed": 7,
+      "commands": 350,
+      "events": 674,
+      "alive": 4,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 65,
+      "world": {
+        "economy": 18,
+        "environment": 2,
+        "society": 11
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 15,
+          "environment": 3,
+          "society": 14
+        },
+        {
+          "round": 2,
+          "economy": 14,
+          "environment": 6,
+          "society": 14
+        },
+        {
+          "round": 3,
+          "economy": 14,
+          "environment": 6,
+          "society": 14
+        },
+        {
+          "round": 4,
+          "economy": 14,
+          "environment": 6,
+          "society": 13
+        },
+        {
+          "round": 5,
+          "economy": 16,
+          "environment": 4,
+          "society": 14
+        },
+        {
+          "round": 6,
+          "economy": 19,
+          "environment": 2,
+          "society": 12
+        },
+        {
+          "round": 7,
+          "economy": 18,
+          "environment": 3,
+          "society": 11
+        },
+        {
+          "round": 8,
+          "economy": 18,
+          "environment": 2,
+          "society": 11
+        }
+      ],
+      "actionCounts": {
+        "play": 42,
+        "choose": 94,
+        "skip": 84,
+        "move": 48,
+        "gather": 31,
+        "donate": 29,
+        "pay_flood": 18,
+        "blade_move": 2,
+        "evacuate": 2
+      },
+      "technology": {
+        "reserve-crate": 1,
+        "space-ring": 1,
+        "aid-beacon": 2,
+        "shared-supply-pod": 1,
+        "alchemy-furnace": 1,
+        "skateboard-shoes": 1,
+        "black-tide-alarm": 3,
+        "famed-blade": 3,
+        "ecological-repeller": 1,
+        "rapid-prototyper": 1,
+        "ruins-blueprint": 3
+      },
+      "disasters": {
+        "develop-first": 2,
+        "eco-collapse": 2,
+        "welfare-pressure": 2,
+        "wealth-gap": 1,
+        "steady-imbalance": 2
+      },
+      "invitations": 21,
+      "boostedGather": 0,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 116,
+          "lowRounds": 0,
+          "highRounds": 3
+        },
+        "environment": {
+          "lowActions": 100,
+          "highActions": 0,
+          "lowRounds": 2,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 12,
+          "inventory": 2,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 71,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -3,
+            "society": 1
+          },
+          "equipment": [
+            "aid-beacon",
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 11,
+          "inventory": 0,
+          "injury": 3,
+          "alive": false,
+          "board": false,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 0,
+            "environment": -1,
+            "society": 0
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 9,
+          "inventory": 0,
+          "injury": 2,
+          "alive": true,
+          "board": false,
+          "actions": 56,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": [
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 13,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 58,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 0,
+            "society": 2
+          },
+          "equipment": [
+            "aid-beacon",
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 16,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 0,
+            "society": -1
+          },
+          "equipment": []
+        },
+        {
+          "id": "P6",
+          "donated": 10,
+          "inventory": 0,
+          "injury": 1,
+          "alive": true,
+          "board": true,
+          "actions": 59,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": []
+        }
+      ],
+      "donationSpread": 7,
+      "donationGini": 0.1056338028169014
+    },
+    {
+      "seed": 8,
+      "commands": 319,
+      "events": 608,
+      "alive": 6,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 63,
+      "world": {
+        "economy": 19,
+        "environment": 8,
+        "society": 8
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 13,
+          "environment": 7,
+          "society": 11
+        },
+        {
+          "round": 2,
+          "economy": 19,
+          "environment": 5,
+          "society": 11
+        },
+        {
+          "round": 3,
+          "economy": 19,
+          "environment": 5,
+          "society": 11
+        },
+        {
+          "round": 4,
+          "economy": 19,
+          "environment": 4,
+          "society": 11
+        },
+        {
+          "round": 5,
+          "economy": 19,
+          "environment": 3,
+          "society": 11
+        },
+        {
+          "round": 6,
+          "economy": 19,
+          "environment": 5,
+          "society": 11
+        },
+        {
+          "round": 7,
+          "economy": 19,
+          "environment": 8,
+          "society": 8
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 8,
+          "society": 8
+        }
+      ],
+      "actionCounts": {
+        "play": 45,
+        "choose": 63,
+        "skip": 79,
+        "move": 48,
+        "gather": 31,
+        "donate": 34,
+        "pay_flood": 18,
+        "evacuate": 1
+      },
+      "technology": {
+        "rapid-prototyper": 2,
+        "famed-blade": 2,
+        "aid-beacon": 2,
+        "alchemy-furnace": 1,
+        "space-ring": 1,
+        "skateboard-shoes": 3,
+        "reserve-crate": 1,
+        "ruins-blueprint": 1,
+        "ecological-repeller": 1,
+        "recycling-claw": 1
+      },
+      "disasters": {
+        "develop-first": 2,
+        "eco-collapse": 3,
+        "wealth-gap": 1
+      },
+      "invitations": 28,
+      "boostedGather": 0,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 234,
+          "lowRounds": 0,
+          "highRounds": 7
+        },
+        "environment": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 18,
+          "inventory": 3,
+          "injury": 3,
+          "alive": true,
+          "board": true,
+          "actions": 58,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -1,
+            "society": 0
+          },
+          "equipment": [
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 9,
+          "inventory": 0,
+          "injury": 1,
+          "alive": true,
+          "board": true,
+          "actions": 54,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 2,
+            "society": -1
+          },
+          "equipment": [
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 8,
+          "inventory": 2,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 48,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": []
+        },
+        {
+          "id": "P4",
+          "donated": 19,
+          "inventory": 0,
+          "injury": 4,
+          "alive": true,
+          "board": true,
+          "actions": 59,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 0,
+            "society": -3
+          },
+          "equipment": [
+            "famed-blade",
+            "reserve-crate",
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 7,
+          "inventory": 0,
+          "injury": 3,
+          "alive": true,
+          "board": false,
+          "actions": 51,
+          "worldImpact": {
+            "economy": 3,
+            "environment": 0,
+            "society": 1
+          },
+          "equipment": [
+            "aid-beacon",
+            "famed-blade",
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 8,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 49,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -1,
+            "society": 2
+          },
+          "equipment": [
+            "aid-beacon"
+          ]
+        }
+      ],
+      "donationSpread": 12,
+      "donationGini": 0.21980676328502416
+    },
+    {
+      "seed": 9,
+      "commands": 334,
+      "events": 633,
+      "alive": 4,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 62,
+      "world": {
+        "economy": 19,
+        "environment": 10,
+        "society": 7
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 11,
+          "environment": 10,
+          "society": 9
+        },
+        {
+          "round": 2,
+          "economy": 13,
+          "environment": 12,
+          "society": 9
+        },
+        {
+          "round": 3,
+          "economy": 13,
+          "environment": 12,
+          "society": 9
+        },
+        {
+          "round": 4,
+          "economy": 15,
+          "environment": 11,
+          "society": 8
+        },
+        {
+          "round": 5,
+          "economy": 15,
+          "environment": 14,
+          "society": 8
+        },
+        {
+          "round": 6,
+          "economy": 17,
+          "environment": 13,
+          "society": 8
+        },
+        {
+          "round": 7,
+          "economy": 19,
+          "environment": 13,
+          "society": 6
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 10,
+          "society": 7
+        }
+      ],
+      "actionCounts": {
+        "play": 45,
+        "choose": 77,
+        "skip": 77,
+        "move": 48,
+        "gather": 30,
+        "donate": 37,
+        "pay_flood": 18,
+        "blade_move": 1,
+        "evacuate": 1
+      },
+      "technology": {
+        "famed-blade": 3,
+        "space-ring": 2,
+        "skateboard-shoes": 3,
+        "mining-drone": 3,
+        "black-tide-alarm": 2,
+        "ecological-repeller": 1,
+        "rapid-prototyper": 2,
+        "ruins-blueprint": 1,
+        "shared-supply-pod": 1
+      },
+      "disasters": {
+        "develop-first": 2,
+        "resource-protection": 1,
+        "wealth-gap": 1,
+        "social-disorder": 1
+      },
+      "invitations": 25,
+      "boostedGather": 2,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 88,
+          "lowRounds": 0,
+          "highRounds": 2
+        },
+        "environment": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 19,
+          "inventory": 2,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 65,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -2,
+            "society": 1
+          },
+          "equipment": [
+            "mining-drone",
+            "skateboard-shoes",
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 4,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 49,
+          "worldImpact": {
+            "economy": -1,
+            "environment": 1,
+            "society": 0
+          },
+          "equipment": []
+        },
+        {
+          "id": "P3",
+          "donated": 12,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 59,
+          "worldImpact": {
+            "economy": 4,
+            "environment": -1,
+            "society": -3
+          },
+          "equipment": [
+            "space-ring",
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 9,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 52,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 2,
+            "society": 0
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 7,
+          "inventory": 0,
+          "injury": 2,
+          "alive": true,
+          "board": true,
+          "actions": 54,
+          "worldImpact": {
+            "economy": 3,
+            "environment": 2,
+            "society": 0
+          },
+          "equipment": [
+            "space-ring",
+            "skateboard-shoes",
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 17,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": []
+        }
+      ],
+      "donationSpread": 15,
+      "donationGini": 0.2647058823529412
+    },
+    {
+      "seed": 10,
+      "commands": 369,
+      "events": 706,
+      "alive": 4,
+      "boarded": 4,
+      "seats": 4,
+      "ark": 74,
+      "world": {
+        "economy": 14,
+        "environment": 2,
+        "society": 15
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 10,
+          "environment": 11,
+          "society": 9
+        },
+        {
+          "round": 2,
+          "economy": 12,
+          "environment": 9,
+          "society": 9
+        },
+        {
+          "round": 3,
+          "economy": 12,
+          "environment": 7,
+          "society": 9
+        },
+        {
+          "round": 4,
+          "economy": 13,
+          "environment": 4,
+          "society": 10
+        },
+        {
+          "round": 5,
+          "economy": 13,
+          "environment": 3,
+          "society": 9
+        },
+        {
+          "round": 6,
+          "economy": 12,
+          "environment": 4,
+          "society": 9
+        },
+        {
+          "round": 7,
+          "economy": 14,
+          "environment": 2,
+          "society": 13
+        },
+        {
+          "round": 8,
+          "economy": 14,
+          "environment": 2,
+          "society": 15
+        }
+      ],
+      "actionCounts": {
+        "play": 40,
+        "choose": 118,
+        "skip": 74,
+        "move": 48,
+        "gather": 32,
+        "donate": 38,
+        "pay_flood": 18,
+        "evacuate": 1
+      },
+      "technology": {
+        "ecological-repeller": 2,
+        "mining-drone": 2,
+        "shared-supply-pod": 4,
+        "reserve-crate": 1,
+        "famed-blade": 1,
+        "black-tide-alarm": 4,
+        "rapid-prototyper": 1
+      },
+      "disasters": {
+        "eco-collapse": 1,
+        "develop-first": 2,
+        "steady-imbalance": 2,
+        "welfare-pressure": 1
+      },
+      "invitations": 25,
+      "boostedGather": 6,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        },
+        "environment": {
+          "lowActions": 123,
+          "highActions": 0,
+          "lowRounds": 2,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 18,
+          "inventory": 4,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 69,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -4,
+            "society": 1
+          },
+          "equipment": [
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 15,
+          "inventory": 0,
+          "injury": 4,
+          "alive": false,
+          "board": false,
+          "actions": 62,
+          "worldImpact": {
+            "economy": -1,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 9,
+          "inventory": 2,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -1,
+            "society": 1
+          },
+          "equipment": []
+        },
+        {
+          "id": "P4",
+          "donated": 14,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 62,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -3,
+            "society": 1
+          },
+          "equipment": [
+            "mining-drone",
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 15,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 60,
+          "worldImpact": {
+            "economy": -2,
+            "environment": 1,
+            "society": 2
+          },
+          "equipment": []
+        },
+        {
+          "id": "P6",
+          "donated": 9,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 59,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": []
+        }
+      ],
+      "donationSpread": 9,
+      "donationGini": 0.13333333333333333
+    },
+    {
+      "seed": 11,
+      "commands": 314,
+      "events": 588,
+      "alive": 6,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 54,
+      "world": {
+        "economy": 19,
+        "environment": 10,
+        "society": 10
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 10,
+          "environment": 14,
+          "society": 10
+        },
+        {
+          "round": 2,
+          "economy": 12,
+          "environment": 12,
+          "society": 12
+        },
+        {
+          "round": 3,
+          "economy": 12,
+          "environment": 12,
+          "society": 12
+        },
+        {
+          "round": 4,
+          "economy": 13,
+          "environment": 9,
+          "society": 12
+        },
+        {
+          "round": 5,
+          "economy": 11,
+          "environment": 11,
+          "society": 12
+        },
+        {
+          "round": 6,
+          "economy": 13,
+          "environment": 14,
+          "society": 11
+        },
+        {
+          "round": 7,
+          "economy": 16,
+          "environment": 11,
+          "society": 13
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 10,
+          "society": 10
+        }
+      ],
+      "actionCounts": {
+        "play": 44,
+        "choose": 59,
+        "skip": 82,
+        "move": 48,
+        "gather": 30,
+        "donate": 32,
+        "pay_flood": 18,
+        "evacuate": 1
+      },
+      "technology": {
+        "skateboard-shoes": 3,
+        "aid-beacon": 2,
+        "reserve-crate": 2,
+        "rapid-prototyper": 2,
+        "black-tide-alarm": 2,
+        "space-ring": 1,
+        "ecological-repeller": 1,
+        "mining-drone": 1,
+        "recycling-claw": 1
+      },
+      "disasters": {
+        "resource-protection": 2,
+        "develop-first": 1,
+        "wealth-gap": 1
+      },
+      "invitations": 28,
+      "boostedGather": 0,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 35,
+          "lowRounds": 0,
+          "highRounds": 1
+        },
+        "environment": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 19,
+          "inventory": 0,
+          "injury": 1,
+          "alive": true,
+          "board": true,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -1,
+            "society": 0
+          },
+          "equipment": [
+            "reserve-crate",
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 5,
+          "inventory": 3,
+          "injury": 2,
+          "alive": true,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": 3,
+            "environment": 2,
+            "society": -2
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 7,
+          "inventory": 2,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 49,
+          "worldImpact": {
+            "economy": -1,
+            "environment": 1,
+            "society": 0
+          },
+          "equipment": []
+        },
+        {
+          "id": "P4",
+          "donated": 18,
+          "inventory": 0,
+          "injury": 5,
+          "alive": true,
+          "board": true,
+          "actions": 51,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -2,
+            "society": 2
+          },
+          "equipment": [
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 5,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 1,
+            "society": -1
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 6,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 0,
+            "society": 2
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "aid-beacon"
+          ]
+        }
+      ],
+      "donationSpread": 14,
+      "donationGini": 0.3055555555555556
+    },
+    {
+      "seed": 12,
+      "commands": 354,
+      "events": 676,
+      "alive": 5,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 63,
+      "world": {
+        "economy": 18,
+        "environment": 1,
+        "society": 15
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 12,
+          "environment": 8,
+          "society": 12
+        },
+        {
+          "round": 2,
+          "economy": 12,
+          "environment": 6,
+          "society": 14
+        },
+        {
+          "round": 3,
+          "economy": 12,
+          "environment": 6,
+          "society": 14
+        },
+        {
+          "round": 4,
+          "economy": 11,
+          "environment": 6,
+          "society": 14
+        },
+        {
+          "round": 5,
+          "economy": 10,
+          "environment": 7,
+          "society": 14
+        },
+        {
+          "round": 6,
+          "economy": 12,
+          "environment": 2,
+          "society": 18
+        },
+        {
+          "round": 7,
+          "economy": 11,
+          "environment": 3,
+          "society": 18
+        },
+        {
+          "round": 8,
+          "economy": 18,
+          "environment": 1,
+          "society": 15
+        }
+      ],
+      "actionCounts": {
+        "play": 42,
+        "choose": 101,
+        "skip": 78,
+        "move": 48,
+        "gather": 30,
+        "donate": 36,
+        "pay_flood": 18,
+        "evacuate": 1
+      },
+      "technology": {
+        "aid-beacon": 1,
+        "black-tide-alarm": 4,
+        "shared-supply-pod": 3,
+        "ruins-blueprint": 3,
+        "reserve-crate": 1,
+        "alchemy-furnace": 1,
+        "famed-blade": 2,
+        "rapid-prototyper": 1,
+        "space-ring": 1,
+        "mining-drone": 1
+      },
+      "disasters": {
+        "welfare-pressure": 1,
+        "eco-collapse": 3,
+        "steady-imbalance": 2,
+        "mutual-aid": 1,
+        "develop-first": 1,
+        "wealth-gap": 1
+      },
+      "invitations": 23,
+      "boostedGather": 0,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 6,
+          "lowRounds": 0,
+          "highRounds": 1
+        },
+        "environment": {
+          "lowActions": 64,
+          "highActions": 0,
+          "lowRounds": 2,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 68,
+          "lowRounds": 0,
+          "highRounds": 2
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 13,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 64,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 0,
+            "society": 1
+          },
+          "equipment": [
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 5,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 58,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": []
+        },
+        {
+          "id": "P3",
+          "donated": 16,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -1,
+            "society": -1
+          },
+          "equipment": [
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 12,
+          "inventory": 0,
+          "injury": 1,
+          "alive": true,
+          "board": true,
+          "actions": 63,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -2,
+            "society": 2
+          },
+          "equipment": [
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 8,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -3,
+            "society": 2
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 15,
+          "inventory": 0,
+          "injury": 5,
+          "alive": true,
+          "board": true,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -1,
+            "society": 2
+          },
+          "equipment": [
+            "aid-beacon",
+            "mining-drone"
+          ]
+        }
+      ],
+      "donationSpread": 11,
+      "donationGini": 0.1859903381642512
+    },
+    {
+      "seed": 13,
+      "commands": 342,
+      "events": 621,
+      "alive": 4,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 57,
+      "world": {
+        "economy": 19,
+        "environment": 9,
+        "society": 6
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 11,
+          "environment": 8,
+          "society": 12
+        },
+        {
+          "round": 2,
+          "economy": 16,
+          "environment": 6,
+          "society": 10
+        },
+        {
+          "round": 3,
+          "economy": 16,
+          "environment": 6,
+          "society": 10
+        },
+        {
+          "round": 4,
+          "economy": 16,
+          "environment": 7,
+          "society": 9
+        },
+        {
+          "round": 5,
+          "economy": 16,
+          "environment": 8,
+          "society": 8
+        },
+        {
+          "round": 6,
+          "economy": 18,
+          "environment": 8,
+          "society": 9
+        },
+        {
+          "round": 7,
+          "economy": 19,
+          "environment": 9,
+          "society": 8
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 9,
+          "society": 6
+        }
+      ],
+      "actionCounts": {
+        "play": 44,
+        "choose": 83,
+        "skip": 78,
+        "move": 48,
+        "gather": 35,
+        "donate": 31,
+        "pay_flood": 18,
+        "blade_move": 2,
+        "evacuate": 3
+      },
+      "technology": {
+        "shared-supply-pod": 1,
+        "ruins-blueprint": 4,
+        "famed-blade": 2,
+        "space-ring": 1,
+        "ecological-repeller": 3,
+        "black-tide-alarm": 2,
+        "skateboard-shoes": 2,
+        "aid-beacon": 1,
+        "rapid-prototyper": 1,
+        "recycling-claw": 1
+      },
+      "disasters": {
+        "develop-first": 1,
+        "eco-collapse": 1,
+        "wealth-gap": 1,
+        "social-disorder": 1
+      },
+      "invitations": 25,
+      "boostedGather": 0,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 113,
+          "lowRounds": 0,
+          "highRounds": 3
+        },
+        "environment": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 11,
+          "inventory": 3,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 65,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 2,
+            "society": -2
+          },
+          "equipment": [
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 13,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 54,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -1,
+            "society": -1
+          },
+          "equipment": []
+        },
+        {
+          "id": "P3",
+          "donated": 7,
+          "inventory": 0,
+          "injury": 1,
+          "alive": true,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": 5,
+            "environment": -4,
+            "society": 4
+          },
+          "equipment": [
+            "space-ring",
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 10,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 60,
+          "worldImpact": {
+            "economy": -2,
+            "environment": 3,
+            "society": -3
+          },
+          "equipment": []
+        },
+        {
+          "id": "P5",
+          "donated": 13,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 54,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -2,
+            "society": 0
+          },
+          "equipment": []
+        },
+        {
+          "id": "P6",
+          "donated": 9,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 54,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 2,
+            "society": -1
+          },
+          "equipment": [
+            "skateboard-shoes"
+          ]
+        }
+      ],
+      "donationSpread": 6,
+      "donationGini": 0.11375661375661375
+    },
+    {
+      "seed": 14,
+      "commands": 322,
+      "events": 616,
+      "alive": 6,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 62,
+      "world": {
+        "economy": 19,
+        "environment": 3,
+        "society": 13
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 10,
+          "environment": 10,
+          "society": 9
+        },
+        {
+          "round": 2,
+          "economy": 10,
+          "environment": 10,
+          "society": 9
+        },
+        {
+          "round": 3,
+          "economy": 10,
+          "environment": 10,
+          "society": 9
+        },
+        {
+          "round": 4,
+          "economy": 11,
+          "environment": 8,
+          "society": 9
+        },
+        {
+          "round": 5,
+          "economy": 14,
+          "environment": 6,
+          "society": 10
+        },
+        {
+          "round": 6,
+          "economy": 19,
+          "environment": 4,
+          "society": 11
+        },
+        {
+          "round": 7,
+          "economy": 19,
+          "environment": 2,
+          "society": 13
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 3,
+          "society": 13
+        }
+      ],
+      "actionCounts": {
+        "play": 43,
+        "choose": 67,
+        "skip": 74,
+        "move": 48,
+        "gather": 33,
+        "donate": 37,
+        "pay_flood": 18,
+        "blade_move": 1,
+        "evacuate": 1
+      },
+      "technology": {
+        "reserve-crate": 4,
+        "ecological-repeller": 1,
+        "mining-drone": 2,
+        "shared-supply-pod": 1,
+        "skateboard-shoes": 2,
+        "rapid-prototyper": 1,
+        "famed-blade": 1,
+        "space-ring": 2,
+        "aid-beacon": 2
+      },
+      "disasters": {
+        "eco-collapse": 2,
+        "develop-first": 1,
+        "wealth-gap": 1,
+        "steady-imbalance": 1
+      },
+      "invitations": 25,
+      "boostedGather": 1,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 102,
+          "lowRounds": 0,
+          "highRounds": 3
+        },
+        "environment": {
+          "lowActions": 54,
+          "highActions": 0,
+          "lowRounds": 1,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 15,
+          "inventory": 0,
+          "injury": 4,
+          "alive": true,
+          "board": true,
+          "actions": 52,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -3,
+            "society": 2
+          },
+          "equipment": [
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 7,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 1,
+            "society": 0
+          },
+          "equipment": [
+            "reserve-crate",
+            "skateboard-shoes",
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 8,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 52,
+          "worldImpact": {
+            "economy": 0,
+            "environment": -1,
+            "society": 0
+          },
+          "equipment": [
+            "mining-drone",
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 21,
+          "inventory": 0,
+          "injury": 5,
+          "alive": true,
+          "board": true,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -1,
+            "society": 0
+          },
+          "equipment": [
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 7,
+          "inventory": 0,
+          "injury": 1,
+          "alive": true,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -1,
+            "society": 0
+          },
+          "equipment": [
+            "aid-beacon",
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 10,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -1,
+            "society": 2
+          },
+          "equipment": [
+            "reserve-crate",
+            "aid-beacon",
+            "skateboard-shoes"
+          ]
+        }
+      ],
+      "donationSpread": 14,
+      "donationGini": 0.23529411764705882
+    },
+    {
+      "seed": 15,
+      "commands": 378,
+      "events": 729,
+      "alive": 5,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 66,
+      "world": {
+        "economy": 19,
+        "environment": 2,
+        "society": 14
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 12,
+          "environment": 7,
+          "society": 12
+        },
+        {
+          "round": 2,
+          "economy": 15,
+          "environment": 3,
+          "society": 14
+        },
+        {
+          "round": 3,
+          "economy": 15,
+          "environment": 3,
+          "society": 14
+        },
+        {
+          "round": 4,
+          "economy": 18,
+          "environment": 3,
+          "society": 10
+        },
+        {
+          "round": 5,
+          "economy": 19,
+          "environment": 5,
+          "society": 10
+        },
+        {
+          "round": 6,
+          "economy": 19,
+          "environment": 6,
+          "society": 12
+        },
+        {
+          "round": 7,
+          "economy": 17,
+          "environment": 2,
+          "society": 18
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 2,
+          "society": 14
+        }
+      ],
+      "actionCounts": {
+        "play": 43,
+        "choose": 123,
+        "skip": 81,
+        "move": 48,
+        "gather": 30,
+        "donate": 33,
+        "pay_flood": 18,
+        "blade_move": 1,
+        "evacuate": 1
+      },
+      "technology": {
+        "rapid-prototyper": 2,
+        "shared-supply-pod": 5,
+        "ruins-blueprint": 2,
+        "space-ring": 3,
+        "black-tide-alarm": 2,
+        "ecological-repeller": 2,
+        "famed-blade": 2,
+        "skateboard-shoes": 2,
+        "mining-drone": 1,
+        "reserve-crate": 1,
+        "aid-beacon": 1,
+        "alchemy-furnace": 1,
+        "recycling-claw": 1
+      },
+      "disasters": {
+        "eco-collapse": 1,
+        "develop-first": 1,
+        "welfare-pressure": 2,
+        "steady-imbalance": 2,
+        "wealth-gap": 2,
+        "mutual-aid": 1
+      },
+      "invitations": 17,
+      "boostedGather": 0,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 167,
+          "lowRounds": 0,
+          "highRounds": 4
+        },
+        "environment": {
+          "lowActions": 145,
+          "highActions": 0,
+          "lowRounds": 2,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 38,
+          "lowRounds": 0,
+          "highRounds": 1
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 12,
+          "inventory": 2,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 66,
+          "worldImpact": {
+            "economy": 0,
+            "environment": -1,
+            "society": 0
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 5,
+          "inventory": 1,
+          "injury": 0,
+          "alive": false,
+          "board": false,
+          "actions": 62,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -2,
+            "society": 1
+          },
+          "equipment": [
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 14,
+          "inventory": 0,
+          "injury": 5,
+          "alive": true,
+          "board": true,
+          "actions": 60,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 0,
+            "society": 2
+          },
+          "equipment": [
+            "space-ring",
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 12,
+          "inventory": 0,
+          "injury": 1,
+          "alive": true,
+          "board": false,
+          "actions": 66,
+          "worldImpact": {
+            "economy": 5,
+            "environment": -4,
+            "society": 1
+          },
+          "equipment": [
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 10,
+          "inventory": 0,
+          "injury": 4,
+          "alive": true,
+          "board": false,
+          "actions": 59,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 3,
+            "society": 0
+          },
+          "equipment": [
+            "famed-blade",
+            "mining-drone",
+            "skateboard-shoes",
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 19,
+          "inventory": 0,
+          "injury": 5,
+          "alive": true,
+          "board": true,
+          "actions": 65,
+          "worldImpact": {
+            "economy": 0,
+            "environment": -1,
+            "society": 2
+          },
+          "equipment": []
+        }
+      ],
+      "donationSpread": 14,
+      "donationGini": 0.18981481481481483
+    },
+    {
+      "seed": 16,
+      "commands": 369,
+      "events": 697,
+      "alive": 5,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 53,
+      "world": {
+        "economy": 19,
+        "environment": 1,
+        "society": 14
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 13,
+          "environment": 11,
+          "society": 9
+        },
+        {
+          "round": 2,
+          "economy": 14,
+          "environment": 8,
+          "society": 10
+        },
+        {
+          "round": 3,
+          "economy": 14,
+          "environment": 7,
+          "society": 10
+        },
+        {
+          "round": 4,
+          "economy": 14,
+          "environment": 7,
+          "society": 10
+        },
+        {
+          "round": 5,
+          "economy": 15,
+          "environment": 9,
+          "society": 9
+        },
+        {
+          "round": 6,
+          "economy": 19,
+          "environment": 5,
+          "society": 11
+        },
+        {
+          "round": 7,
+          "economy": 19,
+          "environment": 1,
+          "society": 14
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 1,
+          "society": 14
+        }
+      ],
+      "actionCounts": {
+        "play": 47,
+        "choose": 108,
+        "skip": 81,
+        "move": 48,
+        "gather": 30,
+        "donate": 33,
+        "pay_flood": 18,
+        "blade_move": 2,
+        "evacuate": 2
+      },
+      "technology": {
+        "mining-drone": 1,
+        "ecological-repeller": 3,
+        "space-ring": 2,
+        "famed-blade": 2,
+        "shared-supply-pod": 3,
+        "black-tide-alarm": 3,
+        "skateboard-shoes": 1,
+        "ruins-blueprint": 4,
+        "aid-beacon": 2,
+        "rapid-prototyper": 1
+      },
+      "disasters": {
+        "develop-first": 1,
+        "eco-collapse": 2,
+        "wealth-gap": 1,
+        "welfare-pressure": 1,
+        "steady-imbalance": 1
+      },
+      "invitations": 23,
+      "boostedGather": 3,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 132,
+          "lowRounds": 0,
+          "highRounds": 3
+        },
+        "environment": {
+          "lowActions": 78,
+          "highActions": 0,
+          "lowRounds": 2,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 9,
+          "inventory": 7,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 61,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 2,
+            "society": 0
+          },
+          "equipment": [
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 13,
+          "inventory": 0,
+          "injury": 5,
+          "alive": true,
+          "board": false,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -2,
+            "society": -1
+          },
+          "equipment": [
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 6,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 63,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -4,
+            "society": 2
+          },
+          "equipment": [
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 11,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 63,
+          "worldImpact": {
+            "economy": 4,
+            "environment": -2,
+            "society": 1
+          },
+          "equipment": [
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 13,
+          "inventory": 0,
+          "injury": 5,
+          "alive": true,
+          "board": true,
+          "actions": 60,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 1,
+            "society": -1
+          },
+          "equipment": []
+        },
+        {
+          "id": "P6",
+          "donated": 7,
+          "inventory": 0,
+          "injury": 0,
+          "alive": false,
+          "board": false,
+          "actions": 69,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -2,
+            "society": 4
+          },
+          "equipment": [
+            "space-ring",
+            "aid-beacon"
+          ]
+        }
+      ],
+      "donationSpread": 7,
+      "donationGini": 0.1553672316384181
+    },
+    {
+      "seed": 17,
+      "commands": 333,
+      "events": 600,
+      "alive": 4,
+      "boarded": 2,
+      "seats": 2,
+      "ark": 49,
+      "world": {
+        "economy": 14,
+        "environment": 12,
+        "society": 7
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 11,
+          "environment": 11,
+          "society": 8
+        },
+        {
+          "round": 2,
+          "economy": 10,
+          "environment": 11,
+          "society": 8
+        },
+        {
+          "round": 3,
+          "economy": 10,
+          "environment": 11,
+          "society": 8
+        },
+        {
+          "round": 4,
+          "economy": 10,
+          "environment": 13,
+          "society": 6
+        },
+        {
+          "round": 5,
+          "economy": 11,
+          "environment": 15,
+          "society": 5
+        },
+        {
+          "round": 6,
+          "economy": 10,
+          "environment": 15,
+          "society": 5
+        },
+        {
+          "round": 7,
+          "economy": 13,
+          "environment": 14,
+          "society": 6
+        },
+        {
+          "round": 8,
+          "economy": 14,
+          "environment": 12,
+          "society": 7
+        }
+      ],
+      "actionCounts": {
+        "play": 36,
+        "choose": 83,
+        "skip": 82,
+        "move": 48,
+        "gather": 32,
+        "donate": 30,
+        "pay_flood": 18,
+        "blade_move": 2,
+        "evacuate": 2
+      },
+      "technology": {
+        "ecological-repeller": 5,
+        "famed-blade": 2,
+        "reserve-crate": 1,
+        "black-tide-alarm": 2,
+        "mining-drone": 1,
+        "skateboard-shoes": 2,
+        "aid-beacon": 1,
+        "shared-supply-pod": 1
+      },
+      "disasters": {
+        "social-disorder": 1,
+        "resource-protection": 1,
+        "develop-first": 1
+      },
+      "invitations": 20,
+      "boostedGather": 3,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        },
+        "environment": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 17,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 62,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -5,
+            "society": 1
+          },
+          "equipment": [
+            "reserve-crate",
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 4,
+          "inventory": 0,
+          "injury": 3,
+          "alive": true,
+          "board": false,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 5,
+            "society": -3
+          },
+          "equipment": [
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 6,
+          "inventory": 0,
+          "injury": 2,
+          "alive": true,
+          "board": false,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 2,
+            "environment": 0,
+            "society": 2
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 17,
+          "inventory": 0,
+          "injury": 4,
+          "alive": false,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": []
+        },
+        {
+          "id": "P5",
+          "donated": 7,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 58,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 3,
+            "society": -3
+          },
+          "equipment": []
+        },
+        {
+          "id": "P6",
+          "donated": 4,
+          "inventory": 2,
+          "injury": 0,
+          "alive": false,
+          "board": false,
+          "actions": 52,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 0,
+            "society": 0
+          },
+          "equipment": []
+        }
+      ],
+      "donationSpread": 13,
+      "donationGini": 0.3181818181818182
+    },
+    {
+      "seed": 18,
+      "commands": 358,
+      "events": 703,
+      "alive": 4,
+      "boarded": 4,
+      "seats": 4,
+      "ark": 71,
+      "world": {
+        "economy": 19,
+        "environment": 1,
+        "society": 14
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 10,
+          "environment": 12,
+          "society": 10
+        },
+        {
+          "round": 2,
+          "economy": 12,
+          "environment": 11,
+          "society": 12
+        },
+        {
+          "round": 3,
+          "economy": 12,
+          "environment": 11,
+          "society": 12
+        },
+        {
+          "round": 4,
+          "economy": 13,
+          "environment": 11,
+          "society": 11
+        },
+        {
+          "round": 5,
+          "economy": 17,
+          "environment": 8,
+          "society": 11
+        },
+        {
+          "round": 6,
+          "economy": 18,
+          "environment": 8,
+          "society": 9
+        },
+        {
+          "round": 7,
+          "economy": 19,
+          "environment": 5,
+          "society": 11
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 1,
+          "society": 14
+        }
+      ],
+      "actionCounts": {
+        "play": 48,
+        "choose": 99,
+        "skip": 77,
+        "move": 48,
+        "gather": 31,
+        "donate": 36,
+        "pay_flood": 18,
+        "evacuate": 1
+      },
+      "technology": {
+        "skateboard-shoes": 3,
+        "shared-supply-pod": 3,
+        "rapid-prototyper": 6,
+        "famed-blade": 1,
+        "mining-drone": 2,
+        "ecological-repeller": 2,
+        "black-tide-alarm": 1,
+        "reserve-crate": 1,
+        "aid-beacon": 1
+      },
+      "disasters": {
+        "resource-protection": 1,
+        "develop-first": 1,
+        "eco-collapse": 3,
+        "wealth-gap": 1,
+        "steady-imbalance": 2,
+        "welfare-pressure": 1
+      },
+      "invitations": 25,
+      "boostedGather": 2,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 138,
+          "lowRounds": 0,
+          "highRounds": 3
+        },
+        "environment": {
+          "lowActions": 46,
+          "highActions": 0,
+          "lowRounds": 1,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 13,
+          "inventory": 3,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 63,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -2,
+            "society": 4
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 7,
+          "inventory": 1,
+          "injury": 1,
+          "alive": true,
+          "board": true,
+          "actions": 65,
+          "worldImpact": {
+            "economy": 4,
+            "environment": -3,
+            "society": 1
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 18,
+          "inventory": 1,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 66,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -4,
+            "society": 0
+          },
+          "equipment": [
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 14,
+          "inventory": 1,
+          "injury": 1,
+          "alive": true,
+          "board": true,
+          "actions": 56,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 2,
+            "society": 0
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 7,
+          "inventory": 1,
+          "injury": 2,
+          "alive": true,
+          "board": true,
+          "actions": 54,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 1,
+            "society": -2
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 18,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 54,
+          "worldImpact": {
+            "economy": 0,
+            "environment": -2,
+            "society": 2
+          },
+          "equipment": []
+        }
+      ],
+      "donationSpread": 11,
+      "donationGini": 0.19264069264069264
+    },
+    {
+      "seed": 19,
+      "commands": 337,
+      "events": 632,
+      "alive": 4,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 55,
+      "world": {
+        "economy": 17,
+        "environment": 10,
+        "society": 8
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 13,
+          "environment": 8,
+          "society": 11
+        },
+        {
+          "round": 2,
+          "economy": 15,
+          "environment": 8,
+          "society": 10
+        },
+        {
+          "round": 3,
+          "economy": 15,
+          "environment": 8,
+          "society": 10
+        },
+        {
+          "round": 4,
+          "economy": 17,
+          "environment": 6,
+          "society": 11
+        },
+        {
+          "round": 5,
+          "economy": 17,
+          "environment": 9,
+          "society": 8
+        },
+        {
+          "round": 6,
+          "economy": 19,
+          "environment": 6,
+          "society": 8
+        },
+        {
+          "round": 7,
+          "economy": 16,
+          "environment": 9,
+          "society": 8
+        },
+        {
+          "round": 8,
+          "economy": 17,
+          "environment": 10,
+          "society": 8
+        }
+      ],
+      "actionCounts": {
+        "play": 44,
+        "choose": 81,
+        "skip": 79,
+        "move": 48,
+        "gather": 32,
+        "donate": 33,
+        "pay_flood": 18,
+        "blade_move": 2
+      },
+      "technology": {
+        "aid-beacon": 2,
+        "famed-blade": 2,
+        "ecological-repeller": 3,
+        "space-ring": 1,
+        "rapid-prototyper": 3,
+        "shared-supply-pod": 1,
+        "alchemy-furnace": 4,
+        "skateboard-shoes": 1,
+        "reserve-crate": 1,
+        "black-tide-alarm": 2,
+        "mining-drone": 2
+      },
+      "disasters": {
+        "develop-first": 1,
+        "eco-collapse": 2,
+        "wealth-gap": 3
+      },
+      "invitations": 21,
+      "boostedGather": 0,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 48,
+          "lowRounds": 0,
+          "highRounds": 1
+        },
+        "environment": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 10,
+          "inventory": 3,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 60,
+          "worldImpact": {
+            "economy": -1,
+            "environment": 2,
+            "society": -1
+          },
+          "equipment": []
+        },
+        {
+          "id": "P2",
+          "donated": 12,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 1,
+            "society": -2
+          },
+          "equipment": []
+        },
+        {
+          "id": "P3",
+          "donated": 8,
+          "inventory": 0,
+          "injury": 3,
+          "alive": true,
+          "board": false,
+          "actions": 56,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -1,
+            "society": 1
+          },
+          "equipment": [
+            "aid-beacon",
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 9,
+          "inventory": 0,
+          "injury": 1,
+          "alive": true,
+          "board": true,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -2,
+            "society": 4
+          },
+          "equipment": [
+            "space-ring",
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 11,
+          "inventory": 0,
+          "injury": 6,
+          "alive": false,
+          "board": false,
+          "actions": 54,
+          "worldImpact": {
+            "economy": -1,
+            "environment": 2,
+            "society": 0
+          },
+          "equipment": [
+            "skateboard-shoes"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 11,
+          "inventory": 0,
+          "injury": 2,
+          "alive": true,
+          "board": true,
+          "actions": 57,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -1,
+            "society": -1
+          },
+          "equipment": [
+            "reserve-crate",
+            "mining-drone"
+          ]
+        }
+      ],
+      "donationSpread": 4,
+      "donationGini": 0.07377049180327869
+    },
+    {
+      "seed": 20,
+      "commands": 349,
+      "events": 664,
+      "alive": 6,
+      "boarded": 3,
+      "seats": 3,
+      "ark": 59,
+      "world": {
+        "economy": 19,
+        "environment": 1,
+        "society": 11
+      },
+      "roundWorld": [
+        {
+          "round": 1,
+          "economy": 11,
+          "environment": 10,
+          "society": 9
+        },
+        {
+          "round": 2,
+          "economy": 12,
+          "environment": 8,
+          "society": 8
+        },
+        {
+          "round": 3,
+          "economy": 12,
+          "environment": 8,
+          "society": 8
+        },
+        {
+          "round": 4,
+          "economy": 15,
+          "environment": 3,
+          "society": 10
+        },
+        {
+          "round": 5,
+          "economy": 16,
+          "environment": 6,
+          "society": 9
+        },
+        {
+          "round": 6,
+          "economy": 16,
+          "environment": 6,
+          "society": 9
+        },
+        {
+          "round": 7,
+          "economy": 19,
+          "environment": 5,
+          "society": 8
+        },
+        {
+          "round": 8,
+          "economy": 19,
+          "environment": 1,
+          "society": 11
+        }
+      ],
+      "actionCounts": {
+        "play": 48,
+        "choose": 89,
+        "skip": 71,
+        "move": 48,
+        "gather": 35,
+        "donate": 38,
+        "pay_flood": 18,
+        "blade_move": 1,
+        "evacuate": 1
+      },
+      "technology": {
+        "ecological-repeller": 2,
+        "ruins-blueprint": 3,
+        "reserve-crate": 3,
+        "rapid-prototyper": 3,
+        "shared-supply-pod": 2,
+        "mining-drone": 2,
+        "skateboard-shoes": 2,
+        "alchemy-furnace": 1,
+        "famed-blade": 2,
+        "space-ring": 2,
+        "aid-beacon": 1
+      },
+      "disasters": {
+        "eco-collapse": 2,
+        "develop-first": 1,
+        "wealth-gap": 1,
+        "steady-imbalance": 1
+      },
+      "invitations": 21,
+      "boostedGather": 1,
+      "worldExtremes": {
+        "economy": {
+          "lowActions": 0,
+          "highActions": 84,
+          "lowRounds": 0,
+          "highRounds": 2
+        },
+        "environment": {
+          "lowActions": 41,
+          "highActions": 0,
+          "lowRounds": 1,
+          "highRounds": 0
+        },
+        "society": {
+          "lowActions": 0,
+          "highActions": 0,
+          "lowRounds": 0,
+          "highRounds": 0
+        }
+      },
+      "players": [
+        {
+          "id": "P1",
+          "donated": 15,
+          "inventory": 1,
+          "injury": 3,
+          "alive": true,
+          "board": true,
+          "actions": 60,
+          "worldImpact": {
+            "economy": 1,
+            "environment": 2,
+            "society": 0
+          },
+          "equipment": [
+            "skateboard-shoes",
+            "mining-drone"
+          ]
+        },
+        {
+          "id": "P2",
+          "donated": 6,
+          "inventory": 1,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 55,
+          "worldImpact": {
+            "economy": 1,
+            "environment": -4,
+            "society": 4
+          },
+          "equipment": [
+            "reserve-crate",
+            "skateboard-shoes",
+            "aid-beacon"
+          ]
+        },
+        {
+          "id": "P3",
+          "donated": 10,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": false,
+          "actions": 61,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -3,
+            "society": 2
+          },
+          "equipment": [
+            "reserve-crate",
+            "mining-drone",
+            "space-ring"
+          ]
+        },
+        {
+          "id": "P4",
+          "donated": 15,
+          "inventory": 0,
+          "injury": 3,
+          "alive": true,
+          "board": true,
+          "actions": 58,
+          "worldImpact": {
+            "economy": 3,
+            "environment": -3,
+            "society": -1
+          },
+          "equipment": [
+            "reserve-crate"
+          ]
+        },
+        {
+          "id": "P5",
+          "donated": 7,
+          "inventory": 0,
+          "injury": 1,
+          "alive": true,
+          "board": false,
+          "actions": 53,
+          "worldImpact": {
+            "economy": 0,
+            "environment": 1,
+            "society": -2
+          },
+          "equipment": [
+            "famed-blade"
+          ]
+        },
+        {
+          "id": "P6",
+          "donated": 12,
+          "inventory": 0,
+          "injury": 0,
+          "alive": true,
+          "board": true,
+          "actions": 62,
+          "worldImpact": {
+            "economy": 2,
+            "environment": -1,
+            "society": -1
+          },
+          "equipment": [
+            "space-ring"
+          ]
+        }
+      ],
+      "donationSpread": 9,
+      "donationGini": 0.18205128205128204
+    }
+  ]
+}

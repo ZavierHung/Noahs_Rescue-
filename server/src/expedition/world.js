@@ -12,6 +12,31 @@ export const DISASTER_RULES = JSON.parse(
   ),
 );
 export const active = (g, id) => g.activeDisasters.some((c) => c.id === id);
+export function disastersForGame(g, cards) {
+  if (!g.learningMode) return cards;
+  return cards.map((card) => {
+    const override = DISASTER_RULES.learningEffects?.[card.id];
+    return override
+      ? {
+          ...card,
+          sourceEffect: card.effect,
+          effect: override.effect,
+          effectSummary: override.summary,
+          learningVersion: "student-learning-v1",
+          ...(override.image
+            ? {
+                image: {
+                  ...card.image,
+                  file: override.image,
+                  width: override.imageWidth,
+                  height: override.imageHeight,
+                },
+              }
+            : {}),
+        }
+      : card;
+  });
+}
 export const handLimit = (g, p) =>
   (p.equipment.includes("space-ring") ? 8 : 5) -
   (active(g, "deflation") ? 1 : 0);
@@ -40,6 +65,7 @@ export function ensureWorld(g, notify = false) {
     queue: [],
     suspended: null,
     harvested,
+    ...(g.learningMode ? { harvestedRound: {} } : {}),
     lastDriftRound: null,
     lastAidRound: null,
     policyVersion: DISASTER_RULES.version,
@@ -208,8 +234,9 @@ export function syncDisasters(g) {
   ensureWorld(g);
   for (let guard = 0; guard < 80; guard++) {
     refreshAttributes(g);
-    const cards = resolveDisasters(g.attributes, g.activeDisasters, () =>
-      random(g),
+    const cards = disastersForGame(
+      g,
+      resolveDisasters(g.attributes, g.activeDisasters, () => random(g)),
     );
     const ids = cards.map((c) => c.id),
       previous = g.world.activeIds;
@@ -368,6 +395,14 @@ export function resolveDisasterChoice(g, input) {
 export function canGather(g, p) {
   const tile = tileById(p.position);
   if (!tile?.resource || flooded(tile, g.floodLevel)) return false;
+  if (
+    g.learningMode &&
+    active(g, "eco-collapse") &&
+    DISASTER_RULES.naturalResources.includes(tile.resource)
+  ) {
+    const lastRound = g.world.harvestedRound?.[tile.id];
+    return lastRound === undefined || g.round >= lastRound + 2;
+  }
   return !(
     active(g, "eco-collapse") &&
     DISASTER_RULES.naturalResources.includes(tile.resource) &&
@@ -375,7 +410,12 @@ export function canGather(g, p) {
   );
 }
 export function gatherYield(g, p, base) {
-  requireRule(canGather(g, p), "生态崩坏：该自然地块已被采集，不能再次产出");
+  requireRule(
+    canGather(g, p),
+    g.learningMode
+      ? "生态崩坏：资源格须休养完整一轮（第r轮采，第r+2轮恢复）"
+      : "生态崩坏：该自然地块已被采集，不能再次产出",
+  );
   let amount = base;
   if (active(g, "class-lock")) {
     const order = ranked(g),
@@ -395,6 +435,10 @@ export function gatherYield(g, p, base) {
     });
   }
   g.world.harvested[p.position] = (g.world.harvested[p.position] || 0) + 1;
+  if (g.learningMode) {
+    g.world.harvestedRound ||= {};
+    g.world.harvestedRound[p.position] = g.round;
+  }
   return amount;
 }
 export function confirmProtection(g, p, input) {
