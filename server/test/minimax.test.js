@@ -13,7 +13,7 @@ const context = {
 test('MiniMax adapter stays disabled without an API key', () => {
   const model = createMiniMaxVerdictModel({ apiKey: '' });
   assert.equal(model.enabled, false);
-  assert.deepEqual(model.describe(), { provider: 'minimax', protocol: 'anthropic-compatible', model: 'MiniMax-M3.0', enabled: false });
+  assert.deepEqual(model.describe(), { provider: 'minimax', protocol: 'anthropic-compatible', model: 'MiniMax-M3', enabled: false });
 });
 
 test('MiniMax adapter calls Anthropic-compatible Messages API and parses JSON', async () => {
@@ -32,7 +32,7 @@ test('MiniMax adapter calls Anthropic-compatible Messages API and parses JSON', 
   const body = JSON.parse(request.init.body);
   assert.equal(request.url, 'https://api.minimaxi.com/anthropic/v1/messages');
   assert.equal(request.init.headers.authorization, 'Bearer test-key-never-store');
-  assert.equal(body.model, 'MiniMax-M3.0');
+  assert.equal(body.model, 'MiniMax-M3');
   assert.match(body.system, /FULL_GOD_PROMPT_SENTINEL/);
   assert.doesNotMatch(body.messages[0].content[0].text, /FULL_GOD_PROMPT_SENTINEL/);
   assert.equal(verdict.title, '平衡回响');
@@ -107,7 +107,7 @@ test('task assessment uses M3, full persona, snapshot, RAG and structured valida
     return { ok: true, json: async () => ({ content: [{ type: 'text', text: '{"completed":true,"reason":"双方提交了修复行动，自述仍需人工确认。"}' }] }) };
   } });
   const result = await model.generateAssessment({ god: context.god, state: context.state, evidence: context.evidence, task: context.ruleDraft, report: '已完成：共同修复湿地。' });
-  assert.equal(body.model, 'MiniMax-M3.0');
+  assert.equal(body.model, 'MiniMax-M3');
   assert.match(body.system, /FULL_GOD_PROMPT_SENTINEL/);
   assert.match(body.messages[0].content[0].text, /eco-01/);
   assert.match(body.messages[0].content[0].text, /共同修复湿地/);

@@ -13,7 +13,20 @@ import { Board } from "./board";
 import { WorldPanel } from "./world-panel";
 import { DisasterChoice } from "./disaster-choice";
 import { PlayerInspector } from "./player-inspector";
+import { TradePanel } from "./trade-panel";
+import { FloodPanel } from "./flood-panel";
+import { InvitationPanel } from "./invitation-panel";
+import { BoardingPanel } from "./boarding-panel";
+import { HistoryPanel } from "./history-panel";
+import {
+  ResourceIcon,
+  ResourceBag,
+  ResourceFields as BagFields,
+} from "./resources";
 import { DisasterCards } from "../game/disaster-cards";
+import { CardHint, worldDelta } from "../game/card-hint";
+import { GamePurpose } from "./game-purpose";
+import { AcademicLibrary } from "./knowledge-panel";
 import "./game.css";
 const keys: Resource[] = ["wood", "metal", "electricity", "seed"];
 const blank = (): Bag => ({ wood: 0, metal: 0, electricity: 0, seed: 0 });
@@ -26,49 +39,9 @@ const phaseNames: Record<string, string> = {
   flood: "洪水结算",
   judgment: "终局审判",
   disaster: "灾难结算",
+  evacuation: "最后撤离",
 };
 type Seat = { characterId: string; flagId: string; name: string };
-function BagFields({
-  value,
-  onChange,
-  label,
-  max,
-}: {
-  value: Bag;
-  onChange: (v: Bag) => void;
-  label: string;
-  max?: Bag;
-}) {
-  const names = {
-    wood: "木头",
-    metal: "金属",
-    electricity: "电力",
-    seed: "种子",
-  };
-  return (
-    <fieldset className="resource-fields">
-      <legend>{label}</legend>
-      {keys.map((r) => (
-        <label key={r}>
-          {names[r]}
-          <input
-            aria-label={`${label}${names[r]}`}
-            type="number"
-            min="0"
-            max={max?.[r] ?? 999}
-            value={value[r]}
-            onChange={(e) =>
-              onChange({
-                ...value,
-                [r]: Math.max(0, Math.min(999, Number(e.target.value) || 0)),
-              })
-            }
-          />
-        </label>
-      ))}
-    </fieldset>
-  );
-}
 export default function ExpeditionGame() {
   const [catalog, setCatalog] = useState<Catalog | null>(null),
     [game, setGame] = useState<Game | null>(null),
@@ -76,24 +49,27 @@ export default function ExpeditionGame() {
       { id: string; round: number; status: string }[]
     >([]);
   const [seats, setSeats] = useState<Seat[]>([]),
-    [editing, setEditing] = useState(0),
-    [capacity, setCapacity] = useState(3);
+    [editing, setEditing] = useState(0);
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [selected, setSelected] = useState<string | null>(null),
-    [preview, setPreview] = useState<{ name: string; image: string } | null>(
-      null,
-    );
+    [preview, setPreview] = useState<{
+      name: string;
+      image: string;
+      implementedEffect?: string;
+      effect?: string;
+      status?: Record<string, number>;
+    } | null>(null);
   const [amounts, setAmounts] = useState<Bag>(blank),
     [spend, setSpend] = useState<Bag>(blank),
     [resource, setResource] = useState<Resource>("wood"),
     [target, setTarget] = useState(""),
     [invitation, setInvitation] = useState<string | null>(null),
-    [give, setGive] = useState<Bag>(blank),
-    [receive, setReceive] = useState<Bag>(blank),
-    [tech, setTech] = useState<string | null>(null),
-    [rebuttal, setRebuttal] = useState("");
-  const [tab, setTab] = useState<"log" | "donations" | "rules">("log");
+    [tech, setTech] = useState<string | null>(null);
+  const [tradeNotice, setTradeNotice] = useState("");
+  const [tab, setTab] = useState<"log" | "donations" | "history" | "rules">(
+    "log",
+  );
   // null follows the server's current actor. A pinned inspection is local UI
   // state only: it never changes game.turn, pending.actor or the command actor.
   const [inspection, setInspection] = useState<{
@@ -168,16 +144,26 @@ export default function ExpeditionGame() {
     setAmounts(blank());
     setSpend(blank());
     setTarget("");
-    setGive(blank());
-    setReceive(blank());
     setSelected(null);
   }, [
     game?.id,
     game?.activePlayerId,
     game?.phase,
     game?.pending?.kind,
+    game?.history?.lastChangeRevision,
     viewedPlayerId,
   ]);
+  useEffect(() => {
+    setPreview(null);
+    const change = game?.historyAudit?.at(-1);
+    setTradeNotice(
+      change?.type === "undo"
+        ? "已撤回整步操作；可在「撤回与重做记录」查看留档。"
+        : change?.type === "redo"
+          ? "已重做原操作，恢复原结果，未重新抽牌或投骰。"
+          : "",
+    );
+  }, [game?.id, game?.history?.lastChangeRevision]);
   useEffect(() => {
     if (!preview) return;
     const close = (e: KeyboardEvent) => {
@@ -188,12 +174,17 @@ export default function ExpeditionGame() {
   }, [preview]);
   async function act(type: string, data: Record<string, unknown> = {}) {
     if (!game || busy) return false;
-    if (game.status === "playing" && inspectingOther) {
+    if (
+      (game.status === "playing" ||
+        ["discuss", "undo", "redo"].includes(type)) &&
+      inspectingOther
+    ) {
       setError("当前为只读查看，请返回当前行动玩家后操作");
       return false;
     }
     setBusy(true);
     setError("");
+    setTradeNotice("");
     try {
       accept(
         await apiRequest<Game>(`/${game.id}/actions`, "POST", {
@@ -203,6 +194,20 @@ export default function ExpeditionGame() {
           revision: data.revision ?? game.revision,
         }),
       );
+      if (game.pending?.kind === "trade" && type === "choose") {
+        const owner = game.players.find((p) => p.id === game.pending.owner);
+        setTradeNotice(
+          data.accept
+            ? `交换已完成，双方物资已结算。返回 ${owner?.id} · ${owner?.name} 继续原行动。`
+            : `对方已拒绝；物资与邀约卡均保留。返回 ${owner?.id} · ${owner?.name}，可以换人重试。`,
+        );
+      }
+      if (game.pending?.kind === "invitation" && type === "choose")
+        setTradeNotice(
+          data.accept
+            ? "邀约已完成，双方各获得一份自选资源，返回发起者继续行动。"
+            : "对方拒绝，未增加或扣除资源，邀约卡保留，可重试。",
+        );
       return true;
     } catch (e) {
       setError((e as Error).message);
@@ -223,7 +228,6 @@ export default function ExpeditionGame() {
       accept(
         await apiRequest<Game>("", "POST", {
           players: seats,
-          seats: Math.min(capacity, seats.length),
         }),
       );
     } catch (e) {
@@ -235,10 +239,19 @@ export default function ExpeditionGame() {
   function setup() {
     version.current++;
     setGame(null);
+    setTradeNotice("");
     localStorage.removeItem("noah-expedition-id");
     void apiRequest<{ id: string; round: number; status: string }[]>("").then(
       setGames,
     );
+  }
+  function openInvitation(uid: string) {
+    setError("");
+    setTradeNotice("");
+    setInvitation(uid);
+    const panel = document.querySelector<HTMLElement>(".trade-panel");
+    panel?.focus({ preventScroll: true });
+    panel?.scrollIntoView({ block: "start" });
   }
   if (!catalog)
     return (
@@ -257,9 +270,6 @@ export default function ExpeditionGame() {
     pending = g?.pending;
   const card = (id: string) =>
     [...cat.cards.actions, ...cat.cards.technology].find((c) => c.id === id)!;
-  function bagText(b: Bag) {
-    return keys.map((r) => `${cat.resources[r]} ${b[r]}`).join(" · ");
-  }
   const ResourceChoice = ({
     onChoose,
     available,
@@ -270,11 +280,12 @@ export default function ExpeditionGame() {
     <div className="resource-options">
       {keys.map((r) => (
         <button
+          aria-label={`${cat.resources[r]}${available ? ` ${available[r]}` : ""}`}
           disabled={busy || (!!available && !available[r])}
           key={r}
           onClick={() => onChoose(r)}
         >
-          {cat.resources[r]}
+          <ResourceIcon resource={r} />
           {available ? ` ${available[r]}` : ""}
         </button>
       ))}
@@ -282,13 +293,15 @@ export default function ExpeditionGame() {
   );
   function Artwork({ c }: { c: Card }) {
     return (
-      <button
-        className="art-button"
-        aria-label={`查看${c.name}卡面`}
-        onClick={() => setPreview(c)}
-      >
-        <img src={c.image} alt={c.name} />
-      </button>
+      <CardHint card={c}>
+        <button
+          className="art-button"
+          aria-label={`查看${c.name}卡面`}
+          onClick={() => setPreview(c)}
+        >
+          <img src={c.image} alt={c.name} />
+        </button>
+      </CardHint>
     );
   }
   return (
@@ -332,6 +345,7 @@ export default function ExpeditionGame() {
               八回合后，上帝将根据每个人的行动，作出最后的登舟裁决。
             </p>
           </section>
+          <GamePurpose />
           <section className="setup-layout">
             <div>
               <div className="section-label">
@@ -379,24 +393,25 @@ export default function ExpeditionGame() {
               </div>
               <div className="character-grid">
                 {cat.characters.map((c) => (
-                  <button
-                    key={c.id}
-                    className={`character-pick ${seats[editing]?.characterId === c.id ? "chosen" : ""}`}
-                    disabled={seats.some(
-                      (s, i) => i !== editing && s.characterId === c.id,
-                    )}
-                    onClick={() =>
-                      setSeats(
-                        seats.map((s, i) =>
-                          i === editing ? { ...s, characterId: c.id } : s,
-                        ),
-                      )
-                    }
-                  >
-                    <img src={c.image} alt={c.name} />
-                    <strong>{c.name}</strong>
-                    <small>{c.factionLabel}</small>
-                  </button>
+                  <CardHint card={c} key={c.id}>
+                    <button
+                      className={`character-pick ${seats[editing]?.characterId === c.id ? "chosen" : ""}`}
+                      disabled={seats.some(
+                        (s, i) => i !== editing && s.characterId === c.id,
+                      )}
+                      onClick={() =>
+                        setSeats(
+                          seats.map((s, i) =>
+                            i === editing ? { ...s, characterId: c.id } : s,
+                          ),
+                        )
+                      }
+                    >
+                      <img src={c.image} alt={c.name} />
+                      <strong>{c.name}</strong>
+                      <small>{c.factionLabel}</small>
+                    </button>
+                  </CardHint>
                 ))}
               </div>
               <div className="setup-controls">
@@ -441,17 +456,10 @@ export default function ExpeditionGame() {
                     ))}
                   </select>
                 </label>
-                <label>
-                  方舟席位
-                  <input
-                    aria-label="方舟席位"
-                    type="number"
-                    min="1"
-                    max={seats.length}
-                    value={Math.min(capacity, seats.length)}
-                    onChange={(e) => setCapacity(Number(e.target.value))}
-                  />
-                </label>
+                <p className="fineprint">
+                  方舟容量由实际库存自动计算，最多 {seats.length}{" "}
+                  人；上帝不能突破容量或批准未存活玩家。
+                </p>
               </div>
               <button
                 className="primary launch"
@@ -542,16 +550,11 @@ export default function ExpeditionGame() {
             </ol>
             <div className="flood-status">
               洪水 {g.floodLevel} / 3
-              <button
-                onClick={() =>
-                  setPreview({
-                    name: "洪水上涨追踪",
-                    image: "/images/expedition/flood.jpg",
-                  })
-                }
-              >
-                查看洪水卡 ↗
-              </button>
+              <CardHint card={cat.floodCard}>
+                <button onClick={() => setPreview(cat.floodCard)}>
+                  查看洪水卡 ↗
+                </button>
+              </CardHint>
             </div>
           </div>
           <div className="player-view-status" aria-label="玩家查看与行动状态">
@@ -576,8 +579,66 @@ export default function ExpeditionGame() {
               </button>
             )}
           </div>
+          {tradeNotice && (
+            <p className="interaction-result" role="status">
+              {tradeNotice}
+            </p>
+          )}
+          <HistoryPanel
+            key={g.id}
+            game={g}
+            busy={busy}
+            readOnly={inspectingOther}
+            act={act}
+          />
+          {g.status === "playing" &&
+            ((invitation === "beacon" && !pending && !inspectingOther) ||
+              pending?.kind === "trade") && (
+              <TradePanel
+                card={card("aid-beacon")}
+                key={`${g.id}-${g.history?.lastChangeRevision}-${pending?.kind === "trade" ? `response-${pending.cardUid}-${pending.actor}` : invitation}`}
+                game={g}
+                invitation={invitation}
+                busy={busy}
+                readOnly={inspectingOther}
+                error={error}
+                onClose={() => setInvitation(null)}
+                onReturn={() => setInspection(null)}
+                act={act}
+              />
+            )}
+          {g.status === "playing" &&
+            ((invitation &&
+              invitation !== "beacon" &&
+              !pending &&
+              !inspectingOther) ||
+              pending?.kind === "invitation") && (
+              <InvitationPanel
+                card={card("invitation")}
+                key={`invitation-${g.id}-${g.history?.lastChangeRevision}-${pending?.kind === "invitation" ? pending.actor : invitation}`}
+                game={g}
+                cardUid={invitation}
+                busy={busy}
+                readOnly={inspectingOther}
+                error={error}
+                onClose={() => setInvitation(null)}
+                onReturn={() => setInspection(null)}
+                act={act}
+              />
+            )}
+          {g.status === "playing" &&
+            g.events.some((e) => e.type === "flood" && e.round === g.round) && (
+              <FloodPanel
+                key={`flood-${g.id}-${g.history?.lastChangeRevision}`}
+                game={g}
+                busy={busy}
+                readOnly={inspectingOther}
+                act={act}
+                onReturn={() => setInspection(null)}
+              />
+            )}
           <WorldPanel
-            key={`${g.id}-${viewedPlayerId}`}
+            key={`${g.id}-${viewedPlayerId}-${g.history?.lastChangeRevision}`}
             game={g}
             busy={busy}
             readOnly={inspectingOther}
@@ -597,7 +658,11 @@ export default function ExpeditionGame() {
                   <span>
                     格子 {tile.id} ·{" "}
                     {tile.zone ? `Zone ${tile.zone}` : "方舟范围"} ·{" "}
-                    {tile.resource ? cat.resources[tile.resource] : "无资源"}
+                    {tile.resource ? (
+                      <ResourceIcon resource={tile.resource} />
+                    ) : (
+                      "无资源"
+                    )}
                   </span>
                   <span>
                     {g.reachable[tile.id]
@@ -612,51 +677,69 @@ export default function ExpeditionGame() {
                     key={player.id}
                     className={`${player.id === g.activePlayerId ? "active" : ""} ${player.id === viewedPlayerId ? "inspected" : ""}`}
                   >
-                    <button
-                      className="roster-select"
-                      aria-label={`查看 ${player.id} 玩家详情`}
-                      aria-pressed={player.id === viewedPlayerId}
-                      onClick={() =>
-                        setInspection(
-                          player.id === g.activePlayerId
-                            ? null
-                            : { gameId: g.id, playerId: player.id },
-                        )
+                    <CardHint
+                      card={
+                        cat.characters.find(
+                          (c) => c.id === player.characterId,
+                        ) || { name: player.name }
                       }
                     >
-                      <img
-                        src={
-                          cat.characters.find(
-                            (c) => c.id === player.characterId,
-                          )?.image
+                      <button
+                        className="roster-select"
+                        aria-label={`查看 ${player.id} 玩家详情`}
+                        aria-pressed={player.id === viewedPlayerId}
+                        onClick={() =>
+                          setInspection(
+                            player.id === g.activePlayerId
+                              ? null
+                              : { gameId: g.id, playerId: player.id },
+                          )
                         }
-                        alt={player.name}
-                      />
-                      <span className="roster-summary">
-                        <strong>
-                          {player.id} · {player.name}
-                        </strong>
-                        <span className="roster-line">
-                          {bagText(player.resources)}
+                      >
+                        <img
+                          src={
+                            cat.characters.find(
+                              (c) => c.id === player.characterId,
+                            )?.image
+                          }
+                          alt={player.name}
+                        />
+                        <span className="roster-summary">
+                          <strong>
+                            {player.id} · {player.name}
+                          </strong>
+                          <span className="roster-line">
+                            <ResourceBag value={player.resources} />
+                          </span>
+                          <small>
+                            出生 {player.spawn} · 当前格 {player.position}
+                          </small>
+                          <small>
+                            伤势 {player.survivalPreview.injury} · 种子救生后{" "}
+                            {player.survivalPreview.remainingInjury} / 耐受{" "}
+                            {player.survivalPreview.tolerance}
+                            {g.status !== "playing"
+                              ? player.survivalPreview.alive
+                                ? " · 幸存"
+                                : " · 未存活"
+                              : "（预览）"}
+                          </small>
+                          <span className="roster-line">
+                            已捐赠{" "}
+                            {keys.reduce((n, r) => n + player.donated[r], 0)} 份
+                          </span>
+                          <span className="roster-view-label">
+                            {player.id === g.activePlayerId &&
+                            g.status === "playing"
+                              ? "当前行动"
+                              : "只读查看"}
+                            {player.id === viewedPlayerId
+                              ? " · 正在查看"
+                              : " · 点击查看手牌"}
+                          </span>
                         </span>
-                        <small>
-                          出生 {player.spawn} · 当前格 {player.position}
-                        </small>
-                        <span className="roster-line">
-                          已捐赠{" "}
-                          {keys.reduce((n, r) => n + player.donated[r], 0)} 份
-                        </span>
-                        <span className="roster-view-label">
-                          {player.id === g.activePlayerId &&
-                          g.status === "playing"
-                            ? "当前行动"
-                            : "只读查看"}
-                          {player.id === viewedPlayerId
-                            ? " · 正在查看"
-                            : " · 点击查看手牌"}
-                        </span>
-                      </span>
-                    </button>
+                      </button>
+                    </CardHint>
                   </article>
                 ))}
               </div>
@@ -670,12 +753,19 @@ export default function ExpeditionGame() {
                 <div className="ark-resources">
                   {keys.map((r) => (
                     <div key={r}>
-                      <span>{cat.resources[r]}</span>
+                      <ResourceIcon resource={r} />
                       <b>{g.ark[r]}</b>
                     </div>
                   ))}
                 </div>
-                <small>捐赠即时入库，洪水按骰点扣除实际物资。</small>
+                <small>
+                  库存 {g.capacity.units} 份，每 {g.capacity.unitsPerSeat}{" "}
+                  份支持 1 人，最多 {g.capacity.maxSeats}{" "}
+                  人；洪水损失会降低容量。
+                  {g.capacity.seats < g.capacity.maxSeats
+                    ? `再需 ${g.capacity.nextSeatNeeds} 份增加一席。`
+                    : ""}
+                </small>
               </section>
               {viewedPlayer && (inspectingOther || g.status !== "playing") && (
                 <PlayerInspector
@@ -689,6 +779,20 @@ export default function ExpeditionGame() {
                   <section className="action-panel">
                     <p className="overline">{p.id} / 轮到你了</p>
                     <h2>{p.name}</h2>
+                    <ResourceBag value={p.resources} />
+                    <p
+                      className={
+                        p.survivalPreview.remainingInjury >
+                        p.survivalPreview.tolerance
+                          ? "interaction-warning"
+                          : "fineprint"
+                      }
+                    >
+                      累计伤势 {p.survivalPreview.injury}；按现有种子救生后为{" "}
+                      {p.survivalPreview.remainingInjury} / 耐受{" "}
+                      {p.survivalPreview.tolerance}
+                      。种子在终局才实际消耗，位置也必须安全。
+                    </p>
                     <div className="phase-track">
                       {["cards", "move", "gather", "donate"].map((s) => (
                         <span className={g.phase === s ? "active" : ""} key={s}>
@@ -701,10 +805,10 @@ export default function ExpeditionGame() {
                         <h3>
                           {pending.kind === "technology"
                             ? "科技 · 抽二选一"
-                            : pending.kind === "trade"
-                              ? "收到资源交换请求"
+                            : ["trade", "invitation"].includes(pending.kind)
+                              ? "邀约等待回应"
                               : pending.kind === "flood"
-                                ? "支付本次洪水损失"
+                                ? "洪水缴纳待完成"
                                 : pending.kind === "blade"
                                   ? "名刀触发 · 额外移动两格"
                                   : "请选择卡牌效果"}
@@ -733,7 +837,10 @@ export default function ExpeditionGame() {
                             </div>
                             {techCard && (
                               <>
-                                <p>{techCard.effect}</p>
+                                <p>
+                                  {techCard.implementedEffect ||
+                                    techCard.effect}
+                                </p>
                                 {tech === "alchemy-furnace" && (
                                   <>
                                     <BagFields
@@ -742,23 +849,21 @@ export default function ExpeditionGame() {
                                       label="炼金消耗"
                                       max={p.resources}
                                     />
-                                    <label>
-                                      产出
-                                      <select
-                                        value={resource}
-                                        onChange={(e) =>
-                                          setResource(
-                                            e.target.value as Resource,
-                                          )
-                                        }
-                                      >
+                                    <fieldset className="resource-output">
+                                      <legend>产出资源</legend>
+                                      <div className="resource-options">
                                         {keys.map((r) => (
-                                          <option key={r} value={r}>
-                                            {cat.resources[r]}
-                                          </option>
+                                          <button
+                                            key={r}
+                                            aria-label={`产出${cat.resources[r]}`}
+                                            aria-pressed={resource === r}
+                                            onClick={() => setResource(r)}
+                                          >
+                                            <ResourceIcon resource={r} />
+                                          </button>
                                         ))}
-                                      </select>
-                                    </label>
+                                      </div>
+                                    </fieldset>
                                   </>
                                 )}
                                 {tech === "recycling-claw" && (
@@ -808,77 +913,53 @@ export default function ExpeditionGame() {
                             </button>
                           </>
                         )}
-                        {pending.kind === "trade" && (
-                          <>
-                            <p>
-                              {
-                                g.players.find((t) => t.id === pending.owner)
-                                  ?.name
-                              }{" "}
-                              给你：{bagText(pending.give)}
-                            </p>
-                            <p>希望你给出：{bagText(pending.receive)}</p>
-                            <div className="two-buttons">
-                              <button
-                                className="primary"
-                                disabled={busy}
-                                onClick={() =>
-                                  void act("choose", { accept: true })
-                                }
-                              >
-                                接受交换
-                              </button>
-                              <button
-                                disabled={busy}
-                                onClick={() =>
-                                  void act("choose", { accept: false })
-                                }
-                              >
-                                拒绝
-                              </button>
-                            </div>
-                          </>
+                        {["trade", "invitation"].includes(pending.kind) && (
+                          <button
+                            onClick={() =>
+                              document
+                                .querySelector<HTMLElement>(".trade-panel")
+                                ?.focus()
+                            }
+                          >
+                            前往邀约面板接受 / 拒绝
+                          </button>
                         )}
                         {pending.kind === "flood" && (
+                          <button
+                            onClick={() =>
+                              document
+                                .querySelector<HTMLElement>(".flood-panel")
+                                ?.focus()
+                            }
+                          >
+                            前往洪水面板查看并缴纳
+                          </button>
+                        )}
+                        {pending.kind === "evacuation" && (
                           <>
-                            <p>固定扣除：{bagText(pending.cost.mandatory)}</p>
                             <p>
-                              {pending.cost.optional
-                                ? "再选择一种可用物资扣除 1："
-                                : "储备仓已减免 1 份，本次无需选扣。"}
-                              不足的固定资源按实际持有扣除，不产生负数。
+                              所有常规行动结束。可最后向内撤离最多{" "}
+                              {g.rules.finalEvacuationSteps}{" "}
+                              格；点击地图选择目的地。随后结算生存，不再出牌或采集。
                             </p>
-                            {pending.cost.optional &&
-                            pending.cost.choices.some(
-                              (r: Resource) =>
-                                p.resources[r] > pending.cost.mandatory[r],
-                            ) ? (
-                              <div className="resource-options">
-                                {pending.cost.choices.map((r: Resource) => (
-                                  <button
-                                    key={r}
-                                    disabled={
-                                      busy ||
-                                      p.resources[r] <=
-                                        pending.cost.mandatory[r]
-                                    }
-                                    onClick={() =>
-                                      void act("pay_flood", { resource: r })
-                                    }
-                                  >
-                                    扣除{cat.resources[r]} 1
-                                  </button>
-                                ))}
-                              </div>
-                            ) : (
-                              <button
-                                className="primary"
-                                disabled={busy}
-                                onClick={() => void act("pay_flood")}
-                              >
-                                确认本次扣除 / 无可扣资源
-                              </button>
-                            )}
+                            <button
+                              disabled={
+                                busy || !selected || !g.reachable[selected]
+                              }
+                              onClick={() =>
+                                void act("evacuate", { tileId: selected })
+                              }
+                            >
+                              确认最后撤离
+                            </button>
+                            <button
+                              disabled={busy}
+                              onClick={() =>
+                                void act("evacuate", { tileId: p.position })
+                              }
+                            >
+                              留在当前格
+                            </button>
                           </>
                         )}
                         {pending.kind === "blade" && (
@@ -918,15 +999,16 @@ export default function ExpeditionGame() {
                         {["prototype", "recover"].includes(pending.kind) &&
                           pending.choices.map(
                             (c: { uid: string; id: string }) => (
-                              <button
-                                key={c.uid}
-                                disabled={busy}
-                                onClick={() =>
-                                  void act("choose", { cardUid: c.uid })
-                                }
-                              >
-                                选择 {card(c.id).name} · {c.uid}
-                              </button>
+                              <CardHint card={card(c.id)} key={c.uid}>
+                                <button
+                                  disabled={busy}
+                                  onClick={() =>
+                                    void act("choose", { cardUid: c.uid })
+                                  }
+                                >
+                                  选择 {card(c.id).name} · {c.uid}
+                                </button>
+                              </CardHint>
                             ),
                           )}
                         {["repeller", "tide"].includes(pending.kind) && (
@@ -945,14 +1027,15 @@ export default function ExpeditionGame() {
                               />
                             ) : pending.kind === "tide" && p.hand.length ? (
                               p.hand.map((c) => (
-                                <button
-                                  key={c.uid}
-                                  onClick={() =>
-                                    void act("choose", { cardUid: c.uid })
-                                  }
-                                >
-                                  弃置 {card(c.id).name}
-                                </button>
+                                <CardHint card={card(c.id)} key={c.uid}>
+                                  <button
+                                    onClick={() =>
+                                      void act("choose", { cardUid: c.uid })
+                                    }
+                                  >
+                                    弃置 {card(c.id).name}
+                                  </button>
+                                </CardHint>
                               ))
                             ) : (
                               <button onClick={() => void act("choose")}>
@@ -1069,6 +1152,7 @@ export default function ExpeditionGame() {
                           <button
                             disabled={
                               busy ||
+                              pending?.kind === "evacuation" ||
                               pending?.kind.startsWith("disaster_") ||
                               pending?.kind === "eco_block" ||
                               (!!pending && c.id !== "technology")
@@ -1076,7 +1160,7 @@ export default function ExpeditionGame() {
                             onClick={() =>
                               c.id === "technology"
                                 ? void act("play", { cardUid: c.uid })
-                                : setInvitation(c.uid)
+                                : openInvitation(c.uid)
                             }
                           >
                             使用
@@ -1085,6 +1169,7 @@ export default function ExpeditionGame() {
                             className="quiet"
                             disabled={
                               busy ||
+                              pending?.kind === "evacuation" ||
                               pending?.kind.startsWith("disaster_") ||
                               pending?.kind === "eco_block"
                             }
@@ -1101,174 +1186,29 @@ export default function ExpeditionGame() {
                       <div className="equipment">
                         <h3>已生效科技</h3>
                         {p.equipment.map((id) => (
-                          <button key={id} onClick={() => setPreview(card(id))}>
-                            {card(id).name} ↗
-                          </button>
+                          <CardHint card={card(id)} key={id}>
+                            <button onClick={() => setPreview(card(id))}>
+                              {card(id).name} ↗
+                            </button>
+                          </CardHint>
                         ))}
                         {p.equipment.includes("aid-beacon") && !pending && (
-                          <button onClick={() => setInvitation("beacon")}>
+                          <button onClick={() => openInvitation("beacon")}>
                             使用互助信标交换
                           </button>
                         )}
                       </div>
                     )}
-                    {invitation && !pending && (
-                      <div className="trade-form">
-                        <h3>资源交换 · 需要对方同意</h3>
-                        <label>
-                          相邻玩家
-                          <select
-                            aria-label="邀约对象"
-                            value={target}
-                            onChange={(e) => setTarget(e.target.value)}
-                          >
-                            <option value="">选择对象</option>
-                            {g.players
-                              .filter((t) => t.id !== p.id)
-                              .map((t) => (
-                                <option key={t.id} value={t.id}>
-                                  {t.name}
-                                </option>
-                              ))}
-                          </select>
-                        </label>
-                        <BagFields
-                          value={give}
-                          onChange={setGive}
-                          label="给出"
-                          max={p.resources}
-                        />
-                        <BagFields
-                          value={receive}
-                          onChange={setReceive}
-                          label="请求"
-                        />
-                        <button
-                          className="primary"
-                          disabled={busy || !target}
-                          onClick={() =>
-                            void act(
-                              invitation === "beacon" ? "beacon" : "play",
-                              {
-                                cardUid: invitation,
-                                targetId: target,
-                                give,
-                                receive,
-                              },
-                            )
-                          }
-                        >
-                          发送交换请求
-                        </button>
-                        <button onClick={() => setInvitation(null)}>
-                          取消
-                        </button>
-                      </div>
-                    )}
                   </section>
                 )
               ) : (
-                <section className="action-panel">
-                  <p className="overline">FINAL JUDGMENT</p>
-                  <h2>谁能登上方舟？</h2>
-                  <p>
-                    世界状态、角色人设、本地知识与完整操作日志将共同作为审判依据。
-                  </p>
-                  {!g.judgment ? (
-                    <button
-                      className="primary"
-                      disabled={busy}
-                      onClick={() => void act("judge")}
-                    >
-                      {busy ? "上帝正在查阅全局记录…" : "请上帝审判这段航程"}
-                    </button>
-                  ) : (
-                    <>
-                      <h3>{g.judgment.god.name}</h3>
-                      <span className="local-chip">
-                        {g.judgment.llm.used
-                          ? "M3 模型裁决"
-                          : "本地规则裁决（未使用 LLM）"}
-                      </span>
-                      <p>{g.judgment.verdict.statement}</p>
-                      {g.judgment.verdict.decisions.map((d: any) => (
-                        <article
-                          className={`boarding-decision ${d.board ? "admitted" : ""}`}
-                          key={d.playerId}
-                        >
-                          <strong>
-                            {d.board ? "准予登舟" : "未获席位"} ·{" "}
-                            {g.players.find((p) => p.id === d.playerId)?.name}
-                          </strong>
-                          <p>{d.reason}</p>
-                          <small>
-                            依据事件：
-                            {d.evidence.map((n: number) => `#${n}`).join("、")}
-                          </small>
-                        </article>
-                      ))}
-                      {g.status === "review" && (
-                        <>
-                          <label>
-                            终局申辩（可选，只能一次）
-                            <textarea
-                              aria-label="终局申辩"
-                              maxLength={4000}
-                              value={rebuttal}
-                              onChange={(e) => setRebuttal(e.target.value)}
-                            />
-                          </label>
-                          <button
-                            disabled={busy || !rebuttal.trim()}
-                            onClick={() =>
-                              void act("rebut", { text: rebuttal })
-                            }
-                          >
-                            提交申辩，听取最终裁决
-                          </button>
-                          <button
-                            className="primary"
-                            disabled={busy}
-                            onClick={() => void act("finalize")}
-                          >
-                            接受裁决，封存本局
-                          </button>
-                        </>
-                      )}
-                      <details className="judgment-history">
-                        <summary>初判与申辩留档</summary>
-                        {g.judgment.history?.map((h: any, i: number) => (
-                          <div key={i}>
-                            <h4>
-                              {h.stage === "initial"
-                                ? "初次裁决"
-                                : "申辩后终判"}
-                            </h4>
-                            {h.rebuttal && <p>申辩：{h.rebuttal}</p>}
-                            <p>{h.verdict.statement}</p>
-                            {h.verdict.decisions.map((d: any) => (
-                              <p key={d.playerId}>
-                                {d.playerId} ·{" "}
-                                {d.board ? "允许登舟" : "未获席位"}：{d.reason}
-                              </p>
-                            ))}
-                          </div>
-                        ))}
-                      </details>
-                      <details>
-                        <summary>本地 RAG 证据与流程</summary>
-                        <p>{g.judgment.trace.join(" → ")}</p>
-                        {g.judgment.rag.evidence.map((e: any) => (
-                          <p key={e.id}>
-                            <strong>{e.title}</strong>
-                            <br />
-                            {e.content}
-                          </p>
-                        ))}
-                      </details>
-                    </>
-                  )}
-                </section>
+                <BoardingPanel
+                  game={g}
+                  busy={busy}
+                  readOnly={inspectingOther}
+                  onReturn={() => setInspection(null)}
+                  act={act}
+                />
               )}
               <DisasterCards cards={g.activeDisasters} automatic />
             </aside>
@@ -1277,7 +1217,7 @@ export default function ExpeditionGame() {
       )}
       <section className="chronicle">
         <nav>
-          {(["log", "donations", "rules"] as const).map((t) => (
+          {(["log", "donations", "history", "rules"] as const).map((t) => (
             <button
               className={tab === t ? "selected" : ""}
               onClick={() => setTab(t)}
@@ -1287,7 +1227,9 @@ export default function ExpeditionGame() {
                 ? "全局航程日志"
                 : t === "donations"
                   ? "方舟捐赠记录"
-                  : "规则与本地约定"}
+                  : t === "history"
+                    ? "撤回与重做记录"
+                    : "规则与本地约定"}
             </button>
           ))}
         </nav>
@@ -1338,14 +1280,43 @@ export default function ExpeditionGame() {
             {g?.donations.map((d, i) => (
               <p key={i}>
                 R{d.round} · {g.players.find((p) => p.id === d.playerId)?.name}
-                ：{bagText(d.amounts)}
+                ：<ResourceBag value={d.amounts} />
               </p>
             ))}
           </div>
         )}
+        {tab === "history" && (
+          <div className="history-audit">
+            <h2>修正留档，不改写已经发生的修正</h2>
+            <p>
+              下列为撤回、重做及分支关闭记录。被撤回事件不计入有效航程或上帝审议；归档事件序号仅对应当时版本。导出本局
+              JSON 包含这些记录，不含内部恢复快照。
+            </p>
+            <div className="event-list">
+              {g?.historyAudit?.toReversed().map((entry) => (
+                <details key={entry.seq}>
+                  <summary>
+                    <span>
+                      修正 #{entry.seq} · v{entry.revision} · {entry.actor}
+                    </span>
+                    {entry.detail}
+                  </summary>
+                  <pre>{JSON.stringify(entry, null, 2)}</pre>
+                </details>
+              ))}
+              {!g?.historyAudit?.length && <p>暂无撤回或重做记录。</p>}
+            </div>
+          </div>
+        )}
         {tab === "rules" && (
           <div className="rules-copy">
+            <GamePurpose />
+            <AcademicLibrary />
             <h2>八回合，三次洪水</h2>
+            <p>
+              行动修正支持最近 20
+              步撤回与重做，由当前行动玩家确认，可以跨玩家及回合恢复整局；随机结果不重掷。初次审议前可撤回最后的生存结算，开始上帝审议后锁定。修正单独留档，新操作关闭原重做分支。
+            </p>
             <p>
               第 1、2、5、6、7、8
               回合开始时，每人等概率抽一张邀约或科技行动卡。第 3
@@ -1359,10 +1330,10 @@ export default function ExpeditionGame() {
             </p>
             <p>
               本地约定：六面旗子各一人、初始资源为 0、手牌上限 5、每次采集 1
-              份；除生态崩坏在场限制外，资源格可逐回合重复采集。同行者同格或相邻即建立联络，方舟范围为中心安全区。资源池四类等概率；同名被动不叠加。可以从任何位置上交材料。
+              份；除生态崩坏在场限制外，资源格可逐回合重复采集。邀约可选择物理位置最近两名其他玩家，接受后双方各领一份自选资源，不是交换；互助信标仍按同格或相邻格交换。方舟范围为中心安全区。资源池四类等概率；同名被动不叠加。可以从任何位置上交材料。
             </p>
             <p>
-              淹没格禁止采集和逆水深入，滞留玩家下一回合可向内逃生，不立即死亡。终局仍在淹没区则不能登舟；席位由开局设置，未擅自设定方舟最低物资门槛。上述未在文档明确的细则可在下一轮修改。
+              淹没格禁止采集和逆水深入。洪水欠缴每份积累一点伤势；终局有一次紧急撤离，随后保留种子自动救生。必须处于安全地块且剩余伤势不超过耐受值才算幸存。方舟实际库存决定席位，只有幸存者能参与初判、逐人交互与最终登船评议。完整数值显示在洪水和终局面板。
             </p>
             <p>
               地图采用原图＋规则格网。经济、环境、社会为全体玩家共享的世界值；科技直接影响世界。1—2
@@ -1402,7 +1373,17 @@ export default function ExpeditionGame() {
               关闭 ×
             </button>
             <h3>{preview.name}</h3>
-            <img src={preview.image} alt={preview.name} />
+            {preview.implementedEffect && (
+              <p className="interaction-ready">
+                本版实际规则：{preview.implementedEffect}
+              </p>
+            )}
+            {worldDelta(preview) && (
+              <p>生效时共享世界：{worldDelta(preview)}；重复被动不叠加。</p>
+            )}
+            <CardHint card={preview}>
+              <img src={preview.image} alt={preview.name} />
+            </CardHint>
           </div>
         </div>
       )}

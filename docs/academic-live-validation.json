@@ -1,0 +1,398 @@
+{
+  "date": "2026-10-30",
+  "timezone": "Asia/Shanghai",
+  "scope": "Deterministic seed-41 synthetic match; initial plus one survivor rebuttal only; no final live council and no player save writes",
+  "connectionDiagnosis": {
+    "oldModelId": "MiniMax-M3.0",
+    "oldModelResult": "HTTP 400 unknown model (2013)",
+    "officialModelId": "MiniMax-M3",
+    "officialModelResult": "HTTP 200 on same key and endpoint",
+    "totalRequestsThisContinuation": 10,
+    "breakdown": "3 old-model HTTP400 requests, 1 corrected-model connectivity request, 3 two-request scholarly smoke runs"
+  },
+  "privacy": "No key, prompt, request headers, raw provider payload, real player data or original PDF included",
+  "limitations": [
+    "Three iterative runs on the same fixture are not independent evaluation or a causal comparison.",
+    "The first run had semantic errors despite passing schema checks.",
+    "The middle run fell back on initial review after HTTP200; the precise invalid field was not retained, so its cause is unknown.",
+    "The final run passed structure checks but still needs semantic review; see report for concrete limitations.",
+    "The corpus metadata changed from v1 to v1.1 during original-document verification; Chinese knowledge conclusions and retrieval policy were not changed."
+  ],
+  "runs": [
+    {
+      "label": "before-facts",
+      "createdAt": "2026-10-29T15:55:59.960Z",
+      "model": "MiniMax-M3",
+      "corpus": {
+        "version": "academic-zh-v1",
+        "hash": "516559f84638aa453ffe4096579bffe958db4dcfca8cbc20647cc4540b0b717e",
+        "sources": 10,
+        "model": "local-hash-256+zh-keywords-v1",
+        "translationPolicy": "入库的是中文结论转述、条件与局限，不是全文翻译；英文短摘录仅供对照。原 PDF 单独归档，下载状态与哈希另存，不把链接冒充本地原件。",
+        "personaPolicy": "风格是游戏编者按现有人设所做的阅读视角映射，不是作者政治立场；相关性优先，各风格均须参考限制与不同视角。",
+        "semanticModel": false
+      },
+      "fixture": {
+        "seed": 41,
+        "players": 6,
+        "policy": "balanced",
+        "commands": 368,
+        "round": 8,
+        "status": "awaiting_judgment",
+        "eventCount": 723,
+        "attributes": {
+          "economy": 19,
+          "environment": 2,
+          "society": 13
+        }
+      },
+      "requestBudget": {
+        "total": 2,
+        "perStage": 1,
+        "actual": 2
+      },
+      "result": "structural_pass_human_review_required",
+      "stages": [
+        {
+          "stage": "initial",
+          "durationMs": 24496,
+          "llm": {
+            "used": true,
+            "model": "MiniMax-M3",
+            "fallbackReason": null
+          },
+          "transport": {
+            "requests": 1,
+            "blockedRetries": 0,
+            "httpStatus": 200,
+            "failure": null,
+            "providerError": null
+          },
+          "capacity": {
+            "units": 57,
+            "unitsPerSeat": 17,
+            "maxSeats": 6,
+            "seats": 3,
+            "nextSeatNeeds": 11
+          },
+          "boardedPlayerIds": ["P2", "P4", "P6"],
+          "sourceIds": [
+            "ostrom-2009",
+            "ipcc-synthesis-2023",
+            "sen-1998",
+            "dasgupta-2021",
+            "aldrich-2018"
+          ],
+          "checks": {
+            "boardingSchema": true,
+            "academicCitations": true,
+            "realModelUsed": true,
+            "allPlayersCovered": true,
+            "survivorOnly": true,
+            "withinCapacity": true,
+            "provisional": true,
+            "discussionRecorded": true,
+            "currentRebuttalUsedForRetrieval": true
+          },
+          "structuralPass": true,
+          "semanticReview": "See ACADEMIC_KNOWLEDGE_REPORT.md; not automatically graded"
+        },
+        {
+          "stage": "discussion",
+          "durationMs": 21161,
+          "llm": {
+            "used": true,
+            "model": "MiniMax-M3",
+            "fallbackReason": null
+          },
+          "transport": {
+            "requests": 1,
+            "blockedRetries": 0,
+            "httpStatus": 200,
+            "failure": null,
+            "providerError": null
+          },
+          "capacity": {
+            "units": 57,
+            "unitsPerSeat": 17,
+            "maxSeats": 6,
+            "seats": 3,
+            "nextSeatNeeds": 11
+          },
+          "boardedPlayerIds": ["P2", "P4", "P6"],
+          "sourceIds": [
+            "ostrom-2009",
+            "ipcc-synthesis-2023",
+            "aldrich-2018",
+            "sen-1998",
+            "dasgupta-2021"
+          ],
+          "checks": {
+            "boardingSchema": true,
+            "academicCitations": true,
+            "realModelUsed": true,
+            "allPlayersCovered": true,
+            "survivorOnly": true,
+            "withinCapacity": true,
+            "provisional": true,
+            "discussionRecorded": true,
+            "currentRebuttalUsedForRetrieval": true
+          },
+          "structuralPass": true,
+          "semanticReview": "See ACADEMIC_KNOWLEDGE_REPORT.md; not automatically graded"
+        }
+      ]
+    },
+    {
+      "label": "facts-added",
+      "createdAt": "2026-10-29T16:08:51.220Z",
+      "model": "MiniMax-M3",
+      "corpus": {
+        "version": "academic-zh-v1.1",
+        "hash": "c222246beb8275e64f3eedc68dd4077e6dd849da5acf6be62e92796a7a99e910",
+        "sources": 10,
+        "model": "local-hash-256+zh-keywords-v1",
+        "translationPolicy": "入库的是中文结论转述、条件与局限，不是全文翻译；英文短摘录仅供对照。原 PDF 单独归档，下载状态与哈希另存，不把链接冒充本地原件。",
+        "personaPolicy": "风格是游戏编者按现有人设所做的阅读视角映射，不是作者政治立场；相关性优先，各风格均须参考限制与不同视角。",
+        "semanticModel": false
+      },
+      "fixture": {
+        "seed": 41,
+        "players": 6,
+        "policy": "balanced",
+        "commands": 368,
+        "round": 8,
+        "status": "awaiting_judgment",
+        "eventCount": 723,
+        "attributes": {
+          "economy": 19,
+          "environment": 2,
+          "society": 13
+        }
+      },
+      "requestBudget": {
+        "total": 2,
+        "perStage": 1,
+        "actual": 2
+      },
+      "result": "live_model_or_structural_failure",
+      "stages": [
+        {
+          "stage": "initial",
+          "durationMs": 20280,
+          "llm": {
+            "used": false,
+            "model": "MiniMax-M3",
+            "fallbackReason": "model_or_validation_failed"
+          },
+          "transport": {
+            "requests": 1,
+            "blockedRetries": 0,
+            "httpStatus": 200,
+            "failure": null,
+            "providerError": null
+          },
+          "capacity": {
+            "units": 57,
+            "unitsPerSeat": 17,
+            "maxSeats": 6,
+            "seats": 3,
+            "nextSeatNeeds": 11
+          },
+          "boardedPlayerIds": ["P1", "P3", "P4"],
+          "sourceIds": [
+            "ostrom-2009",
+            "ipcc-synthesis-2023",
+            "sen-1998",
+            "aldrich-2018",
+            "dasgupta-2021",
+            "richardson-2023"
+          ],
+          "checks": {
+            "boardingSchema": true,
+            "academicCitations": true,
+            "realModelUsed": false,
+            "allPlayersCovered": true,
+            "survivorOnly": true,
+            "withinCapacity": true,
+            "provisional": true,
+            "discussionRecorded": true,
+            "currentRebuttalUsedForRetrieval": true
+          },
+          "structuralPass": false,
+          "semanticReview": "See ACADEMIC_KNOWLEDGE_REPORT.md; not automatically graded"
+        },
+        {
+          "stage": "discussion",
+          "durationMs": 17507,
+          "llm": {
+            "used": true,
+            "model": "MiniMax-M3",
+            "fallbackReason": null
+          },
+          "transport": {
+            "requests": 1,
+            "blockedRetries": 0,
+            "httpStatus": 200,
+            "failure": null,
+            "providerError": null
+          },
+          "capacity": {
+            "units": 57,
+            "unitsPerSeat": 17,
+            "maxSeats": 6,
+            "seats": 3,
+            "nextSeatNeeds": 11
+          },
+          "boardedPlayerIds": ["P1", "P3", "P4"],
+          "sourceIds": [
+            "ostrom-2009",
+            "ipcc-synthesis-2023",
+            "sen-1998",
+            "aldrich-2018",
+            "dasgupta-2021"
+          ],
+          "checks": {
+            "boardingSchema": true,
+            "academicCitations": true,
+            "realModelUsed": true,
+            "allPlayersCovered": true,
+            "survivorOnly": true,
+            "withinCapacity": true,
+            "provisional": true,
+            "discussionRecorded": true,
+            "currentRebuttalUsedForRetrieval": true
+          },
+          "structuralPass": true,
+          "semanticReview": "See ACADEMIC_KNOWLEDGE_REPORT.md; not automatically graded"
+        }
+      ]
+    },
+    {
+      "label": "facts-and-explicit-schema",
+      "createdAt": "2026-10-29T16:15:10.586Z",
+      "model": "MiniMax-M3",
+      "corpus": {
+        "version": "academic-zh-v1.1",
+        "hash": "c222246beb8275e64f3eedc68dd4077e6dd849da5acf6be62e92796a7a99e910",
+        "sources": 10,
+        "model": "local-hash-256+zh-keywords-v1",
+        "translationPolicy": "入库的是中文结论转述、条件与局限，不是全文翻译；英文短摘录仅供对照。原 PDF 单独归档，下载状态与哈希另存，不把链接冒充本地原件。",
+        "personaPolicy": "风格是游戏编者按现有人设所做的阅读视角映射，不是作者政治立场；相关性优先，各风格均须参考限制与不同视角。",
+        "semanticModel": false
+      },
+      "fixture": {
+        "seed": 41,
+        "players": 6,
+        "policy": "balanced",
+        "commands": 368,
+        "round": 8,
+        "status": "awaiting_judgment",
+        "eventCount": 723,
+        "attributes": {
+          "economy": 19,
+          "environment": 2,
+          "society": 13
+        }
+      },
+      "requestBudget": {
+        "total": 2,
+        "perStage": 1,
+        "actual": 2
+      },
+      "result": "structural_pass_human_review_required",
+      "stages": [
+        {
+          "stage": "initial",
+          "durationMs": 28676,
+          "llm": {
+            "used": true,
+            "model": "MiniMax-M3",
+            "fallbackReason": null
+          },
+          "transport": {
+            "requests": 1,
+            "blockedRetries": 0,
+            "httpStatus": 200,
+            "failure": null,
+            "providerError": null,
+            "validationFailure": null
+          },
+          "capacity": {
+            "units": 57,
+            "unitsPerSeat": 17,
+            "maxSeats": 6,
+            "seats": 3,
+            "nextSeatNeeds": 11
+          },
+          "boardedPlayerIds": ["P1", "P3", "P4"],
+          "sourceIds": [
+            "dasgupta-2021",
+            "richardson-2023",
+            "ostrom-2009",
+            "sen-1998"
+          ],
+          "checks": {
+            "boardingSchema": true,
+            "academicCitations": true,
+            "realModelUsed": true,
+            "allPlayersCovered": true,
+            "survivorOnly": true,
+            "withinCapacity": true,
+            "provisional": true,
+            "discussionRecorded": true,
+            "currentRebuttalUsedForRetrieval": true
+          },
+          "structuralPass": true,
+          "semanticReview": "See ACADEMIC_KNOWLEDGE_REPORT.md; not automatically graded"
+        },
+        {
+          "stage": "discussion",
+          "durationMs": 25569,
+          "llm": {
+            "used": true,
+            "model": "MiniMax-M3",
+            "fallbackReason": null
+          },
+          "transport": {
+            "requests": 1,
+            "blockedRetries": 0,
+            "httpStatus": 200,
+            "failure": null,
+            "providerError": null,
+            "validationFailure": null
+          },
+          "capacity": {
+            "units": 57,
+            "unitsPerSeat": 17,
+            "maxSeats": 6,
+            "seats": 3,
+            "nextSeatNeeds": 11
+          },
+          "boardedPlayerIds": ["P1", "P3", "P4"],
+          "sourceIds": [
+            "ostrom-2009",
+            "aldrich-2018",
+            "sen-1998",
+            "ipcc-synthesis-2023",
+            "dasgupta-2021",
+            "otto-2020"
+          ],
+          "checks": {
+            "boardingSchema": true,
+            "academicCitations": true,
+            "realModelUsed": true,
+            "allPlayersCovered": true,
+            "survivorOnly": true,
+            "withinCapacity": true,
+            "provisional": true,
+            "discussionRecorded": true,
+            "currentRebuttalUsedForRetrieval": true
+          },
+          "structuralPass": true,
+          "semanticReview": "See ACADEMIC_KNOWLEDGE_REPORT.md; not automatically graded"
+        }
+      ]
+    }
+  ]
+}

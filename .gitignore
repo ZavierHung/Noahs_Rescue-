@@ -24,6 +24,8 @@ server/data/judgments.json
 server/data/rooms.json
 server/data/expeditions.json
 server/data/*.tmp
+# Original academic PDFs retain their own licences. Archive locally, not in Git.
+server/data/academic/originals/
 miniprogram/project.private.config.json
 miniprogram/config.local.js
 

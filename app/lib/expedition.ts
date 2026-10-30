@@ -10,6 +10,8 @@ export type Character = {
   name: string;
   image: string;
   factionLabel: string;
+  implementedEffect?: string;
+  effectSummary?: string;
 };
 export type Card = {
   id: string;
@@ -19,6 +21,8 @@ export type Card = {
   type: string;
   condition?: string;
   status: Record<string, number>;
+  implementedEffect?: string;
+  effectSummary?: string;
 };
 export type Tile = {
   id: string;
@@ -32,6 +36,16 @@ export type Tile = {
   flag?: string;
 };
 export type Player = {
+  survivalPreview: {
+    alive: boolean;
+    safe: boolean;
+    injury: number;
+    seedsUsed: number;
+    remainingInjury: number;
+    tolerance: number;
+    reason: string;
+  };
+  floodInjury: number;
   id: string;
   name: string;
   characterId: string;
@@ -53,9 +67,39 @@ export type Event = {
   effects?: { playerId: string; resources: Bag; from: string; to: string }[];
   [key: string]: unknown;
 };
+export type HistoryAction = {
+  id: string;
+  actor: string;
+  type: string;
+  label: string;
+  round: number;
+  phase: string;
+  revision: number;
+};
+export type HistoryAudit = {
+  seq: number;
+  type: "undo" | "redo" | "branch";
+  actor: string;
+  round: number;
+  revision: number;
+  at: string;
+  detail: string;
+  events?: Event[];
+};
 export type Game = {
   id: string;
   revision: number;
+  history: {
+    limit: number;
+    actorId: string;
+    lockedReason: string;
+    undoCount: number;
+    redoCount: number;
+    undo: HistoryAction | null;
+    redo: HistoryAction | null;
+    lastChangeRevision: number;
+  };
+  historyAudit: HistoryAudit[];
   status: string;
   round: number;
   phase: string;
@@ -64,6 +108,30 @@ export type Game = {
   players: Player[];
   ark: Bag;
   seats: number;
+  capacity: {
+    units: number;
+    unitsPerSeat: number;
+    maxSeats: number;
+    seats: number;
+    nextSeatNeeds: number;
+  };
+  rules: {
+    finalEvacuationSteps: number;
+    floodInjuryTolerance: number;
+    seedRecovery: number;
+    arkUnitsPerSeat: number;
+  };
+  reviewRemaining?: string[];
+  invitation: {
+    targets: {
+      playerId: string;
+      distance: number;
+      rank: number;
+      eligible: boolean;
+    }[];
+    blockedReason: string;
+    responseReason: string;
+  };
   floodLevel: number;
   reachable: Record<string, string[]>;
   events: Event[];
@@ -78,8 +146,20 @@ export type Game = {
     harvested: Record<string, number>;
   };
   canGather: boolean;
+  trade: {
+    targets: { playerId: string; distance: number; contact: boolean }[];
+    invitationBlockedReason: string;
+    beaconBlockedReason: string;
+    response: { reason: string } | null;
+  };
 };
 export type Catalog = {
+  floodCard: {
+    name: string;
+    image: string;
+    implementedEffect: string;
+    effectSummary: string;
+  };
   characters: Character[];
   cards: { actions: Card[]; technology: Card[] };
   resources: Record<Resource, string>;
@@ -91,6 +171,8 @@ export type Catalog = {
   };
 };
 const BASE = process.env.NEXT_PUBLIC_GAME_API_URL || "http://localhost:8787";
+export const academicOriginalUrl = (id: string) =>
+  `${BASE}/api/expeditions/knowledge/original/${encodeURIComponent(id)}`;
 export async function apiRequest<T>(
   path: string,
   method = "GET",

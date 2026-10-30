@@ -143,7 +143,7 @@ test("donation is atomic, logs exact resources and rejects overdrafts/negative v
   assert.equal(next.donations[0].amounts.wood, 2);
   assert.equal(next.events.find((e) => e.type === "donation").actor, "P1");
 });
-test("invitation rejection permits retry and acceptance transfers both sides atomically", () => {
+test("invitation rejection permits retry; acceptance creates one independently selected resource each", () => {
   let g = make();
   g.players[0].position = "0,0";
   g.players[1].position = "1,0";
@@ -153,8 +153,7 @@ test("invitation rejection permits retry and acceptance transfers both sides ato
   g = act(g, "play", {
     cardUid: "trade",
     targetId: "P2",
-    give: { wood: 1 },
-    receive: { metal: 1 },
+    resource: "metal",
   });
   assert.equal(viewGame(g).activePlayerId, "P2");
   g = act(g, "choose", { accept: false });
@@ -162,13 +161,49 @@ test("invitation rejection permits retry and acceptance transfers both sides ato
   g = act(g, "play", {
     cardUid: "trade",
     targetId: "P2",
+    resource: "metal",
+  });
+  g = act(g, "choose", { accept: true, resource: "wood" });
+  assert.equal(g.players[0].resources.metal, 1);
+  assert.equal(g.players[1].resources.wood, 1);
+  assert.equal(g.players[0].resources.wood, 2);
+  assert.equal(g.players[1].resources.metal, 1);
+  assert.equal(g.players[0].hand.length, 0);
+});
+test("beacon trade view exposes contact and acceptance reasons without writes, and uses the same acceptance validation", () => {
+  let g = make();
+  g.players[0].position = "0,0";
+  g.players[1].position = "1,0";
+  g.players[0].resources.wood = 2;
+  g.players[1].resources.metal = 1;
+  g.players[0].hand = [{ uid: "trade", id: "invitation" }];
+  g.players[0].equipment = ["aid-beacon"];
+  const snapshot = structuredClone(g);
+  assert.deepEqual(viewGame(g).trade.targets[0], {
+    playerId: "P2",
+    distance: 1,
+    contact: true,
+  });
+  assert.deepEqual(g, snapshot);
+  g = act(g, "beacon", {
+    cardUid: "trade",
+    targetId: "P2",
     give: { wood: 1 },
     receive: { metal: 1 },
   });
-  g = act(g, "choose", { accept: true });
-  assert.equal(g.players[0].resources.metal, 1);
-  assert.equal(g.players[1].resources.wood, 1);
-  assert.equal(g.players[0].hand.length, 0);
+  assert.equal(viewGame(g).trade.response.reason, "");
+  assert.ok(
+    g.events.some((e) => e.type === "trade_offer" && e.targetId === "P2"),
+  );
+  g.players[1].resources.metal = 0;
+  assert.match(viewGame(g).trade.response.reason, /资源不足/);
+  assert.throws(() => act(g, "choose", { accept: true }), /资源不足/);
+  g = act(g, "choose", { accept: false });
+  assert.equal(g.players[0].hand[0].uid, "trade");
+  g.players[0].roundFlags.noInvite = true;
+  assert.match(viewGame(g).trade.invitationBlockedReason, /炼金炉/);
+  g.players[1].position = "3,0";
+  assert.equal(viewGame(g).trade.targets[0].contact, false);
 });
 test("action draw is equiprobable with replacement and technology offers two independent choices", () => {
   let technology = 0,
@@ -510,7 +545,10 @@ test("draw schedule excludes round4 and draws after flood in round3; all stages 
   let g = make(1),
     guard = 0;
   while (g.status === "playing" && guard++ < 100) {
-    g = act(g, g.phase === "flood" ? "pay_flood" : "skip");
+    g =
+      g.phase === "evacuation"
+        ? act(g, "evacuate", { tileId: g.players[0].position })
+        : act(g, g.phase === "flood" ? "pay_flood" : "skip");
   }
   const draws = g.events.filter((e) =>
     ["draw", "draw_overflow"].includes(e.type),
@@ -520,5 +558,5 @@ test("draw schedule excludes round4 and draws after flood in round3; all stages 
     [1, 2, 3, 5, 6, 7, 8],
   );
   assert.ok(draws[2].seq > g.events.find((e) => e.type === "flood").seq);
-  assert.equal(g.events.filter((e) => e.type === "action").length, 35);
+  assert.equal(g.events.filter((e) => e.type === "action").length, 36);
 });

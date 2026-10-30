@@ -1,28 +1,53 @@
 // A deterministic local bot, used only by tests/CLI, never wired to public actions.
-import {
-  activePlayer,
-  bag,
-  command,
-  createGame,
-  floodCost,
-  viewGame,
-} from "./engine.js";
+import { activePlayer, bag, command, createGame, floodCost } from "./engine.js";
 import { CHARACTERS, RESOURCES } from "./catalog.js";
-import { tileById, distance } from "./map.js";
-import { handLimit } from "./world.js";
+import { tileById, distance, reachable } from "./map.js";
+import { handLimit, canGather } from "./world.js";
+import { invitationTargets, rulesFor } from "./rules.js";
 const available = (p) => RESOURCES.find((r) => p.resources[r] > 0);
-export function botAction(g) {
+export function botAction(g, { policy = "balanced", seed = 1 } = {}) {
   const p = activePlayer(g),
-    v = viewGame(g),
     pending = g.pending;
+  const routes = () =>
+    reachable(
+      p.position,
+      pending?.kind === "evacuation"
+        ? rulesFor(g).finalEvacuationSteps
+        : pending?.kind === "repeller"
+          ? 1
+          : pending?.kind === "blade"
+            ? 2
+            : rulesFor(g).baseMove +
+              (p.equipment.includes("skateboard-shoes") ? 1 : 0),
+      g.floodLevel,
+      {
+        escape: pending?.kind !== "repeller",
+        away: pending?.kind === "repeller",
+      },
+    );
   const input = { actor: p.id, revision: g.revision };
+  // Frozen, resource-aware policy: no access to future cards/dice or survival targets.
+  const style =
+    policy === "mixed"
+      ? ["generous", "balanced", "cautious"][(Number(p.id.slice(1)) + seed) % 3]
+      : policy;
+  const wanted = () => {
+    if (g.round >= 4 && p.resources.seed < (style === "cautious" ? 2 : 1))
+      return "seed";
+    if (g.round >= 6 && p.resources.electricity < 1) return "electricity";
+    return [...RESOURCES].sort(
+      (a, b) =>
+        g.ark[a] + p.resources[a] - g.ark[b] - p.resources[b] ||
+        RESOURCES.indexOf(a) - RESOURCES.indexOf(b),
+    )[0];
+  };
   if (pending) {
     const kind = pending.kind;
     if (kind.startsWith("disaster_"))
       return {
         ...input,
         type: "choose",
-        resource: kind === "disaster_gain" ? "metal" : available(p),
+        resource: kind === "disaster_gain" ? wanted() : available(p),
       };
     if (kind === "eco_block") return { ...input, type: "choose", block: false };
     if (kind === "flood") {
@@ -33,13 +58,17 @@ export function botAction(g) {
         resource: cost.choices.find((r) => p.resources[r] > cost.mandatory[r]),
       };
     }
-    if (kind === "blade") {
-      const tileId = Object.keys(v.reachable).sort(
+    if (kind === "blade" || kind === "evacuation") {
+      const tileId = Object.keys(routes()).sort(
         (a, b) =>
           distance(tileById(a), tileById("0,0")) -
           distance(tileById(b), tileById("0,0")),
       )[0];
-      return { ...input, type: "blade_move", tileId };
+      return {
+        ...input,
+        type: kind === "blade" ? "blade_move" : "evacuate",
+        tileId,
+      };
     }
     if (kind === "technology") {
       for (const techId of pending.choices) {
@@ -51,7 +80,13 @@ export function botAction(g) {
             n -= spend[r];
           }
           if (n) continue;
-          return { ...input, type: "choose", techId, spend, resource: "wood" };
+          return {
+            ...input,
+            type: "choose",
+            techId,
+            spend,
+            resource: wanted(),
+          };
         }
         if (techId === "recycling-claw") {
           const target = g.players.find(
@@ -79,6 +114,21 @@ export function botAction(g) {
         type: "choose",
         accept: RESOURCES.every((r) => p.resources[r] >= pending.receive[r]),
       };
+    if (kind === "invitation") {
+      const owner = g.players.find((p) => p.id === pending.owner);
+      return {
+        ...input,
+        type: "choose",
+        accept:
+          !!owner &&
+          !owner.roundFlags.noInvite &&
+          owner.hand.some((c) => c.uid === pending.cardUid) &&
+          invitationTargets(g, owner).some(
+            (t) => t.playerId === p.id && t.eligible,
+          ),
+        resource: wanted(),
+      };
+    }
     if (["prototype", "recover"].includes(kind)) {
       if (p.hand.length >= handLimit(g, p))
         return { ...input, type: "discard", cardUid: p.hand[0].uid };
@@ -97,18 +147,29 @@ export function botAction(g) {
         type: "choose",
         resource: available(p),
         ...(!available(p)
-          ? { tileId: Object.keys(v.reachable).find((id) => id !== p.position) }
+          ? { tileId: Object.keys(routes()).find((id) => id !== p.position) }
           : {}),
       };
   }
   if (g.phase === "cards") {
+    const invitation =
+      !p.roundFlags.noInvite && p.hand.find((c) => c.id === "invitation");
+    const target = invitationTargets(g, p).find((t) => t.eligible);
+    if (invitation && target)
+      return {
+        ...input,
+        type: "play",
+        cardUid: invitation.uid,
+        targetId: target.playerId,
+        resource: wanted(),
+      };
     const c = p.hand.find((c) => c.id === "technology");
     if (c) return { ...input, type: "play", cardUid: c.uid };
     return { ...input, type: "skip" };
   }
   if (g.phase === "move") {
     const current = distance(tileById(p.position), tileById("0,0"));
-    const choices = Object.keys(v.reachable)
+    const choices = Object.keys(routes())
       .map(tileById)
       .sort((a, b) => {
         const rank = (t) =>
@@ -122,7 +183,7 @@ export function botAction(g) {
     return {
       ...input,
       type:
-        v.canGather &&
+        canGather(g, p) &&
         tileById(p.position).resource &&
         !(
           (tileById(p.position).zone || 4) >= 4 - g.floodLevel &&
@@ -131,15 +192,35 @@ export function botAction(g) {
           ? "gather"
           : "skip",
     };
-  if (g.phase === "donate")
+  if (g.phase === "donate") {
+    const amounts = { ...p.resources };
+    if (style !== "generous") {
+      if (g.round >= 4)
+        amounts.seed = Math.max(
+          0,
+          amounts.seed - (style === "cautious" ? 2 : 1),
+        );
+      if (g.round >= 6 && g.round <= 7)
+        amounts.electricity = Math.max(0, amounts.electricity - 1);
+      if ([3, 5, 7].includes(g.round)) {
+        const r = ["wood", "metal", "electricity"].find((r) => amounts[r] > 0);
+        if (r) amounts[r]--;
+      }
+    }
     return {
       ...input,
-      type: available(p) ? "donate" : "skip",
-      amounts: { ...p.resources },
+      type: RESOURCES.some((r) => amounts[r]) ? "donate" : "skip",
+      amounts,
     };
+  }
   return { ...input, type: "skip" };
 }
-export function simulate({ seed = 1, players = 6 } = {}) {
+export function simulate({
+  seed = 1,
+  players = 6,
+  rules,
+  policy = "balanced",
+} = {}) {
   let game = createGame(
     {
       players: CHARACTERS.slice(0, players).map((c, i) => ({
@@ -147,13 +228,13 @@ export function simulate({ seed = 1, players = 6 } = {}) {
         flagId: `P${i + 1}`,
       })),
     },
-    { seed },
+    { seed, rules },
   );
   let commands = 0;
   while (game.status === "playing") {
     if (++commands > 2500)
       throw new Error(`simulation did not converge: seed=${seed}`);
-    game = command(game, botAction(game));
+    game = command(game, botAction(game, { policy, seed }));
     for (const p of game.players)
       for (const r of RESOURCES)
         if (!Number.isInteger(p.resources[r]) || p.resources[r] < 0)

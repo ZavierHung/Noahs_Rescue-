@@ -205,11 +205,21 @@ test("invitation consent and immediate two-choose-one technology rules preserve 
   assert.equal(invitation.condition, "对已建立联络的玩家使用。");
   assert.equal(invitation.restriction, "对方可自由选择回应或拒绝。");
   assert.deepEqual(invitation.semantics, {
-    kind: "trade_invitation",
-    requiresContact: true,
+    kind: "nearest_cooperative_grant",
+    nearestCount: 2,
     requiresConsent: true,
+    resourceEach: 1,
+    independentResourceChoice: true,
     retryAfterRejection: true,
   });
+  assert.ok(
+    [...cards.actions, ...cards.technology].every(
+      (c) =>
+        typeof c.implementedEffect === "string" &&
+        c.implementedEffect.length > 10,
+    ),
+  );
+  assert.match(invitation.implementedEffect, /不是交换/);
   assert.equal(
     technology.effect,
     "随机抽取两张科技卡卡牌并选择一张获得对应收益",

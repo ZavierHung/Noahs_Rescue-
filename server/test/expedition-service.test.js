@@ -217,7 +217,7 @@ test("HTTP rejects every non-current actor command without mutations, including 
   assert.equal(game.players[1].resources.metal, 1);
   assert.equal(game.activePlayerId, "P3");
 });
-test("terminal judge sees complete global events, RAG and full persona; one verdict, one rebuttal; game sealed", async (t) => {
+test("terminal judge sees complete evidence; each survivor discusses before finalization and game is sealed", async (t) => {
   const local = await testApi();
   t.after(local.close);
   const { game } = simulate({ seed: 41, players: 3 });
@@ -243,17 +243,56 @@ test("terminal judge sees complete global events, RAG and full persona; one verd
     }),
     result,
   );
+  let reviewed = result;
+  if (reviewed.reviewRemaining.length)
+    await assert.rejects(
+      local.service.action(game.id, {
+        type: "finalize",
+        revision: reviewed.revision,
+      }),
+      /每位幸存/,
+    );
+  const survivors = result.reviewRemaining.length;
+  while (reviewed.reviewRemaining.length) {
+    const actor = reviewed.activePlayerId,
+      revision = reviewed.revision;
+    const replies = await Promise.all([
+      local.service.action(game.id, {
+        type: "discuss",
+        actor,
+        revision,
+        text: "请结合我的实际捐赠与合作记录复核。",
+      }),
+      local.service
+        .action(game.id, { type: "discuss", actor, revision, text: "重复请求" })
+        .catch((e) => e),
+    ]);
+    reviewed = replies[0];
+    assert.match(replies[1].message, /状态已更新/);
+    assert.equal(reviewed.status, "review");
+    assert.equal(reviewed.judgment.final, false);
+    assert.deepEqual(reviewed.ark, result.ark);
+    assert.deepEqual(reviewed.players, result.players);
+    await assert.rejects(
+      local.service.action(game.id, {
+        type: "discuss",
+        actor,
+        revision: reviewed.revision,
+        text: "同一人重复发言",
+      }),
+      /当前幸存/,
+    );
+  }
   const final = await local.service.action(game.id, {
-    type: "rebut",
-    revision: result.revision,
-    text: "请结合我的实际捐赠与合作记录复核。",
+    type: "finalize",
+    revision: reviewed.revision,
   });
   assert.equal(final.status, "finished");
   assert.equal(final.judgment.final, true);
   assert.deepEqual(final.judgment.context, result.judgment.context);
-  assert.equal(final.judgment.history.length, 2);
+  assert.equal(final.judgment.history.length, survivors + 2);
   assert.deepEqual(final.judgment.history[0].verdict, result.judgment.verdict);
-  assert.match(final.judgment.history[1].rebuttal, /合作记录/);
+  if (survivors) assert.match(final.judgment.history[1].rebuttal, /合作记录/);
   await assert.rejects(
     local.service.action(game.id, {
       type: "skip",
@@ -268,7 +307,7 @@ test("terminal judge sees complete global events, RAG and full persona; one verd
       revision: final.revision,
       text: "再来",
     }),
-    /一次/,
+    /结束/,
   );
 });
 test("valid M3 boarding and rebuttal preserve complete decisions without exposing full prompt", async () => {
@@ -307,13 +346,23 @@ test("valid M3 boarding and rebuttal preserve complete decisions without exposin
     random: () => 0,
   });
   game.judgment = await judge(game);
-  const final = await judge(game, { rebuttal: "请核对实际捐赠。" });
-  assert.equal(requests.length, 2);
+  const discussed = await judge(game, {
+    stage: "discussion",
+    playerId: game.players[0].id,
+    text: "请核对实际捐赠。",
+  });
+  assert.equal(discussed.final, false);
+  game.judgment = discussed;
+  const final = await judge(game, { stage: "final" });
+  assert.equal(requests.length, 3);
   assert.equal(requests[0].max_tokens, 3000);
   assert.match(requests[1].messages[0].content[0].text, /请核对实际捐赠/);
   assert.match(requests[1].messages[0].content[0].text, /previous/);
   assert.equal(final.llm.used, true);
-  assert.equal(final.history.length, 2);
+  assert.equal(final.history.length, 3);
+  assert.equal(final.final, true);
+  assert.match(requests[2].messages[0].content[0].text, /请核对实际捐赠/);
+  assert.match(requests[0].system, /不再触发灾难/);
   assert.equal(final.god.prompt, undefined);
 });
 test("boarding validates each player, eligibility, seat limit and real event references", () => {

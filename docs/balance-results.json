@@ -1,0 +1,221 @@
+{
+  "date": "2026-10-29",
+  "target": {
+    "survival": 0.8,
+    "boarding": 0.5,
+    "denominator": "initial six players per match"
+  },
+  "iterations": [
+    {
+      "kind": "calibration",
+      "matches": 100,
+      "seedRange": [
+        1,
+        100
+      ],
+      "policy": "mixed",
+      "selected": {
+        "floodInjuryTolerance": 4,
+        "arkUnitsPerSeat": 18
+      },
+      "projectedMetrics": {
+        "survival": 0.775,
+        "boarding": 0.4916666666666666
+      }
+    },
+    {
+      "kind": "pilot_validation_failed_target",
+      "version": "balance-eval-v1",
+      "mode": "offline; six initial players; local deterministic boarding; no forced survival or selection",
+      "policy": "mixed",
+      "seedRange": [
+        10001,
+        10300
+      ],
+      "matches": 300,
+      "denominator": 1800,
+      "rules": {
+        "version": "boarding-v3",
+        "baseMove": 2,
+        "baseGather": 1,
+        "finalEvacuationSteps": 1,
+        "floodInjuryTolerance": 4,
+        "seedRecovery": 1,
+        "arkUnitsPerSeat": 18,
+        "arkMaxSeats": 6,
+        "invitationNearestCount": 2
+      },
+      "metrics": {
+        "survival": {
+          "mean": 0.7405555555555553,
+          "ci95": [
+            0.7235868317424851,
+            0.7575242793686255
+          ]
+        },
+        "boarding": {
+          "mean": 0.4616666666666665,
+          "ci95": [
+            0.4501686149787775,
+            0.4731647183545555
+          ]
+        },
+        "meanCapacity": 2.7866666666666666
+      },
+      "confidence": "95% normal interval over independent match rates (not individual players)"
+    },
+    {
+      "kind": "retuned_after_pilot",
+      "selected": {
+        "floodInjuryTolerance": 5,
+        "arkUnitsPerSeat": 17
+      },
+      "reason": "Pilot undershot both targets; next independent validation fixed all settings before seed 20001."
+    }
+  ],
+  "finalValidation": {
+    "version": "balance-eval-v1",
+    "mode": "offline; six initial players; local deterministic boarding; no forced survival or selection",
+    "policy": "mixed",
+    "seedRange": [
+      20001,
+      20500
+    ],
+    "matches": 500,
+    "denominator": 3000,
+    "rules": {
+      "version": "boarding-v3",
+      "baseMove": 2,
+      "baseGather": 1,
+      "finalEvacuationSteps": 1,
+      "floodInjuryTolerance": 5,
+      "seedRecovery": 1,
+      "arkUnitsPerSeat": 17,
+      "arkMaxSeats": 6,
+      "invitationNearestCount": 2
+    },
+    "metrics": {
+      "survival": {
+        "mean": 0.8139999999999986,
+        "ci95": [
+          0.8016732088918181,
+          0.8263267911081791
+        ]
+      },
+      "boarding": {
+        "mean": 0.5096666666666665,
+        "ci95": [
+          0.5008604370342724,
+          0.5184728962990606
+        ]
+      },
+      "meanCapacity": 3.066
+    },
+    "confidence": "95% normal interval over independent match rates (not individual players)",
+    "totals": {
+      "survivors": 2442,
+      "boarded": 1529,
+      "commands": 172664,
+      "matchesWithThreeFloods": 500
+    }
+  },
+  "sensitivity": [
+    {
+      "version": "balance-eval-v1",
+      "mode": "offline; six initial players; local deterministic boarding; no forced survival or selection",
+      "policy": "generous",
+      "seedRange": [
+        30001,
+        30040
+      ],
+      "matches": 40,
+      "denominator": 240,
+      "rules": {
+        "version": "boarding-v3",
+        "baseMove": 2,
+        "baseGather": 1,
+        "finalEvacuationSteps": 1,
+        "floodInjuryTolerance": 5,
+        "seedRecovery": 1,
+        "arkUnitsPerSeat": 17,
+        "arkMaxSeats": 6,
+        "invitationNearestCount": 2
+      },
+      "metrics": {
+        "survival": {
+          "mean": 0.6041666666666667,
+          "ci95": [
+            0.5460506183561952,
+            0.6622827149771383
+          ]
+        },
+        "boarding": {
+          "mean": 0.575,
+          "ci95": [
+            0.5282869888242535,
+            0.6217130111757464
+          ]
+        },
+        "meanCapacity": 4.25
+      },
+      "confidence": "95% normal interval over independent match rates (not individual players)"
+    },
+    {
+      "version": "balance-eval-v1",
+      "mode": "offline; six initial players; local deterministic boarding; no forced survival or selection",
+      "policy": "cautious",
+      "seedRange": [
+        30001,
+        30040
+      ],
+      "matches": 40,
+      "denominator": 240,
+      "rules": {
+        "version": "boarding-v3",
+        "baseMove": 2,
+        "baseGather": 1,
+        "finalEvacuationSteps": 1,
+        "floodInjuryTolerance": 5,
+        "seedRecovery": 1,
+        "arkUnitsPerSeat": 17,
+        "arkMaxSeats": 6,
+        "invitationNearestCount": 2
+      },
+      "metrics": {
+        "survival": {
+          "mean": 0.9083333333333332,
+          "ci95": [
+            0.8696285554750399,
+            0.9470381111916265
+          ]
+        },
+        "boarding": {
+          "mean": 0.37916666666666676,
+          "ci95": [
+            0.34220207476940573,
+            0.4161312585639278
+          ]
+        },
+        "meanCapacity": 2.275
+      },
+      "confidence": "95% normal interval over independent match rates (not individual players)"
+    }
+  ],
+  "checks": {
+    "node": 88,
+    "browser": 13,
+    "typecheck": "passed",
+    "productionBuild": "passed",
+    "fullServiceSimulations": 20,
+    "playerConversations": 66,
+    "realLLMCalls": 0,
+    "liveSaveWrites": 0
+  },
+  "limitations": [
+    "Rates are per six initial players, not per survivor.",
+    "Policy is fixed before final validation: 2 generous, 2 balanced, 2 cautious players; seats rotate by seed; no future cards or dice inspected.",
+    "Balance runs use the actual engine and validated offline boarding, not real M3 responses.",
+    "No forcing of survival counts or selecting specific losers; LLM can leave seats empty, human strategy can change rates.",
+    "Target tolerance gate is +/- 5 percentage points; exact 80%/50% is not guaranteed."
+  ]
+}

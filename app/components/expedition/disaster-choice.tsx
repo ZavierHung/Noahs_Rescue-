@@ -1,5 +1,6 @@
 "use client";
 import type { Game, Player, Resource, Catalog } from "@/lib/expedition";
+import { ResourceIcon } from "./resources";
 export function DisasterChoice({
   game: g,
   player: p,
@@ -35,6 +36,7 @@ export function DisasterChoice({
         {resources.map((r) => (
           <button
             key={r}
+            aria-label={`${gain ? "领取" : block ? "支付并阻止" : "交出"}${cat.resources[r]}`}
             disabled={busy || (!gain && !p.resources[r])}
             onClick={() =>
               void act("choose", {
@@ -44,7 +46,7 @@ export function DisasterChoice({
             }
           >
             {gain ? "领取" : block ? "支付并阻止" : "交出"}
-            {cat.resources[r]}
+            <ResourceIcon resource={r} />
           </button>
         ))}
       </div>

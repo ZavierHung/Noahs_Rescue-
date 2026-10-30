@@ -11,6 +11,7 @@ const catalog = JSON.parse(
 const art = JSON.parse(
   readFileSync(new URL("../data/disaster-art.json", import.meta.url), "utf8"),
 );
+const effectSummaries = JSON.parse(readFileSync(new URL("../data/expedition/effect-summaries.json", import.meta.url), "utf8")).disasters;
 export const DISASTER_VERSION = catalog.version;
 export const DISASTERS = Object.fromEntries(
   Object.keys(DIMENSION_LABELS).map((dimension) => [
@@ -25,6 +26,7 @@ export const DISASTERS = Object.fromEntries(
               throw new Error(`灾难卡缺少匹配图片：${card.id}`);
             return {
               ...card,
+              effectSummary: effectSummaries[card.id],
               catalogVersion: catalog.version,
               image: {
                 file: image.file,

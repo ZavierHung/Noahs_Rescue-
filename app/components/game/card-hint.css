@@ -1,0 +1,107 @@
+.card-hint-trigger {
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+  border-radius: 8px;
+}
+.card-hint-trigger:focus-visible {
+  outline: 2px solid #a96d27;
+  outline-offset: 3px;
+}
+.card-effect-tooltip {
+  background: #193438 !important;
+  color: #fff9ec !important;
+  box-shadow: 0 10px 35px #0004;
+  font-family: inherit;
+}
+.card-effect-tooltip p {
+  margin: 5px 0 0;
+}
+.character-grid > .card-hint-trigger {
+  display: flex;
+}
+.character-grid .character-pick {
+  width: 100%;
+}
+.player-roster > article > .card-hint-trigger {
+  display: flex;
+  width: 100%;
+}
+.interaction-heading > .card-hint-trigger {
+  flex-shrink: 0;
+}
+.game-purpose {
+  border: 1px solid #cfbd91;
+  border-radius: 16px;
+  background: #f9f3e6;
+  padding: 20px 24px;
+  margin: 20px 0;
+  color: #293d39;
+}
+.game-purpose h2 {
+  font-size: clamp(20px, 2vw, 27px);
+  margin: 4px 0 12px;
+}
+.game-purpose p {
+  line-height: 1.8;
+  margin: 10px 0;
+}
+.game-purpose small {
+  display: block;
+  line-height: 1.7;
+  color: #596961;
+}
+.academic-current,
+.academic-library {
+  margin: 18px 0;
+  padding: 14px;
+  background: #f4f6ed;
+  border: 1px solid #b6c9ad;
+  border-radius: 12px;
+}
+.academic-current summary,
+.academic-library summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.academic-source {
+  border: 1px solid #c4ccb9;
+  border-radius: 10px;
+  padding: 16px;
+  margin: 12px 0;
+  background: #fffdf6;
+}
+.academic-source h4 {
+  margin: 6px 0;
+}
+.academic-source p {
+  line-height: 1.7;
+}
+.academic-source details {
+  padding-top: 12px;
+}
+.academic-limit {
+  color: #735022;
+}
+.academic-application {
+  background: #eef3e8;
+  padding: 10px 14px;
+  border-left: 3px solid #718b64;
+}
+.academic-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.academic-links a {
+  text-decoration: underline;
+  color: #315e65;
+}
+.academic-hash,
+.academic-evidence pre {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-size: 12px;
+  max-height: 240px;
+  overflow: auto;
+}

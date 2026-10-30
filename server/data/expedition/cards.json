@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "source": {
     "document": "资产合集.docx",
     "archivePath": "word/media",
@@ -17,7 +17,8 @@
     "effect、condition、restriction、note 为卡面原文（仅统一空格与换行）。status 为卡面状态栏的三维分数增减。",
     "科技行动的原文是选一张获得对应收益：选定后生效；条件触发的名刀需保留至洪水触发后弃置。",
     "卡面未规定初始手牌上限、建立联络方式、方舟范围边界、资源池组成、同名非手牌上限科技的叠加细则；这些应由独立规则配置明确，不应假冒卡面原文。",
-    "互助信标中的斗争在本轮用户要求的基本流程之外；保留规则字段，供后续冲突模块使用。"
+    "互助信标中的斗争在本轮用户要求的基本流程之外；保留规则字段，供后续冲突模块使用。",
+    "2026-10-29 运行规则优先使用 implementedEffect；effect 保留原卡面原文。邀约按用户新规则覆盖为最近两名玩家共同领取资源，不再交换。互助信标的物理相邻格交换仍独立执行。"
   ],
   "actions": [
     {
@@ -32,16 +33,19 @@
       "note": "适合用于试探立场或短期合作。",
       "status": {},
       "semantics": {
-        "kind": "trade_invitation",
-        "requiresContact": true,
+        "kind": "nearest_cooperative_grant",
+        "nearestCount": 2,
         "requiresConsent": true,
+        "resourceEach": 1,
+        "independentResourceChoice": true,
         "retryAfterRejection": true
       },
       "width": 1061,
       "height": 1482,
       "image": "/images/expedition/cards/invitation.jpg",
       "sourceImage": "image14.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "选择物理位置最近的两名其他玩家之一（地图直线距离，同距按座位号），自己选一种资源。对方接受时独立选择一种，双方各新增一份；不需要库存，不是交换。接受后消耗邀约卡；拒绝不消耗、不发资源，可重试。社会失序的交易限制不影响此共同领取。"
     },
     {
       "id": "technology",
@@ -64,7 +68,8 @@
       "height": 1039,
       "image": "/images/expedition/cards/technology.jpg",
       "sourceImage": "image15.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "从13种科技等概率、有放回抽两张，选一张立即执行；可在普通行动或洪水/普通卡牌响应时使用，不能打断灾难、生态阻止或终局撤离/审议。不能满足条件可放弃。"
     }
   ],
   "technology": [
@@ -87,7 +92,8 @@
       "height": 1482,
       "image": "/images/expedition/cards/space-ring.jpg",
       "sourceImage": "image30.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "手牌上限改为8；同名被动不叠加，重复选择也不重复改变世界分数。"
     },
     {
       "id": "skateboard-shoes",
@@ -108,7 +114,8 @@
       "height": 1482,
       "image": "/images/expedition/cards/skateboard-shoes.jpg",
       "sourceImage": "image31.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "每个常规移动步骤最多3格（基础2+1），不能叠加；不增强名刀或终局撤离。"
     },
     {
       "id": "famed-blade",
@@ -131,7 +138,8 @@
       "height": 1482,
       "image": "/images/expedition/cards/famed-blade.jpg",
       "sourceImage": "image32.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "洪水缴纳结束后仍处淹没区时额外向内移动0—2格并移除装备。可选择原地；被没收后不再具有逃生资格。"
     },
     {
       "id": "mining-drone",
@@ -154,7 +162,8 @@
       "height": 1483,
       "image": "/images/expedition/cards/mining-drone.jpg",
       "sourceImage": "image33.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "常规采集同种资源额外+1，仍受共享灾难对产量和地块的限制，不叠加。"
     },
     {
       "id": "reserve-crate",
@@ -174,7 +183,8 @@
       "height": 1482,
       "image": "/images/expedition/cards/reserve-crate.jpg",
       "sourceImage": "image34.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "每次洪水尽可能少付一份实际持有物资，优先免额外选扣；没有额外物资时免一份可支付的固定成本；不会倒扣或凭空补偿，按减免后要求计算欠缴伤势。"
     },
     {
       "id": "alchemy-furnace",
@@ -200,7 +210,8 @@
       "height": 1482,
       "image": "/images/expedition/cards/alchemy-furnace.jpg",
       "sourceImage": "image35.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "支付任意两份现有资源，获得三份同种自选资源；本回合随后不能使用邀约（之前已经完成的不回滚），互助信标不受此限制。"
     },
     {
       "id": "aid-beacon",
@@ -225,7 +236,8 @@
       "height": 1483,
       "image": "/images/expedition/cards/aid-beacon.jpg",
       "sourceImage": "image36.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "同格或相邻一格玩家双方各交出一份现有物资，受邀者同意才原子交换；每回合一次，拒绝不计使用。本回合双方不能用机械爪争夺彼此，跨回合保护自动清除。与新版邀约分开。"
     },
     {
       "id": "shared-supply-pod",
@@ -251,7 +263,8 @@
       "height": 1483,
       "image": "/images/expedition/cards/shared-supply-pod.jpg",
       "sourceImage": "image37.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "公开随机生成玩家人数+1份四类等概率资源，从使用者按座位循环每人选一份；剩余一份弃置。领取不是玩家间交易，不受社会失序限制。"
     },
     {
       "id": "ecological-repeller",
@@ -283,7 +296,8 @@
       "height": 1483,
       "image": "/images/expedition/cards/ecological-repeller.jpg",
       "sourceImage": "image38.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "方舟中心安全区以外所有玩家依次弃一份物资或沿合法路径向外一格，禁止主动进入更深洪水。无资源且无合法向外路径时记录无法执行，不锁死回合。"
     },
     {
       "id": "black-tide-alarm",
@@ -310,7 +324,8 @@
       "height": 1483,
       "image": "/images/expedition/cards/black-tide-alarm.jpg",
       "sourceImage": "image39.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "位于河流或相邻水域、河流、洪水及地图边界者依次丢一份资源；无资源丢一张手牌，两者都没有则记零损失。"
     },
     {
       "id": "rapid-prototyper",
@@ -334,7 +349,8 @@
       "height": 1483,
       "image": "/images/expedition/cards/rapid-prototyper.jpg",
       "sourceImage": "image40.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "有放回等概率生成两张行动卡，选一张入手；未选牌回到无限随机牌池。满手需先弃牌，不增加有限牌堆或固定顺序。"
     },
     {
       "id": "ruins-blueprint",
@@ -358,7 +374,8 @@
       "height": 1483,
       "image": "/images/expedition/cards/ruins-blueprint.jpg",
       "sourceImage": "image41.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "只能从实际行动弃牌堆回收一张邀约/科技行动卡；不能回收已使用科技装备。满手先弃牌；弃牌堆为空则记录无收益。"
     },
     {
       "id": "recycling-claw",
@@ -386,7 +403,8 @@
       "height": 1483,
       "image": "/images/expedition/cards/recycling-claw.jpg",
       "sourceImage": "image42.png",
-      "sourceCopies": 1
+      "sourceCopies": 1,
+      "implementedEffect": "同格或相邻一格选一名玩家，按每份物资等概率随机转移其一份；无资源则抽一张行动卡，满手进入弃牌堆。受互助信标双方本轮保护限制。"
     }
   ],
   "backs": {

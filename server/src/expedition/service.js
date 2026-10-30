@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { createGame, command, viewGame } from "./engine.js";
 import { publicCatalog } from "./catalog.js";
+import { requireRule } from "./runtime.js";
+import { judgmentContext, validateBoarding } from "./judgment.js";
+import { gameplayState, recordAction, restoreHistory } from "./history.js";
 
 export function createExpeditionService({ store, judge }) {
   const queues = new Map();
@@ -80,41 +83,78 @@ export function createExpeditionService({ store, judge }) {
             status: 409,
           });
         let updated;
-        if (input.type === "judge" || input.type === "rebut") {
-          if (input.type === "judge" && original.status !== "awaiting_judgment")
-            throw new Error("只能在第八回合结束时审判");
-          if (input.type === "rebut" && original.status !== "review")
-            throw new Error("仅能对初次终局裁决申辩一次");
-          const text =
-            input.type === "rebut" ? String(input.text || "").trim() : "";
-          if (input.type === "rebut" && (!text || text.length > 4000))
-            throw new Error("请填写不超过 4000 字的申辩");
+        if (["undo", "redo"].includes(input.type)) {
+          updated = restoreHistory(original, input);
+        } else if (
+          ["judge", "discuss", "rebut", "finalize"].includes(input.type)
+        ) {
+          const initial = input.type === "judge",
+            final = input.type === "finalize";
+          requireRule(
+            initial
+              ? original.status === "awaiting_judgment"
+              : original.status === "review",
+            initial ? "只能在第八回合结束时审判" : "终局审议已经结束或尚未开始",
+          );
+          const context = judgmentContext(original);
+          const responded = new Set(
+            original.judgment?.conversations?.map((c) => c.playerId) || [],
+          );
+          const remaining = context.players.filter(
+            (p) => p.eligible && !responded.has(p.id),
+          );
+          let text = "",
+            playerId = null;
+          if (final)
+            requireRule(
+              !remaining.length,
+              "请先让每位幸存玩家发言或明确放弃，再进行最终裁决",
+            );
+          else if (!initial) {
+            requireRule(
+              remaining.length && input.actor === remaining[0].id,
+              "请由当前幸存玩家回应，每人只能回应一次",
+            );
+            playerId = input.actor;
+            text = typeof input.text === "string" ? input.text.trim() : "";
+            requireRule(
+              input.waive === true || (text.length > 0 && text.length <= 4000),
+              "请填写不超过 4000 字的发言，或明确放弃",
+            );
+          }
           updated = structuredClone(original);
-          updated.judgment = await judge(original, { rebuttal: text });
-          updated.status = input.type === "rebut" ? "finished" : "review";
+          updated.judgment = await judge(gameplayState(original), {
+            stage: initial ? "initial" : final ? "final" : "discussion",
+            playerId,
+            text,
+            waive: input.waive === true,
+          });
+          // A model/custom adapter can only return a validated list, never gameplay mutations.
+          updated.judgment.verdict = validateBoarding(
+            updated.judgment.verdict,
+            context,
+            updated.judgment.rag?.evidence || [],
+          );
+          updated.status = final ? "finished" : "review";
+          updated.judgment.final = final;
+          // Release checkpoints only after a successful, validated judgment.
+          updated.historyState = { version: 1, undo: [], redo: [] };
           updated.revision++;
           updated.events.push({
             seq: updated.events.length + 1,
             round: 8,
-            actor: "god",
-            type: input.type,
+            actor: playerId || "god",
+            type: initial ? "judge" : final ? "finalize" : "discussion",
+            text: text || null,
+            waived: input.waive === true,
             detail: updated.judgment.verdict.statement,
           });
-        } else if (input.type === "finalize") {
-          if (original.status !== "review")
-            throw new Error("尚无可确认的终局裁决");
-          updated = structuredClone(original);
-          updated.status = "finished";
-          updated.judgment.final = true;
-          updated.revision++;
-          updated.events.push({
-            seq: updated.events.length + 1,
-            round: 8,
-            actor: "system",
-            type: "finalize",
-            detail: "确认终局登舟名单",
-          });
-        } else updated = command(original, input);
+        } else
+          updated = recordAction(
+            original,
+            command(gameplayState(original), input),
+            input,
+          );
         return transaction((data) => {
           const index = data.games.findIndex((g) => g.id === id);
           if (data.games[index].revision !== original.revision)

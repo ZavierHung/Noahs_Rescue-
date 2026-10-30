@@ -7,7 +7,7 @@ import { createExpeditionService } from "../../server/src/expedition/service.js"
 import { createExpeditionHandler } from "../../server/src/expedition/http.js";
 import { createBoardingJudge } from "../../server/src/expedition/judgment.js";
 import { createGodRepository } from "../../server/src/god-repository.js";
-import { createLocalRetriever } from "../../server/src/rag.js";
+import { createAcademicRetriever } from "../../server/src/academic/retriever.js";
 export async function testApi() {
   const directory = await mkdtemp(path.join(tmpdir(), "noah-expedition-test-"));
   const data = new URL("../../server/data/", import.meta.url).pathname;
@@ -15,7 +15,7 @@ export async function testApi() {
   // No env loading, no model construction: all tests are strictly offline.
   const judge = createBoardingJudge({
     godRepository: createGodRepository(data),
-    retriever: await createLocalRetriever(path.join(data, "knowledge.json")),
+    retriever: await createAcademicRetriever(),
     random: () => 0,
   });
   const service = createExpeditionService({ store, judge }),

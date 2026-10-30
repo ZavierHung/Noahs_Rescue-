@@ -2,6 +2,7 @@ export type Disaster = {
   id: string;
   name: string;
   effect: string;
+  effectSummary?: string;
   dimension: "economy" | "environment" | "society";
   dimensionLabel: string;
   band: string;

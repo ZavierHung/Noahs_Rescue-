@@ -88,7 +88,7 @@ export default function LegacyWorldLab() {
   const [apiConnected, setApiConnected] = useState(false);
   const [error, setError] = useState('');
   const [knowledgeMeta, setKnowledgeMeta] = useState({ model: 'local-hash-256', documents: 8 });
-  const [llmMeta, setLlmMeta] = useState({ provider: 'minimax', model: 'MiniMax-M3.0', enabled: false });
+  const [llmMeta, setLlmMeta] = useState({ provider: 'minimax', model: 'MiniMax-M3', enabled: false });
 
   useEffect(() => {
     Promise.all([api.health(), api.state(), api.judgments()])

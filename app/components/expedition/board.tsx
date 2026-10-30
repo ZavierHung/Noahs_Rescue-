@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { Catalog, Game, Tile } from "@/lib/expedition";
+import { ResourceSvg } from "./resources";
 const colors = [
   "#f9c668",
   "#8bcbe6",
@@ -9,7 +10,6 @@ const colors = [
   "#b5a5e1",
   "#f6df95",
 ];
-const symbols = { wood: "木", metal: "金", electricity: "电", seed: "种" };
 export function Board({
   catalog,
   game,
@@ -123,11 +123,32 @@ export function Board({
                 }
                 strokeWidth={selected === t.id ? 3 : 1}
               />
-              {grid && t.resource && !wet && (
-                <text className="map-resource" x={t.x} y={t.y + 5}>
-                  {exhausted ? "×" : symbols[t.resource]}
-                </text>
-              )}
+              {grid &&
+                t.resource &&
+                !wet &&
+                (exhausted ? (
+                  <text className="map-resource" x={t.x} y={t.y + 5}>
+                    ×
+                  </text>
+                ) : (
+                  <g pointerEvents="none" aria-hidden="true">
+                    <circle
+                      cx={t.x}
+                      cy={t.y}
+                      r={10}
+                      fill="#fff7df"
+                      fillOpacity=".92"
+                    />
+                    <ResourceSvg
+                      resource={t.resource}
+                      className={`resource-${t.resource}`}
+                      x={t.x - 9}
+                      y={t.y - 9}
+                      width={18}
+                      height={18}
+                    />
+                  </g>
+                ))}
             </g>
           );
         })}

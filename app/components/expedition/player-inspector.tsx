@@ -1,5 +1,7 @@
 "use client";
 import type { Bag, Catalog, Player, Resource } from "@/lib/expedition";
+import { ResourceIcon } from "./resources";
+import { CardHint } from "../game/card-hint";
 
 type Props = {
   player: Player;
@@ -19,7 +21,9 @@ export function PlayerInspector({ player, catalog, onPreview }: Props) {
         <dl>
           {resources.map((resource) => (
             <div key={resource}>
-              <dt>{catalog.resources[resource]}</dt>
+              <dt>
+                <ResourceIcon resource={resource} />
+              </dt>
               <dd>{value[resource]}</dd>
             </div>
           ))}
@@ -31,15 +35,17 @@ export function PlayerInspector({ player, catalog, onPreview }: Props) {
     const card = cards.find((c) => c.id === id);
     return card ? (
       <div key={key} className="inspection-card">
-        <button
-          className="art-button"
-          aria-label={`查看${card.name}卡面`}
-          onClick={() => onPreview(card)}
-        >
-          <img src={card.image} alt={card.name} />
-        </button>
+        <CardHint card={card}>
+          <button
+            className="art-button"
+            aria-label={`查看${card.name}卡面`}
+            onClick={() => onPreview(card)}
+          >
+            <img src={card.image} alt={card.name} />
+          </button>
+        </CardHint>
         <strong>{card.name}</strong>
-        <p>{card.effect}</p>
+        <p>{card.implementedEffect || card.effect}</p>
       </div>
     ) : (
       <p key={key}>未知卡牌：{id}</p>
@@ -53,13 +59,15 @@ export function PlayerInspector({ player, catalog, onPreview }: Props) {
       <p className="overline">{player.id} / 只读查看</p>
       <div className="inspection-identity">
         {character && (
-          <button
-            className="art-button"
-            aria-label="查看角色卡面"
-            onClick={() => onPreview(character)}
-          >
-            <img src={character.image} alt={character.name} />
-          </button>
+          <CardHint card={character}>
+            <button
+              className="art-button"
+              aria-label="查看角色卡面"
+              onClick={() => onPreview(character)}
+            >
+              <img src={character.image} alt={character.name} />
+            </button>
+          </CardHint>
         )}
         <div>
           <h2>{player.name}</h2>
@@ -76,6 +84,11 @@ export function PlayerInspector({ player, catalog, onPreview }: Props) {
       </p>
       {inventory("持有资源", player.resources)}
       {inventory("累计捐赠", player.donated)}
+      <p className="inspection-note">
+        伤势 {player.survivalPreview.injury}；种子救生后{" "}
+        {player.survivalPreview.remainingInjury} / 耐受{" "}
+        {player.survivalPreview.tolerance}。生存资格以终局统一结算为准。
+      </p>
       <div className="hand-heading">
         <h3>手牌</h3>
         <small>

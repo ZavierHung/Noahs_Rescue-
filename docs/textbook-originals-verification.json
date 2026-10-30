@@ -1,0 +1,172 @@
+{
+  "reviewedAt": "2026-10-30",
+  "libraryVersion": "academic-zh-v2.0",
+  "libraryHash": "77d90ce65ba97c3f769f7bbb38c44943550348070f70e6cd12531698934f9139",
+  "scope": "新增12份教学来源：11教材及1课程指南。3份PDF本地归档，8份网页章节与1份大型作者PDF仅保留外链。只核读入库观点相关段落并渲染抽查PDF关键页，不是整书翻译或全文审校。原10份PDF核验保留在academic-originals-verification.json。",
+  "archiveCount": 3,
+  "externalCount": 9,
+  "sources": [
+    {
+      "id": "mankiw-principles-2015",
+      "kind": "textbook",
+      "workId": "mankiw-principles-of-economics",
+      "edition": "第7版；所核读材料为出版社第10章配套教学讲义",
+      "originalFormat": "pdf",
+      "originalUrl": "https://www.cengage.com/resource_uploads/downloads/128516587X_429108.pdf",
+      "status": "available",
+      "pages": 12,
+      "pdfPagesVisuallyChecked": [
+        6,
+        12
+      ],
+      "sha256": "24a169de3d4eb319f25c484823eab6d4b05047a2025ab56a4a0ec26e95426ad9",
+      "bytes": 213211,
+      "downloadUrl": "https://www.cengage.com/resource_uploads/downloads/128516587X_429108.pdf",
+      "provenance": "recorded_download",
+      "verification": "2026-10-30：实际下载并读取 Cengage 官方12页讲义，渲染核对第6、12页；它是有课堂留空的配套讲义，不是教材全文。只概括完整可读段落，不补写留空内容。",
+      "rights": "Cengage 保留版权。保存独立概念说明及官方链接；原件只用于本地核验，不默认获得公开再分发或全文翻译授权，发行前复核许可。"
+    },
+    {
+      "id": "core-economy-2022",
+      "kind": "textbook",
+      "workId": "core-the-economy",
+      "edition": "The Economy 1.0，在线版本1.14.1；该教材初版于2017年出版，本条使用2022版权在线版",
+      "originalFormat": "web",
+      "originalUrl": "https://books.core-econ.org/the-economy-v1/book/text/05.html",
+      "status": "external",
+      "verification": "2026-10-30：核读 CORE 官方完整网页的5.1–5.3节及版权页；明确区分帕累托效率、结果公平、程序公平和规则赋予的议价权。未依据目录推断结论。",
+      "rights": "官方在线版为 CC BY-NC-ND 4.0。这里只存独立概念说明与官方原文链接，不复制或逐段翻译章节、不分发改写原书；商业发行及其他再利用需另行复核。"
+    },
+    {
+      "id": "bowles-halliday-2022",
+      "kind": "textbook",
+      "workId": "bowles-halliday-microeconomics",
+      "edition": "第1版；作者公开的 OUP final corrected proof，正文页眉标2021校样日期、版权页标2022",
+      "originalFormat": "link",
+      "originalUrl": "https://simondhalliday.com/microeconomics/bowleshalliday_final_2022.pdf",
+      "status": "external",
+      "verification": "2026-10-30：从作者网站实际下载1072页、约64MB的公开校样PDF，核对版权页、版本和5.12节全文，渲染核对PDF第297页。因大于现有30MB归档上限，默认保留外部原件链接，不冒充已入游戏本地原件目录。",
+      "rights": "作者允许公开阅读下载的原件仍标 All rights reserved，并非开放再分发许可。知识库只保存独立概念说明与作者链接；不打包全文、不逐段译介，发行前复核版权。"
+    },
+    {
+      "id": "curtis-irvine-2021",
+      "kind": "textbook",
+      "workId": "curtis-irvine-principles-microeconomics",
+      "edition": "Version 2021 — Revision A，2021年3月15日",
+      "originalFormat": "web",
+      "originalUrl": "https://socialsci.libretexts.org/Bookshelves/Economics/Microeconomics/Principles_of_Microeconomics_(Curtis_and_Irvine)/03:_Decision_Making_by_Consumer_and_Producers/07:_Firms_investors_and_capital_markets",
+      "status": "external",
+      "verification": "2026-10-30：从 eCampusOntario 托管的2021A版原PDF核对作者、版次、日期和许可；实读 LibreTexts 署名转载的第7章完整HTML，核对7.3–7.4节及风险组合表。未把另一作者同名 Pressbooks 教材混作本书。",
+      "rights": "2021A原PDF标 CC BY-NC-SA 3.0；LibreTexts转载页标 CC BY-NC-SA 4.0，应按具体使用版本分别保留署名与许可。这里保存独立概念说明及合法原文链接；商业发行须复核非商业限制。"
+    },
+    {
+      "id": "perman-textbook-2011",
+      "kind": "textbook",
+      "workId": "perman-natural-resource-environmental-economics",
+      "edition": "第4版；本次核验出版社公开第1章样章",
+      "originalFormat": "pdf",
+      "originalUrl": "https://www.pearsonhighered.com/assets/samplechapter/0/3/2/1/0321417534.pdf",
+      "status": "available",
+      "pages": 15,
+      "pdfPagesVisuallyChecked": [
+        3,
+        4,
+        11,
+        12,
+        13
+      ],
+      "sha256": "068593994aadbb1bf924d39175ccb08d02de5ac5b45a78d0939883d75dcf7eb8",
+      "bytes": 103593,
+      "downloadUrl": "https://www.pearsonhighered.com/assets/samplechapter/0/3/2/1/0321417534.pdf",
+      "provenance": "recorded_download",
+      "verification": "2026-10-30：实际阅读Pearson官方第1章样章中效率与最优的区分、代际要求、存量与流量、替代性及不可逆性段落；另用Pearson封面及作者大学记录核对第4版。15页样章已本地归档，渲染检查PDF第3、4、11–13页；第4、11–13页印刷页码与PDF页码一致。不是整书审校，未核验第13章数学推导。",
+      "rights": "Pearson保留版权。只采用自行撰写的概念说明和短摘录，并链接官方公开样章；公开可下载不代表可随游戏分发整章。部署、商业用途及向模型提供材料前应复核适用授权。"
+    },
+    {
+      "id": "freedman-textbook-2018",
+      "kind": "textbook",
+      "workId": "freedman-environmental-science",
+      "edition": "2018年大学开放数字版；序言说明以第6版内容编排",
+      "originalFormat": "web",
+      "originalUrl": "https://digitaleditions.library.dal.ca/environmentalscience/chapter/chapter-12-resources-and-sustainable-development/",
+      "status": "external",
+      "verification": "2026-10-30：阅读大学官方开放正文中最大可持续产量、预防性采收、超采与更新管理段落；核对大学书籍元数据中的2018-08-27发布日期、作者和CC BY-NC4.0许可。核验的是上述小节，不是整本书。",
+      "rights": "大学页面标注CC BY-NC4.0，第三方内容除外。可保留署名及许可链接供本地非商业教学查阅；商业发行需另行复核或取得授权。当前归档对象建议是所读HTML章，不冒称已保存整书PDF。"
+    },
+    {
+      "id": "theis-tomkin-textbook-2015",
+      "kind": "textbook",
+      "workId": "theis-tomkin-sustainability-comprehensive-foundation",
+      "edition": "开放教材修订版；本次阅读Lumen/SUNY版所注明的CNX集合44.1，不冒称商业第2版",
+      "originalFormat": "web",
+      "originalUrl": "https://courses.lumenlearning.com/suny-sustainability-a-comprehensive-foundation/chapter/biosphere-chapter-introduction/",
+      "status": "external",
+      "verification": "2026-10-30：实际阅读Lumen/SUNY完整导言正文及页面许可。页面明确署名Theis/Tomkin并指向CNX44.1，CC BY链接解析为4.0；2015修订年份参考大学开放教材目录。初版2012与后续集合修订不能混为同一版本；所读正文不是当前OpenStax Biology。",
+      "rights": "所读Lumen页面标注CC BY并链接CC BY4.0，需署名、保留链接并说明中文概念说明为重新编写；插图等第三方内容单独核对。本次仅使用明确开放授权的教学页面，不导入当前OpenStax受限版本。整本不同镜像较大且版本不一，宜先归档所读HTML。"
+    },
+    {
+      "id": "taylor-teaching-guide-2023",
+      "kind": "teaching_guide",
+      "workId": "taylor-regulations-and-environment",
+      "edition": "2023年大学环境科学课程开放教学指南；网页未标数字版次，不是法律教科书",
+      "originalFormat": "web",
+      "originalUrl": "https://pressbooks.openeducationalberta.ca/mruenvregs/chapter/chapter-2-principles/",
+      "status": "external",
+      "verification": "2026-10-30：实际阅读大学发布的上述四节及导言警示；核对作者、2023-05-05出版日期、大学出版社、DOI和CC BY-NC4.0许可。原PDF共268页；本条只核验概念小节，不把2023年法律状态当作当前法律。",
+      "rights": "CC BY-NC4.0，注明例外的第三方内容除外。可供本地非商业教学，商业发行需另行审查或获授权；归档所读HTML时保留作者和许可。只写原则说明，不复刻整章，也不提供现实个案法律结论。"
+    },
+    {
+      "id": "little-sociology-2023",
+      "kind": "textbook",
+      "workId": "little-introduction-sociology",
+      "edition": "3rd Canadian Edition",
+      "originalFormat": "web",
+      "originalUrl": "https://opentextbc.ca/introductiontosociology3rdedition/chapter/9-1-what-is-social-inequality/",
+      "status": "external",
+      "verification": "2026-10-30：核对出版社书目、2023-09-07出版日期、第三加拿大版、CC BY 4.0许可；实际阅读§9.1分层及机会平等段、§5.1米德角色学习段。不是全书审校。",
+      "rights": "本版正文CC BY 4.0，允许署名后的再利用和改编；说明中文内容为游戏编者转述。封面及部分第三方图片有独立许可，不随正文批量复制。可保存所读章节HTML原件。"
+    },
+    {
+      "id": "jhangiani-tarry-social-2022",
+      "kind": "textbook",
+      "workId": "jhangiani-tarry-principles-social-psychology",
+      "edition": "1st International H5P Edition",
+      "originalFormat": "web",
+      "originalUrl": "https://opentextbc.ca/socialpsychology/chapter/conflict-cooperation-morality-and-fairness/",
+      "status": "external",
+      "verification": "2026-10-30：核对2022-01-26 H5P版书目及版本许可；实际阅读§12.1分配公平、程序公平、责怪受害者段，§8.3注意、解释、责任分散段。未把经典案例早期失实报道作为事实引用。",
+      "rights": "本版整体标CC BY-NC-SA 4.0；从原教材改编的部分保留CC BY-NC-SA 3.0，新补充内容另有CC BY 4.0。非商业教学原型须署名并保留相应许可；商业发行前复核或替换受限材料。可保存章节HTML，不复制第三方图片。"
+    },
+    {
+      "id": "rebus-ethics-2019",
+      "kind": "textbook",
+      "workId": "rebus-introduction-philosophy-ethics",
+      "edition": "2019开放教材版",
+      "originalFormat": "web",
+      "originalUrl": "https://press.rebus.community/intro-to-phil-ethics/chapter/utilitarianism/",
+      "status": "external",
+      "verification": "2026-10-30：核对出版社书目、2019-12-09出版日期、作者编辑及CC BY 4.0许可；实际阅读第5章正文和第6章导论/义务论段。官方数字PDF118页及目录已确认，本条保留已读HTML原文链接，不宣称已本地归档或全书审校。",
+      "rights": "正文CC BY 4.0，允许署名后的改编与再利用；保留分章作者和教材出处，标明中文说明由游戏编者整理。图片和引文中的第三方材料需分别核对，不整包复制。"
+    },
+    {
+      "id": "anderies-janssen-commons-2013",
+      "kind": "textbook",
+      "workId": "anderies-janssen-sustaining-commons",
+      "edition": "Version 1.0, May 2013",
+      "originalFormat": "pdf",
+      "originalUrl": "https://dlc.dlib.indiana.edu/dlcrest/api/core/bitstreams/5b370c03-7a9c-4a6a-91f0-688db1085a05/content",
+      "status": "available",
+      "pages": 180,
+      "pdfPagesVisuallyChecked": [
+        106,
+        114
+      ],
+      "sha256": "8f9336e1cad0d1e74e563ecb471c0fcf2b8ff0a04eedbbfc739737afc3449b31",
+      "bytes": 17644764,
+      "downloadUrl": "https://dlc.dlib.indiana.edu/dlcrest/api/core/bitstreams/5b370c03-7a9c-4a6a-91f0-688db1085a05/content",
+      "provenance": "recorded_download",
+      "verification": "2026-10-30：Indiana University Digital Library of the Commons公开原PDF已本地归档，180页；核对2013年5月v1.0版权页，实读§9.3.1、§9.4开头、§9.7–9.8，并渲染核验PDF第106和114页。正式归档记录保存SHA-256及实际下载地址；不是全书审校。",
+      "rights": "原书CC BY-NC-ND 3.0，仅按许可保留不改动的非商业研究原件；不提供原书逐段翻译或改编版，originalExcerpt留空。中文为独立概念说明，不复制作者表达。公开部署、商业发行及进一步改编前需复核许可或取得授权。"
+    }
+  ]
+}

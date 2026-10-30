@@ -11,6 +11,7 @@ import { createGodRepository } from './god-repository.js';
 import { createExpeditionService } from './expedition/service.js';
 import { createExpeditionHandler } from './expedition/http.js';
 import { createBoardingJudge } from './expedition/judgment.js';
+import { createAcademicRetriever } from './academic/retriever.js';
 
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url));
 const dataDirectory = process.env.GAME_DATA_DIR || path.resolve(sourceDirectory, '../data');
@@ -20,7 +21,8 @@ await godRepository.list();
 const retriever = await createLocalRetriever(path.join(dataDirectory, 'knowledge.json'));
 const verdictModel = createMiniMaxVerdictModel(process.env.GAME_LLM_MODE === 'mock' ? { apiKey: '' } : {});
 const agentLoop = createAgentLoop({ godRepository, retriever, verdictModel });
-const expeditionService = createExpeditionService({store,judge:createBoardingJudge({godRepository,retriever,verdictModel})});
+const academicRetriever = await createAcademicRetriever();
+const expeditionService = createExpeditionService({store,judge:createBoardingJudge({godRepository,retriever:academicRetriever,verdictModel})});
 const expeditionHandler = createExpeditionHandler(expeditionService);
 const port = Number(process.env.GAME_API_PORT || 8787);
 const DEFAULT_STATE = {
@@ -68,7 +70,7 @@ const server = createServer(async (request, response) => {
     if (await expeditionHandler(request, url, { send, bodyOf })) return;
 
     if (request.method === 'GET' && url.pathname === '/api/health') {
-      return send(response, 200, { ok: true, rag: { model: retriever.model, documents: retriever.size }, llm: verdictModel.describe(), godPrompts: await godRepository.describe(), persistence: 'json' });
+      return send(response, 200, { ok: true, rag: { model: retriever.model, documents: retriever.size }, boardingRag: academicRetriever.describe(), llm: verdictModel.describe(), godPrompts: await godRepository.describe(), persistence: 'json' });
     }
 
     if (request.method === 'GET' && url.pathname === '/api/state') {

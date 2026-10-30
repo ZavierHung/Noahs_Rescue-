@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import "./disaster-cards.css";
+import { CardHint } from "./card-hint";
 
 const bands: Record<string, string> = {
   criticalLow: "极低叠加 · 1—2",
@@ -63,15 +64,17 @@ export function DisasterCards({
             data-disaster-id={card.id}
           >
             {card.image && (
-              <button
-                type="button"
-                className="disaster-art-button"
-                aria-label={`查看${card.name}卡牌大图`}
-                onClick={() => setSelected(card)}
-              >
-                <CardArt card={card} />
-                <span>点击放大 ↗</span>
-              </button>
+              <CardHint card={card}>
+                <button
+                  type="button"
+                  className="disaster-art-button"
+                  aria-label={`查看${card.name}卡牌大图`}
+                  onClick={() => setSelected(card)}
+                >
+                  <CardArt card={card} />
+                  <span>点击放大 ↗</span>
+                </button>
+              </CardHint>
             )}
             <div className="disaster-copy">
               <span className="disaster-band">
@@ -79,7 +82,7 @@ export function DisasterCards({
                 {bands[card.band] || card.band}
               </span>
               <h3>{card.name}</h3>
-              <p>{card.effect}</p>
+              <p>{card.effectSummary || card.effect}</p>
             </div>
           </article>
         ))}
@@ -107,8 +110,13 @@ export function DisasterCards({
           </DialogDescription>
           {selected && (
             <>
-              <CardArt key={selected.id} card={selected} large />
-              <p className="disaster-full-effect">{selected.effect}</p>
+              <CardHint card={selected}>
+                <CardArt key={selected.id} card={selected} large />
+              </CardHint>
+              <p className="disaster-full-effect">
+                本版实际规则：{selected.effectSummary || selected.effect}
+              </p>
+              <p>卡面原文：{selected.effect}</p>
             </>
           )}
         </DialogContent>

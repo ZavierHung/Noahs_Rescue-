@@ -366,9 +366,10 @@ test("social disorder rejects nonadjacent transactions, but never blocks ark don
   g.players[0].resources.wood = 2;
   g.players[1].resources.metal = 2;
   g.players[0].hand = [{ id: "invitation", uid: "invite" }];
+  g.players[0].equipment = ["aid-beacon"];
   assert.throws(
     () =>
-      act(g, "play", {
+      act(g, "beacon", {
         cardUid: "invite",
         targetId: "P2",
         give: { wood: 1 },
@@ -482,7 +483,8 @@ test("drift during a pending trade revalidates adjacency at acceptance and still
   g.players[0].resources.wood = 3;
   g.players[1].resources.metal = 3;
   g.players[0].hand = [{ id: "invitation", uid: "invite" }];
-  g = act(g, "play", {
+  g.players[0].equipment = ["aid-beacon"];
+  g = act(g, "beacon", {
     cardUid: "invite",
     targetId: "P2",
     give: { wood: 1 },

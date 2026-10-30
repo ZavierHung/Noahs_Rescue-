@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { MAP, TILES, FLAGS } from "./map.js";
+import { DEFAULT_RULES } from "./rules.js";
 const read = (name) =>
   JSON.parse(
     readFileSync(
@@ -8,7 +9,14 @@ const read = (name) =>
     ),
   );
 export const CARDS = read("cards");
-export const CHARACTERS = read("characters").characters;
+export const EFFECT_SUMMARIES = read("effect-summaries");
+for (const card of [...CARDS.actions, ...CARDS.technology])
+  card.effectSummary = EFFECT_SUMMARIES.cards[card.id];
+export const CHARACTERS = read("characters").characters.map((c) => ({
+  ...c,
+  implementedEffect: EFFECT_SUMMARIES.character,
+  effectSummary: EFFECT_SUMMARIES.character,
+}));
 export const RESOURCES = ["wood", "metal", "electricity", "seed"];
 export const LABELS = {
   wood: "木头",
@@ -21,8 +29,15 @@ export const publicCatalog = () => ({
   cards: CARDS,
   characters: CHARACTERS,
   resources: LABELS,
+  floodCard: {
+    name: "洪水上涨追踪",
+    image: "/images/expedition/flood.jpg",
+    implementedEffect: EFFECT_SUMMARIES.flood,
+    effectSummary: EFFECT_SUMMARIES.flood,
+  },
   map: { ...MAP, tiles: TILES, flags: FLAGS },
   rules: {
+    balance: DEFAULT_RULES,
     disasterPolicy: read("disaster-rules"),
     rounds: 8,
     floodRounds: [3, 5, 7],

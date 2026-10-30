@@ -9,7 +9,17 @@ import {
   distance,
 } from "./map.js";
 import { bag, sum, random, log, requireRule } from "./runtime.js";
+import { gameplayState, historyView } from "./history.js";
 import { resolveDisasters } from "../catalog.js";
+import {
+  DEFAULT_RULES,
+  validateRules,
+  rulesFor,
+  arkCapacity,
+  survivalState,
+  floodInjury,
+  invitationTargets,
+} from "./rules.js";
 import {
   DIMENSIONS,
   active,
@@ -48,6 +58,7 @@ const ACTION_NAMES = {
   blade_move: "名刀逃生",
   set_world: "手动调节世界",
   confirm_protection: "确认资源保护条件",
+  evacuate: "终局紧急撤离",
 };
 const PHASE_NAMES = {
   cards: "出牌",
@@ -58,8 +69,16 @@ const PHASE_NAMES = {
   flood: "洪水",
   judgment: "审判",
   disaster: "灾难结算",
+  evacuation: "终局紧急撤离",
 };
 const pick = (g, rows) => rows[Math.floor(random(g) * rows.length)];
+function snapshotNewEvents(g, start = 0) {
+  // structuredClone(game) preserves aliases *inside* the object graph. Detach
+  // each newly committed event from live state, command inputs, and other logs
+  // so later equipment/card/resource changes cannot rewrite historical facts.
+  for (let i = start; i < g.events.length; i++)
+    g.events[i] = structuredClone(g.events[i]);
+}
 function add(p, resource, amount) {
   requireRule(RESOURCES.includes(resource), "无效资源");
   p.resources[resource] += amount;
@@ -118,6 +137,30 @@ function turnStart(g) {
 }
 function nextRound(g) {
   if (g.round === 8) {
+    if (!g.evacuationStarted && rulesFor(g).finalEvacuationSteps > 0) {
+      g.evacuationStarted = true;
+      const remaining = g.players
+        .filter((p) => flooded(tileById(p.position), g.floodLevel))
+        .map((p) => p.id);
+      if (remaining.length) {
+        g.pending = { kind: "evacuation", actor: remaining[0], remaining };
+        g.phase = "evacuation";
+        log(
+          g,
+          "system",
+          "evacuation_start",
+          `终局最后撤离：受困者各移动最多 ${rulesFor(g).finalEvacuationSteps} 格，随后结算生存；不能使用新卡牌`,
+        );
+        return;
+      }
+    }
+    g.pending = null;
+    for (const p of g.players) {
+      p.survival = survivalState(g, p);
+      p.resources.seed -= p.survival.seedsUsed;
+      log(g, p.id, "survival", p.survival.reason, { ...p.survival });
+    }
+    g.seats = arkCapacity(g).seats;
     g.status = "awaiting_judgment";
     g.phase = "judgment";
     log(g, "system", "game_end", "八回合结束，封存全局日志，等待上帝审判");
@@ -208,8 +251,9 @@ function settleWorld(g) {
 }
 export function createGame(
   input,
-  { id = "EXP-local", seed = Date.now() >>> 0 } = {},
+  { id = "EXP-local", seed = Date.now() >>> 0, rules = DEFAULT_RULES } = {},
 ) {
+  validateRules(rules);
   requireRule(
     Array.isArray(input.players) &&
       input.players.length >= 1 &&
@@ -238,6 +282,7 @@ export function createGame(
       position: flag.tileId,
       spawn: flag.id,
       resources: bag(),
+      floodInjury: 0,
       worldImpact: { economy: 0, environment: 0, society: 0 },
       hand: [],
       equipment: [],
@@ -262,7 +307,8 @@ export function createGame(
     cardCounter: 0,
     players,
     ark: bag(),
-    seats,
+    seats: 0,
+    rules: structuredClone(rules),
     floodLevel: 0,
     discard: [],
     pending: null,
@@ -280,15 +326,50 @@ export function createGame(
       spawn: p.spawn,
       position: p.position,
     })),
-    seats,
+    capacity: arkCapacity(g),
+    rules: g.rules,
   });
   for (const p of players) draw(g, p);
+  snapshotNewEvents(g);
   return g;
 }
 function nearby(a, b) {
   return (
     a.id !== b.id && distance(tileById(a.position), tileById(b.position)) <= 1
   );
+}
+function tradeResponseReason(g, pending) {
+  const owner = playerAt(g, pending.owner),
+    recipient = playerAt(g, pending.actor);
+  if (!owner || !recipient || !nearby(owner, recipient))
+    return "位置已变化：交易双方必须同格或相邻，可以拒绝本次交易";
+  if (
+    pending.beacon
+      ? !has(owner, "aid-beacon") || owner.roundFlags.beacon
+      : !owner.hand.some(
+          (c) => c.uid === pending.cardUid && c.id === "invitation",
+        )
+  )
+    return "邀约卡或互助信标已失效，可以拒绝本次交易";
+  if (!canPay(owner, pending.give) || !canPay(recipient, pending.receive))
+    return "交易双方资源不足，可以拒绝本次交易";
+  return "";
+}
+function invitationResponseReason(g, pending) {
+  const owner = playerAt(g, pending.owner);
+  if (
+    !owner ||
+    !invitationTargets(g, owner).some(
+      (t) => t.playerId === pending.actor && t.eligible,
+    )
+  )
+    return "位置已变化：对方不再属于最近两名玩家，可拒绝本次邀约";
+  if (
+    owner.roundFlags.noInvite ||
+    !owner.hand.some((c) => c.uid === pending.cardUid && c.id === "invitation")
+  )
+    return "邀约卡或本回合邀约资格已失效，可以拒绝";
+  return "";
 }
 function technology(g, p, id, input) {
   const card = getTech(id);
@@ -504,21 +585,46 @@ function resolveChoice(g, p, input) {
         );
       }
     }
+  } else if (pending.kind === "invitation") {
+    const owner = playerAt(g, pending.owner);
+    requireRule(typeof input.accept === "boolean", "请选择接受或拒绝");
+    if (input.accept) {
+      const reason = invitationResponseReason(g, pending);
+      requireRule(!reason, reason);
+      requireRule(RESOURCES.includes(input.resource), "请选择你想获得的资源");
+      add(owner, pending.resource, 1);
+      add(p, input.resource, 1);
+      g.discard.push(
+        ...owner.hand.splice(
+          owner.hand.findIndex((c) => c.uid === pending.cardUid),
+          1,
+        ),
+      );
+      log(
+        g,
+        owner.id,
+        "invitation_accept",
+        `${p.name}接受邀约，双方各获得一份自选资源（非交换）`,
+        {
+          targetId: p.id,
+          ownerResource: pending.resource,
+          recipientResource: input.resource,
+        },
+      );
+    } else
+      log(
+        g,
+        p.id,
+        "invitation_reject",
+        "拒绝邀约，双方不获资源、不消耗卡，可重新邀请",
+        { owner: owner.id },
+      );
+    restore(g, pending);
   } else if (pending.kind === "trade") {
     const owner = playerAt(g, pending.owner);
     if (input.accept === true) {
-      requireRule(
-        nearby(owner, p),
-        "位置已变化：交易双方必须同格或相邻，可以拒绝本次交易",
-      );
-      requireRule(
-        pending.beacon
-          ? has(owner, "aid-beacon") && !owner.roundFlags.beacon
-          : owner.hand.some(
-              (c) => c.uid === pending.cardUid && c.id === "invitation",
-            ),
-        "邀约卡或互助信标已失效，可以拒绝本次交易",
-      );
+      const unavailable = tradeResponseReason(g, pending);
+      requireRule(!unavailable, unavailable);
       const give = validateBag(pending.give),
         receive = validateBag(pending.receive);
       requireRule(
@@ -652,11 +758,30 @@ export function command(original, input) {
     () => 0,
   );
   const p = activePlayer(g);
+  g.rules ||= structuredClone(DEFAULT_RULES);
+  for (const player of g.players) player.floodInjury ??= floodInjury(g, player);
   requireRule(input.actor === p.id, "请由当前行动玩家操作");
   const before = structuredClone(g.players),
     arkBefore = { ...g.ark },
     worldBefore = { ...g.attributes };
-  if (isDisasterChoice(g)) {
+  if (g.pending?.kind === "evacuation") {
+    requireRule(
+      input.type === "evacuate",
+      "请先完成终局撤离，不能再使用卡牌或资源操作",
+    );
+    const path = reachable(
+      p.position,
+      rulesFor(g).finalEvacuationSteps,
+      g.floodLevel,
+      { escape: true },
+    )[input.tileId];
+    requireRule(path, "无效的终局撤离路径");
+    p.position = input.tileId;
+    log(g, p.id, "evacuate", "执行最后撤离", { path });
+    g.pending.remaining.shift();
+    if (g.pending.remaining.length) g.pending.actor = g.pending.remaining[0];
+    else nextRound(g);
+  } else if (isDisasterChoice(g)) {
     resolveDisasterChoice(g, input);
   } else if (g.pending?.kind === "eco_block") {
     requireRule(input.type === "choose", "请先回应生态管制");
@@ -711,8 +836,11 @@ export function command(original, input) {
       );
       lost[input.resource] += take(p, input.resource);
     }
-    log(g, p.id, "flood_payment", "结算个人洪水损失", {
+    const injury = Math.max(0, sum(cost.mandatory) + cost.optional - sum(lost));
+    p.floodInjury += injury;
+    log(g, p.id, "flood_payment", `结算个人洪水损失；欠缴增加伤势 ${injury}`, {
       lost,
+      injury,
       requested: cost,
       protected: has(p, "reserve-crate"),
     });
@@ -749,31 +877,71 @@ export function command(original, input) {
         "炼金炉生效，本回合不能邀约",
       );
       const target = playerAt(g, input.targetId);
-      requireRule(
-        target && nearby(p, target),
-        active(g, "social-disorder")
-          ? "社会失序：只能与同格或相邻玩家互动"
-          : "邀约需要建立联络：同格或相邻玩家",
-      );
-      const give = validateBag(input.give),
-        receive = validateBag(input.receive);
-      if (input.type === "beacon")
+      if (input.type !== "beacon") {
         requireRule(
-          sum(give) === 1 && sum(receive) === 1,
-          "互助信标只能各交换一份",
+          target &&
+            invitationTargets(g, p).some(
+              (t) => t.playerId === target.id && t.eligible,
+            ),
+          "邀约只能选择物理位置最近的两名其他玩家",
         );
-      requireRule(canPay(p, give), "给出的资源不足");
-      g.pending = {
-        kind: "trade",
-        actor: target.id,
-        owner: p.id,
-        give,
-        receive,
-        cardUid: card?.uid || null,
-        beacon: input.type === "beacon",
-        resume: g.phase,
-      };
-      g.phase = "choice";
+        requireRule(RESOURCES.includes(input.resource), "请选择你想获得的资源");
+        g.pending = {
+          kind: "invitation",
+          actor: target.id,
+          owner: p.id,
+          resource: input.resource,
+          cardUid: card.uid,
+          resume: g.phase,
+        };
+        g.phase = "choice";
+        log(
+          g,
+          p.id,
+          "invitation_offer",
+          `向 ${target.name} 发出共同领取资源的邀约`,
+          { targetId: target.id, resource: input.resource, cardUid: card.uid },
+        );
+      } else {
+        requireRule(
+          target && nearby(p, target),
+          active(g, "social-disorder")
+            ? "社会失序：只能与同格或相邻玩家互动"
+            : "邀约需要建立联络：同格或相邻玩家",
+        );
+        const give = validateBag(input.give),
+          receive = validateBag(input.receive);
+        if (input.type === "beacon")
+          requireRule(
+            sum(give) === 1 && sum(receive) === 1,
+            "互助信标只能各交换一份",
+          );
+        requireRule(canPay(p, give), "给出的资源不足");
+        g.pending = {
+          kind: "trade",
+          actor: target.id,
+          owner: p.id,
+          give,
+          receive,
+          cardUid: card?.uid || null,
+          beacon: input.type === "beacon",
+          resume: g.phase,
+        };
+        g.phase = "choice";
+        log(
+          g,
+          p.id,
+          "trade_offer",
+          `向 ${target.name} 发出交换请求，等待回应`,
+          {
+            targetId: target.id,
+            give,
+            receive,
+            cardUid: g.pending.cardUid,
+            beacon: g.pending.beacon,
+          },
+        );
+      }
     } else {
       requireRule(card.id === "technology", "未知行动卡");
       g.discard.push(...p.hand.splice(index, 1));
@@ -797,7 +965,7 @@ export function command(original, input) {
     }
   } else if (input.type === "move") {
     requireRule(g.phase === "move", "请在移动步骤操作");
-    const max = 2 + (has(p, "skateboard-shoes") ? 1 : 0);
+    const max = rulesFor(g).baseMove + (has(p, "skateboard-shoes") ? 1 : 0);
     const path = reachable(p.position, max, g.floodLevel, {
       escape: flooded(tileById(p.position), g.floodLevel),
     })[input.tileId];
@@ -815,7 +983,11 @@ export function command(original, input) {
     add(
       p,
       tile.resource,
-      gatherYield(g, p, 1 + (has(p, "mining-drone") ? 1 : 0)),
+      gatherYield(
+        g,
+        p,
+        rulesFor(g).baseGather + (has(p, "mining-drone") ? 1 : 0),
+      ),
     );
     g.phase = "donate";
   } else if (input.type === "donate") {
@@ -838,6 +1010,7 @@ export function command(original, input) {
     finishTurn(g);
   } else fail("未知游戏操作");
   settleWorld(g);
+  g.seats = arkCapacity(g).seats;
   const effects = g.players.map((after, i) => ({
     playerId: after.id,
     resources: Object.fromEntries(
@@ -871,11 +1044,15 @@ export function command(original, input) {
       ),
     },
   );
+  snapshotNewEvents(g, original.events.length);
   g.revision++;
   return g;
 }
 export function viewGame(g) {
-  const result = structuredClone(g);
+  // Internal checkpoints contain RNG state; never copy them into public JSON.
+  const result = gameplayState(g);
+  result.history = historyView(g);
+  result.historyAudit = structuredClone(g.historyAudit || []);
   ensureWorld(result);
   // Historical games keep their saved final values; active games expose global state.
   if (result.status === "playing") {
@@ -888,25 +1065,75 @@ export function viewGame(g) {
   }
   result.players.forEach((p) => {
     p.handLimit = handLimit(result, p);
+    p.survivalPreview = survivalState(result, p);
   });
+  result.capacity = arkCapacity(result);
+  if (!g.judgment?.final) result.seats = result.capacity.seats;
+  result.rules ||= structuredClone(DEFAULT_RULES);
   result.canGather =
     result.status === "playing" && canGather(result, activePlayer(result));
   delete result.rng;
   const p = activePlayer(g);
   result.activePlayerId = p?.id;
+  if (g.status === "review") {
+    const responded = new Set(
+      g.judgment?.conversations?.map((c) => c.playerId) || [],
+    );
+    result.reviewRemaining = g.players
+      .filter(
+        (player) => survivalState(g, player).alive && !responded.has(player.id),
+      )
+      .map((player) => player.id);
+    result.activePlayerId = result.reviewRemaining[0] || p.id;
+  }
+  result.invitation = {
+    targets: invitationTargets(g, p),
+    blockedReason: p.roundFlags.noInvite ? "炼金炉生效，本回合不能邀约" : "",
+    responseReason:
+      g.pending?.kind === "invitation"
+        ? invitationResponseReason(g, g.pending)
+        : "",
+  };
+  result.trade = {
+    targets: g.players
+      .filter((t) => t.id !== p.id)
+      .map((t) => ({
+        playerId: t.id,
+        distance: distance(tileById(p.position), tileById(t.position)),
+        contact: nearby(p, t),
+      })),
+    invitationBlockedReason: p.roundFlags.noInvite
+      ? "炼金炉生效，本回合不能邀约"
+      : "",
+    beaconBlockedReason:
+      !has(p, "aid-beacon") || p.roundFlags.beacon
+        ? "互助信标不可用或本回合已使用"
+        : "",
+    response:
+      g.pending?.kind === "trade"
+        ? { reason: tradeResponseReason(g, g.pending) }
+        : null,
+  };
   result.reachable =
     g.phase === "move"
       ? reachable(
           p.position,
-          2 + (has(p, "skateboard-shoes") ? 1 : 0),
+          rulesFor(g).baseMove + (has(p, "skateboard-shoes") ? 1 : 0),
           g.floodLevel,
           { escape: true },
         )
-      : g.pending?.kind === "blade"
-        ? reachable(p.position, 2, g.floodLevel, { escape: true })
-        : g.pending?.kind === "repeller"
-          ? reachable(p.position, 1, g.floodLevel, { away: true })
-          : {};
+      : g.pending?.kind === "evacuation"
+        ? reachable(
+            p.position,
+            rulesFor(g).finalEvacuationSteps,
+            g.floodLevel,
+            { escape: true },
+          )
+        : g.pending?.kind === "blade"
+          ? reachable(p.position, 2, g.floodLevel, { escape: true })
+          : g.pending?.kind === "repeller"
+            ? reachable(p.position, 1, g.floodLevel, { away: true })
+            : {};
   if (g.pending?.kind === "flood") result.pending.cost = floodCost(g, p);
   return result;
 }

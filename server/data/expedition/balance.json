@@ -1,0 +1,11 @@
+{
+  "version": "boarding-v3",
+  "baseMove": 2,
+  "baseGather": 1,
+  "finalEvacuationSteps": 1,
+  "floodInjuryTolerance": 5,
+  "seedRecovery": 1,
+  "arkUnitsPerSeat": 17,
+  "arkMaxSeats": 6,
+  "invitationNearestCount": 2
+}
