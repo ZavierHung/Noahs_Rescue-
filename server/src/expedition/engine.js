@@ -13,6 +13,14 @@ import { gameplayState, historyView } from "./history.js";
 import { peerReviewView } from "./peer-review.js";
 import { buildLearningOutcome } from "./learning-outcome.js";
 import { buildOpportunityContext } from "./opportunity-context.js";
+import { buildFloodForecast } from "./forecast.js";
+import {
+  PASSIVE_TECHNOLOGIES,
+  inContact as nearby,
+  clawTargetReason,
+  beaconBlockedReason,
+  technologyOptions,
+} from "./technology-options.js";
 import {
   initializePublicEvents,
   beginPublicEvent,
@@ -355,11 +363,6 @@ export function createGame(
   snapshotNewEvents(g);
   return g;
 }
-function nearby(a, b) {
-  return (
-    a.id !== b.id && distance(tileById(a.position), tileById(b.position)) <= 1
-  );
-}
 function tradeResponseReason(g, pending) {
   const owner = playerAt(g, pending.owner),
     recipient = playerAt(g, pending.actor);
@@ -396,14 +399,7 @@ function invitationResponseReason(g, pending) {
 function technology(g, p, id, input) {
   const card = getTech(id);
   requireRule(card, "未知科技");
-  const passive = [
-    "space-ring",
-    "skateboard-shoes",
-    "mining-drone",
-    "reserve-crate",
-    "aid-beacon",
-    "famed-blade",
-  ].includes(id);
+  const passive = PASSIVE_TECHNOLOGIES.has(id);
   if (passive && has(p, id)) {
     log(g, p.id, "duplicate_technology", `${card.name}已生效，同类不叠加`);
     g.phase = g.pending.resume;
@@ -511,11 +507,8 @@ function technology(g, p, id, input) {
     } else log(g, p.id, "empty_discard", "弃牌堆为空，废墟蓝图无可回收牌");
   } else if (id === "recycling-claw") {
     const target = playerAt(g, input.targetId);
-    requireRule(target && nearby(p, target), "机械爪需要相邻玩家");
-    requireRule(
-      !p.roundFlags.noConflictWith.includes(target.id),
-      "本回合已与此玩家互助，不能争夺",
-    );
+    const reason = clawTargetReason(p, target);
+    requireRule(!reason, reason);
     const available = RESOURCES.flatMap((r) =>
       Array(target.resources[r]).fill(r),
     );
@@ -542,6 +535,28 @@ function technology(g, p, id, input) {
 function restore(g, pending) {
   g.phase = pending.resume;
   g.pending = pending.resumePending || null;
+  // An interrupted blueprint may offer a card that a nested blueprint took.
+  // Keep only the original offer's still-present cards, never substitute a new
+  // discard or splice(-1). If none remain, unwind to the prior action safely.
+  if (g.pending?.kind === "recover") {
+    g.pending.choices = recoverChoices(g, g.pending);
+    if (!g.pending.choices.length) {
+      log(
+        g,
+        g.pending.actor,
+        "recover_unavailable",
+        "原回收选项已被取走，结束此次回收，不移动其他弃牌",
+      );
+      restore(g, g.pending);
+    }
+  }
+}
+function recoverChoices(g, pending) {
+  return pending.choices.filter((card) =>
+    g.discard.some(
+      (current) => current.uid === card.uid && current.id === card.id,
+    ),
+  );
 }
 function nextChoice(g) {
   const pending = g.pending;
@@ -715,15 +730,35 @@ function resolveChoice(g, p, input) {
     add(p, input.resource, 1);
     nextChoice(g);
   } else if (pending.kind === "prototype" || pending.kind === "recover") {
+    // Old saves can already be waiting on an exhausted recovery offer. Let the
+    // actor acknowledge it without granting a card or requiring a destructive discard.
+    if (pending.kind === "recover" && !recoverChoices(g, pending).length) {
+      requireRule(
+        input.decline === true,
+        "原回收选项已被取走，请确认无可回收牌",
+      );
+      log(
+        g,
+        p.id,
+        "recover_unavailable",
+        "原回收选项已被取走，结束此次回收，不移动其他弃牌",
+      );
+      restore(g, pending);
+      return;
+    }
     const chosen = pending.choices.find((c) => c.uid === input.cardUid);
     requireRule(chosen, "请选择有效的行动牌");
+    const discardIndex =
+      pending.kind === "recover"
+        ? g.discard.findIndex((c) => c.uid === chosen.uid && c.id === chosen.id)
+        : -1;
+    requireRule(
+      pending.kind !== "recover" || discardIndex >= 0,
+      "这张牌已不在弃牌堆，请重新选择当前可回收牌",
+    );
     requireRule(p.hand.length < handLimit(g, p), "手牌已满，请先弃一张");
     p.hand.push(chosen);
-    if (pending.kind === "recover")
-      g.discard.splice(
-        g.discard.findIndex((c) => c.uid === chosen.uid),
-        1,
-      );
+    if (pending.kind === "recover") g.discard.splice(discardIndex, 1);
     else
       log(
         g,
@@ -855,6 +890,10 @@ export function command(original, input) {
       kind: "technology",
       actor: p.id,
       choices: [pick(g, CARDS.technology).id, pick(g, CARDS.technology).id],
+      sourceCardUid: input.cardUid,
+      // Effective event history rewinds with undo; revision deliberately does
+      // not. Keep replayed offers identical without consuming extra randomness.
+      offerId: `technology-${g.events.length + 1}`,
       resume: g.phase,
       resumePending: previous,
     };
@@ -999,6 +1038,8 @@ export function command(original, input) {
         kind: "technology",
         actor: p.id,
         choices: [pick(g, CARDS.technology).id, pick(g, CARDS.technology).id],
+        sourceCardUid: input.cardUid,
+        offerId: `technology-${g.events.length + 1}`,
         resume: g.phase,
       };
       g.phase = "choice";
@@ -1144,6 +1185,7 @@ export function viewGame(g) {
     p.survivalPreview = survivalState(result, p);
   });
   result.capacity = arkCapacity(result);
+  result.floodForecast = buildFloodForecast(g, floodCost);
   if (!g.judgment?.final) result.seats = result.capacity.seats;
   result.rules ||= structuredClone(DEFAULT_RULES);
   result.canGather =
@@ -1190,15 +1232,15 @@ export function viewGame(g) {
     invitationBlockedReason: p.roundFlags.noInvite
       ? "炼金炉生效，本回合不能邀约"
       : "",
-    beaconBlockedReason:
-      !has(p, "aid-beacon") || p.roundFlags.beacon
-        ? "互助信标不可用或本回合已使用"
-        : "",
+    beaconBlockedReason: beaconBlockedReason(g, p),
     response:
       g.pending?.kind === "trade"
         ? { reason: tradeResponseReason(g, g.pending) }
         : null,
   };
+  result.technology = technologyOptions(g, p);
+  if (g.pending?.kind === "recover")
+    result.pending.choices = structuredClone(recoverChoices(g, g.pending));
   result.reachable =
     g.phase === "move"
       ? reachable(

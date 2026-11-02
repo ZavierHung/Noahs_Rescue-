@@ -1,4 +1,4 @@
-export const WEB_VERSION = "0.4.0-local";
+export const WEB_VERSION = "0.4.1-local";
 export type Resource = "wood" | "metal" | "electricity" | "seed";
 export type Bag = Record<Resource, number>;
 export type WorldAttributes = Record<
@@ -115,6 +115,44 @@ export type PublicEventPending = {
   card: PublicEventCard;
 };
 export type Game = {
+  floodForecast: {
+    current: null | {
+      round: number;
+      level: number;
+      zone: number;
+      die: number;
+      resource: Resource;
+      requested: number;
+      actual: number;
+      paidPlayerIds: string[];
+      remainingPlayerIds: string[];
+    };
+    next: null | {
+      round: number;
+      level: number;
+      zone: number;
+      roundsUntil: number;
+      baseCost: { mandatory: Bag; choices: Resource[]; optional: number };
+      ark: {
+        requested: number;
+        possibilities: {
+          resource: Resource;
+          dieValues: number[];
+          currentStock: number;
+          actualLoss: number;
+          seatsAfter: number;
+        }[];
+      };
+      players: {
+        playerId: string;
+        cost: { mandatory: Bag; choices: Resource[]; optional: number };
+        mandatoryPayable: Bag;
+        eligibleOptions: Resource[];
+        injuryIfPaid: number;
+        protected: boolean;
+      }[];
+    };
+  };
   learningMode?: boolean;
   learningVersion?: string;
   opportunityContext?: {
@@ -218,6 +256,15 @@ export type Game = {
     harvested: Record<string, number>;
   };
   canGather: boolean;
+  technology?: {
+    choices: {
+      id: string;
+      blockedReason: string;
+      warning: string;
+      targets: { playerId: string; reason: string; empty: boolean }[];
+    }[];
+    equipment: { id: string; description: string }[];
+  };
   trade: {
     targets: { playerId: string; distance: number; contact: boolean }[];
     invitationBlockedReason: string;
@@ -278,6 +325,7 @@ export type LearningOutcome = {
   disclaimer: string;
 };
 export type Catalog = {
+  disasters: import("./disasters").Disaster[];
   floodCard: {
     name: string;
     image: string;

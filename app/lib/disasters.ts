@@ -9,7 +9,8 @@ export type Disaster = {
   dimension: "economy" | "environment" | "society";
   dimensionLabel: string;
   band: string;
-  triggerValue: number;
+  triggerValue?: number;
+  triggerRange?: string;
   catalogVersion?: string;
   image?: { file: string; width: number; height: number };
 };

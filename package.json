@@ -1,6 +1,6 @@
 {
   "name": "world-balance-system",
-  "version": "0.4.0-local",
+  "version": "0.4.1-local",
   "private": true,
   "type": "module",
   "scripts": {
@@ -18,11 +18,14 @@
     "test": "npm --prefix server test",
     "test:simulation": "node scripts/simulate-expedition.mjs",
     "test:learning": "node scripts/evaluate-learning.mjs --learning --matches 20",
+    "test:learning:live": "node scripts/simulate-learning-live.mjs",
+    "test:learning:live:proxy": "node scripts/with-system-proxy.mjs simulate-learning-live.mjs",
     "test:balance": "node scripts/balance-expedition.mjs",
     "typecheck": "npm --prefix app exec tsc -- --noEmit -p app/tsconfig.json",
     "check": "npm test && npm run typecheck && npm run build",
     "test:e2e": "playwright test",
     "test:game": "node --test server/test/expedition*.test.js",
+    "test:technology": "node --test server/test/expedition-technology-options.test.js server/test/expedition-engine.test.js server/test/expedition-learning-rules.test.js && playwright test tests/browser/technology-actions.spec.js",
     "check:all": "npm run check && npm run test:e2e",
     "release:check": "node scripts/release-check.mjs && npm run check:all"
   },

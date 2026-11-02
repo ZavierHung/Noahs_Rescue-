@@ -6,6 +6,9 @@ const systemChrome =
   existsSync("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome");
 export default defineConfig({
   testDir: "./tests/browser",
+  // Playwright clears its outputDir before a run. Keep paid live experiments
+  // in sibling directories safe from that automatic cleanup.
+  outputDir: "./test-results/browser",
   timeout: 60000,
   expect: { timeout: 10000 },
   workers: 1,

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { MAP, TILES, FLAGS } from "./map.js";
 import { DEFAULT_RULES } from "./rules.js";
+import { DISASTERS, DIMENSION_LABELS } from "../catalog.js";
 const read = (name) =>
   JSON.parse(
     readFileSync(
@@ -25,8 +26,41 @@ export const LABELS = {
   seed: "种子",
 };
 export const getTech = (id) => CARDS.technology.find((c) => c.id === id);
+export function disasterCatalog() {
+  const policy = read("disaster-rules");
+  const ranges = {
+    criticalLow: "1–2",
+    low: "1–6",
+    high: "14–19",
+    criticalHigh: "18–19",
+  };
+  return Object.entries(DISASTERS).flatMap(([dimension, bands]) =>
+    Object.entries(bands).flatMap(([band, cards]) =>
+      cards.map((card) => {
+        const override = policy.learningEffects?.[card.id];
+        return {
+          ...structuredClone(card),
+          dimensionLabel: DIMENSION_LABELS[dimension],
+          triggerRange: ranges[band],
+          ...(override
+            ? {
+                learningEffect: override.effect,
+                learningSummary: override.summary,
+                learningImage: {
+                  file: override.image,
+                  width: override.imageWidth,
+                  height: override.imageHeight,
+                },
+              }
+            : {}),
+        };
+      }),
+    ),
+  );
+}
 export const publicCatalog = () => ({
   cards: CARDS,
+  disasters: disasterCatalog(),
   characters: CHARACTERS,
   resources: LABELS,
   floodCard: {

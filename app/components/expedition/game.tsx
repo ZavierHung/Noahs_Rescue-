@@ -28,6 +28,9 @@ import { CardHint, worldDelta } from "../game/card-hint";
 import { GamePurpose } from "./game-purpose";
 import { AcademicLibrary } from "./knowledge-panel";
 import { PublicEventPanel } from "./public-event-panel";
+import { CardCatalog } from "./card-catalog";
+import { VoyageHud } from "./voyage-hud";
+import { TechnologyChoice } from "./technology-choice";
 import "./game.css";
 const keys: Resource[] = ["wood", "metal", "electricity", "seed"];
 const blank = (): Bag => ({ wood: 0, metal: 0, electricity: 0, seed: 0 });
@@ -64,11 +67,7 @@ export default function ExpeditionGame() {
       status?: Record<string, number>;
     } | null>(null);
   const [amounts, setAmounts] = useState<Bag>(blank),
-    [spend, setSpend] = useState<Bag>(blank),
-    [resource, setResource] = useState<Resource>("wood"),
-    [target, setTarget] = useState(""),
-    [invitation, setInvitation] = useState<string | null>(null),
-    [tech, setTech] = useState<string | null>(null);
+    [invitation, setInvitation] = useState<string | null>(null);
   const [tradeNotice, setTradeNotice] = useState("");
   const [tab, setTab] = useState<"log" | "donations" | "history" | "rules">(
     "log",
@@ -143,10 +142,7 @@ export default function ExpeditionGame() {
   }, [game?.id, busy]);
   useEffect(() => {
     setInvitation(null);
-    setTech(null);
     setAmounts(blank());
-    setSpend(blank());
-    setTarget("");
     setSelected(null);
   }, [
     game?.id,
@@ -189,20 +185,35 @@ export default function ExpeditionGame() {
     setError("");
     setTradeNotice("");
     try {
-      accept(
-        await apiRequest<Game>(`/${game.id}/actions`, "POST", {
-          ...data,
-          type,
-          actor: game.activePlayerId,
-          revision: data.revision ?? game.revision,
-        }),
-      );
+      const next = await apiRequest<Game>(`/${game.id}/actions`, "POST", {
+        ...data,
+        type,
+        actor: game.activePlayerId,
+        revision: data.revision ?? game.revision,
+      });
+      accept(next);
+      if (
+        game.pending?.kind === "technology" &&
+        type === "choose" &&
+        data.techId
+      ) {
+        const events = next.events.slice(game.events.length);
+        const applied = events.find((e) => e.type === "technology");
+        if (events.some((e) => e.type === "duplicate_technology"))
+          setTradeNotice("该科技已部署；同名不叠加，也不重复改变世界分数。");
+        else if (events.some((e) => e.type === "ecology_response"))
+          setTradeNotice("正在等待相邻玩家回应生态管制，本次科技尚未生效。");
+        else if (applied)
+          setTradeNotice(
+            `${applied.detail}。${data.techId === "aid-beacon" ? "已部署：在「已生效科技」查看交换条件，满足后主动发起。" : next.pending ? "请继续完成当前效果选择。" : "已结算效果；常驻科技的触发状态见「已生效科技」。"}`,
+          );
+      }
       if (game.pending?.kind === "trade" && type === "choose") {
         const owner = game.players.find((p) => p.id === game.pending.owner);
         setTradeNotice(
           data.accept
             ? `交换已完成，双方物资已结算。返回 ${owner?.id} · ${owner?.name} 继续原行动。`
-            : `对方已拒绝；物资与邀约卡均保留。返回 ${owner?.id} · ${owner?.name}，可以换人重试。`,
+            : `对方已拒绝；物资保留，${game.pending.beacon ? "本回合信标次数未消耗" : "邀约卡保留"}。返回 ${owner?.id} · ${owner?.name}，可以换人重试。`,
         );
       }
       if (game.pending?.kind === "invitation" && type === "choose")
@@ -301,8 +312,7 @@ export default function ExpeditionGame() {
       !g.peerReviewSummary.complete,
     discussing = g?.status === "review" && !!g.reviewRemaining?.length,
     tile = cat.map.tiles.find((t) => t.id === (selected || p?.position));
-  const techCard = cat.cards.technology.find((c) => c.id === tech),
-    pending = g?.pending;
+  const pending = g?.pending;
   const card = (id: string) =>
     [...cat.cards.actions, ...cat.cards.technology].find((c) => c.id === id)!;
   const ResourceChoice = ({
@@ -351,6 +361,11 @@ export default function ExpeditionGame() {
         </a>
         <div className="header-actions">
           <span className="local-chip">本地网页版 · {WEB_VERSION}</span>
+          <CardCatalog
+            catalog={catalog}
+            disasters={catalog.disasters || []}
+            learningMode={g ? !!g.learningMode : true}
+          />
           <a href="/lab">世界实验台</a>
           {g && (
             <button onClick={setup} disabled={busy}>
@@ -666,6 +681,7 @@ export default function ExpeditionGame() {
               </button>
             )}
           </div>
+          <VoyageHud game={g} />
           {tradeNotice && (
             <p className="interaction-result" role="status">
               {tradeNotice}
@@ -945,97 +961,14 @@ export default function ExpeditionGame() {
                           </button>
                         )}
                         {pending.kind === "technology" && (
-                          <>
-                            <div className="tech-options">
-                              {pending.choices.map((id: string, i: number) => (
-                                <div
-                                  key={i}
-                                  className={tech === id ? "chosen" : ""}
-                                >
-                                  <Artwork c={card(id)} />
-                                  <button onClick={() => setTech(id)}>
-                                    {card(id).name}
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                            {techCard && (
-                              <>
-                                <p>
-                                  {techCard.implementedEffect ||
-                                    techCard.effect}
-                                </p>
-                                {tech === "alchemy-furnace" && (
-                                  <>
-                                    <BagFields
-                                      value={spend}
-                                      onChange={setSpend}
-                                      label="炼金消耗"
-                                      max={p.resources}
-                                    />
-                                    <fieldset className="resource-output">
-                                      <legend>产出资源</legend>
-                                      <div className="resource-options">
-                                        {keys.map((r) => (
-                                          <button
-                                            key={r}
-                                            aria-label={`产出${cat.resources[r]}`}
-                                            aria-pressed={resource === r}
-                                            onClick={() => setResource(r)}
-                                          >
-                                            <ResourceIcon resource={r} />
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </fieldset>
-                                  </>
-                                )}
-                                {tech === "recycling-claw" && (
-                                  <label>
-                                    相邻目标
-                                    <select
-                                      aria-label="科技目标"
-                                      value={target}
-                                      onChange={(e) =>
-                                        setTarget(e.target.value)
-                                      }
-                                    >
-                                      <option value="">选择玩家</option>
-                                      {g.players
-                                        .filter((t) => t.id !== p.id)
-                                        .map((t) => (
-                                          <option key={t.id} value={t.id}>
-                                            {t.name}
-                                          </option>
-                                        ))}
-                                    </select>
-                                  </label>
-                                )}
-                                <button
-                                  className="primary"
-                                  disabled={busy}
-                                  onClick={() =>
-                                    void act("choose", {
-                                      techId: tech,
-                                      spend,
-                                      resource,
-                                      targetId: target,
-                                    })
-                                  }
-                                >
-                                  获得 {techCard.name} 的收益
-                                </button>
-                              </>
-                            )}
-                            <button
-                              disabled={busy}
-                              onClick={() =>
-                                void act("choose", { decline: true })
-                              }
-                            >
-                              放弃本次科技收益
-                            </button>
-                          </>
+                          <TechnologyChoice
+                            key={`${g.id}-${pending.offerId || pending.sourceCardUid || pending.choices.join(",")}-${g.history?.lastChangeRevision}`}
+                            game={g}
+                            cards={cat.cards.technology}
+                            busy={busy}
+                            act={act}
+                            onPreview={setPreview}
+                          />
                         )}
                         {["trade", "invitation"].includes(pending.kind) && (
                           <button
@@ -1121,11 +1054,36 @@ export default function ExpeditionGame() {
                           </>
                         )}
                         {["prototype", "recover"].includes(pending.kind) &&
+                          pending.choices.length > 0 &&
+                          p.hand.length >= p.handLimit && (
+                            <p className="interaction-warning" role="status">
+                              手牌已满，请先在下方手牌区弃置一张，再领取所选卡牌。
+                            </p>
+                          )}
+                        {pending.kind === "recover" &&
+                          !pending.choices.length && (
+                            <>
+                              <p>
+                                原回收选项已被取走，不再重复领取，也不会移除其他弃牌。
+                              </p>
+                              <button
+                                disabled={busy}
+                                onClick={() =>
+                                  void act("choose", { decline: true })
+                                }
+                              >
+                                确认无可回收牌
+                              </button>
+                            </>
+                          )}
+                        {["prototype", "recover"].includes(pending.kind) &&
                           pending.choices.map(
                             (c: { uid: string; id: string }) => (
                               <CardHint card={card(c.id)} key={c.uid}>
                                 <button
-                                  disabled={busy}
+                                  disabled={
+                                    busy || p.hand.length >= p.handLimit
+                                  }
                                   onClick={() =>
                                     void act("choose", { cardUid: c.uid })
                                   }
@@ -1161,8 +1119,18 @@ export default function ExpeditionGame() {
                                   </button>
                                 </CardHint>
                               ))
+                            ) : pending.kind === "repeller" &&
+                              Object.keys(g.reachable).some(
+                                (id) => id !== p.position,
+                              ) ? (
+                              <p className="interaction-warning">
+                                没有可弃物资，请点击地图高亮格向外移动一格。
+                              </p>
                             ) : (
-                              <button onClick={() => void act("choose")}>
+                              <button
+                                disabled={busy}
+                                onClick={() => void act("choose")}
+                              >
                                 确认无可扣物资
                               </button>
                             )}
@@ -1340,14 +1308,30 @@ export default function ExpeditionGame() {
                       <div className="equipment">
                         <h3>已生效科技</h3>
                         {p.equipment.map((id) => (
-                          <CardHint card={card(id)} key={id}>
-                            <button onClick={() => setPreview(card(id))}>
-                              {card(id).name} ↗
-                            </button>
-                          </CardHint>
+                          <div className="equipment-detail" key={id}>
+                            <CardHint card={card(id)}>
+                              <button onClick={() => setPreview(card(id))}>
+                                {card(id).name} ↗
+                              </button>
+                            </CardHint>
+                            <small>
+                              {
+                                g.technology?.equipment.find(
+                                  (item) => item.id === id,
+                                )?.description
+                              }
+                            </small>
+                          </div>
                         ))}
-                        {p.equipment.includes("aid-beacon") && !pending && (
-                          <button onClick={() => openInvitation("beacon")}>
+                        {p.equipment.includes("aid-beacon") && (
+                          <button
+                            disabled={
+                              busy ||
+                              !!pending ||
+                              !!g.trade?.beaconBlockedReason
+                            }
+                            onClick={() => openInvitation("beacon")}
+                          >
                             使用互助信标交换
                           </button>
                         )}

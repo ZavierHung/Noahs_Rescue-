@@ -148,9 +148,16 @@ export function botAction(g, { policy = "balanced", seed = 1 } = {}) {
       };
     }
     if (["prototype", "recover"].includes(kind)) {
+      const choices =
+        kind === "recover"
+          ? pending.choices.filter((c) =>
+              g.discard.some((d) => d.uid === c.uid && d.id === c.id),
+            )
+          : pending.choices;
+      if (!choices.length) return { ...input, type: "choose", decline: true };
       if (p.hand.length >= handLimit(g, p))
         return { ...input, type: "discard", cardUid: p.hand[0].uid };
-      return { ...input, type: "choose", cardUid: pending.choices[0].uid };
+      return { ...input, type: "choose", cardUid: choices[0].uid };
     }
     if (kind === "tide")
       return {

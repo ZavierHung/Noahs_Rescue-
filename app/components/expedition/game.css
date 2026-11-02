@@ -1605,3 +1605,18 @@
     font-size: 19px;
   }
 }
+.equipment-detail {
+  display: grid;
+  gap: 0.35rem;
+  margin-block: 0.5rem;
+}
+.equipment-detail small,
+.technology-choice .tech-options small {
+  display: block;
+  line-height: 1.5;
+  color: #625440;
+}
+.resource-options button[aria-pressed="true"] {
+  outline: 2px solid #9a742c;
+  background: #f2e5bd;
+}

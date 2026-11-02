@@ -1,10 +1,18 @@
 # Noah’s Rescue · 网页地图版
 
-当前版本：**0.4.0-local**。入口：[http://localhost:3000/](http://localhost:3000/)。原世界属性与上帝调试台移至 [/lab](http://localhost:3000/lab)。
+当前版本：**0.4.1-local**。入口：[http://localhost:3000/](http://localhost:3000/)。原世界属性与上帝调试台移至 [/lab](http://localhost:3000/lab)。
+
+使用文档：[玩家手册](docs/PLAYER_MANUAL.md)（目标、规则与操作） · [开发者手册](docs/DEVELOPER_MANUAL.md)（模块、完整流程、全部卡牌逻辑、接口与维护）。两份手册按当前网页学习版整理，旧存档差异另行注明。
 
 小程序及其共享房间实现封存在 `archive/miniprogram-v0.2`（快照 `9733568`）。网页基线已提交至 `main@c32f6d3`；学习迭代在 `feature/student-learning-iterations`，不导入小程序代码，也不读写旧 `rooms.json`。仅本地运行，未公开部署。
 
 本轮新增：玩家评分评论、多层次教育结果、三张重绘且有取舍的新规则卡、紧凑行动 UI，以及第 2/4/6 轮的公共随机抉择。新对局默认学习 v2；无学习标记的旧局保持原规则，学习 v1 也不会半途插入公共事件。每批 20 局的反馈、局限和开发记录见 [学生视角迭代报告](docs/STUDENT_ITERATION_REPORT.md)。这些指标不是学生成绩，未登船不代表没有价值。
+
+0.4.1 增加「卡牌图鉴」：全部 27 种牌分类、搜索、悬停说明与大图预览。航程面板常显当前方舟载客量、距离下一席的物资缺口，以及下次洪水每位玩家的缴纳要求、方舟骰定扣库及可能减少的席位。预览完全只读，不提前掷骰或改变游戏。另提供显式启用、有请求预算和断点记录的真实 M3 模拟；进度与限制见 [本次迭代记录](docs/iterations/UI_LIVE_ITERATION_2026-10-30.md)。
+
+真实二十局测试的逐局状态、失败、消耗和判词事实审查见 [真实 M3 测试报告](docs/iterations/LIVE_20_MATCH_REPORT_2026-10-30.md)。目前尚未实现二十局完整模型闭环；即使通过结构校验，解释仍可能误读玩家行为，不能作为无监督的教育评价。
+
+科技触发修复：互助信标改为清晰的资源图标选择／同意交换流程，装备显示实际触发条件；修复嵌套科技选择残留与废墟蓝图重复回收。全部 13 种科技已有浏览器实际操作测试，运行 `npm run test:technology` 可离线复验；本轮不调用 MiniMax。操作说明见 [科技卡如何触发](docs/QUICK_START.md#科技卡如何触发)。
 
 ## 快速开始
 
@@ -285,7 +293,7 @@ v3 数值在新局内保存快照；旧活动局第一次成功操作补入当�
 
 ## 测试与模拟
 
-撤回专项：`node --test server/test/expedition-history.test.js`。包含完整六人对局的逐步撤回/重做一致性验证，通常需要约两分钟；单独跑 UI 回归可用 `npm run test:e2e -- -g 'undo|rollback'`。当前完整门禁实测为 100 项后端测试、16 个浏览器场景；历次版本记录见 `docs/RELEASE_PLAN.md`。
+撤回专项：`node --test server/test/expedition-history.test.js`。包含完整六人对局的逐步撤回/重做一致性验证，通常需要约两分钟；单独跑 UI 回归可用 `npm run test:e2e -- -g 'undo|rollback'`。本版回归套件包含 256 项后端测试、52 个浏览器场景；历次版本记录见 `docs/RELEASE_PLAN.md`。
 
 ```bash
 npm run test:game         # 新地图、全部科技、HTTP/JSON、终局上下文与素材测试
